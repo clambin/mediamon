@@ -1,0 +1,183 @@
+stages:
+  - unittest
+  - build
+#  - qa
+  - release
+
+# Don't run for new tags
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
+
+.test_only:
+  rules:
+    - changes:
+        - "*.py"
+        - "src/*.py"
+        - "tests/*.py"
+        - "Pipfile*"
+        - .gitlab-ci.yml
+
+.build_only:
+  rules:
+    - changes:
+        - "*.py"
+        - "src/*.py"
+        - "Pipfile*"
+        - "Dockerfile*"
+        - .gitlab-ci.yml
+
+.docker:
+  image: docker:stable
+  services:
+    - docker:stable-dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_CERT_PATH: "/certs/client"
+    DOCKER_CLI_EXPERIMENTAL: enabled
+  tags:
+    - docker
+    - shared
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+    - export CI_PROJECT_PATH=$(echo $CI_PROJECT_PATH | tr "[:upper:]" "[:lower:]")
+
+.docker_arm:
+  extends: .docker
+  tags:
+    - docker
+    - arm
+    - rpi
+
+flake8:
+  stage: unittest
+  extends: .test_only
+  image: python:3.7
+  before_script:
+    - pip install flake8
+  script:
+    - flake8 --max-line-length 120 *.py src/*.py
+
+pytest:
+  stage: unittest
+  extends: .test_only
+  image: python:3.7
+  before_script:
+    - pip install pipenv
+    - pipenv install --dev
+  script:
+    - pipenv check
+    - cd tests && pipenv run pytest --cov --junitxml=report.xml
+    - pipenv run bash <(curl -s https://codecov.io/bash) -s tests
+  artifacts:
+    reports:
+      junit: tests/report.xml
+
+sast:
+  stage: unittest
+  extends: .test_only
+  image: python:3.7
+  before_script:
+    - pip install bandit
+  script:
+    - bandit -r src/*.py
+
+build_amd64:
+  stage: build
+  extends:
+    - .docker
+    - .build_only
+  script:
+    - docker pull $CI_PROJECT_PATH:build-amd64 || true
+    - docker build --cache-from $CI_PROJECT_PATH:build-amd64 --pull -t $CI_PROJECT_PATH:build-amd64 .
+    - docker push $CI_PROJECT_PATH:build-amd64
+
+build_arm:
+  stage: build
+  extends:
+    - .docker
+    - .build_only
+  script:
+    - docker run --rm --privileged multiarch/qemu-user-static:register --reset
+    - docker pull $CI_PROJECT_PATH:build-arm || true
+    - docker build --cache-from $CI_PROJECT_PATH:build-arm --pull -t $CI_PROJECT_PATH:build-arm --file Dockerfile.qemu .
+    - docker push $CI_PROJECT_PATH:build-arm
+
+#test_amd64:
+  #stage: qa
+  #extends:
+    #- .docker
+    #- .build_only
+  #script:
+    #- apk add --update curl
+    #- docker run -v $(pwd)/tests:/app/tests -p 8080:8080 --name tester --rm -d $CI_PROJECT_PATH:build-amd64 --debug --interval 1 --client-status /app/tests/client.status
+    #- sleep 5
+    #- curl -s docker:8080/metric | grep '^openvpn_client_auth_read_bytes_total'
+    #- docker stop tester
+#
+#test_arm:
+  #stage : qa
+  #extends:
+    #- .docker_arm
+    #- .build_only
+  #script:
+    #- apk add --update curl
+    #- docker run -v $(pwd)/tests:/app/tests -p 8080:8080 --name tester --rm -d $CI_PROJECT_PATH:build-arm --debug --interval 1 --client-status /app/tests/client.status
+    #- sleep 5
+    #- curl -s docker:8080/metric | grep '^openvpn_client_auth_read_bytes_total'
+    #- docker stop tester
+
+publish_nonmaster:
+  stage: release
+  extends: .docker
+  rules:
+    - if: $CI_COMMIT_BRANCH != "master"
+  script:
+    - docker pull $CI_PROJECT_PATH:build-amd64
+    - docker tag  $CI_PROJECT_PATH:build-amd64 $CI_PROJECT_PATH:$CI_COMMIT_BRANCH-amd64
+    - docker push $CI_PROJECT_PATH:$CI_COMMIT_BRANCH-amd64
+    - docker pull $CI_PROJECT_PATH:build-arm
+    - docker tag  $CI_PROJECT_PATH:build-arm $CI_PROJECT_PATH:$CI_COMMIT_BRANCH-arm
+    - docker push $CI_PROJECT_PATH:$CI_COMMIT_BRANCH-arm
+    - docker manifest create $CI_PROJECT_PATH:$CI_COMMIT_BRANCH
+        $CI_PROJECT_PATH:$CI_COMMIT_BRANCH-amd64
+        $CI_PROJECT_PATH:$CI_COMMIT_BRANCH-arm
+    - docker manifest push -p $CI_PROJECT_PATH:$CI_COMMIT_BRANCH
+
+publish_master:
+  stage: release
+  extends: .docker
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+  script:
+    - export VERSION=$(grep -i  version src/version.py | awk '{ print $3 }' | tr -d \');
+    - docker pull $CI_PROJECT_PATH:build-amd64
+    - docker tag  $CI_PROJECT_PATH:build-amd64 $CI_PROJECT_PATH:$VERSION-amd64
+    - docker push $CI_PROJECT_PATH:$VERSION-amd64
+    - docker pull $CI_PROJECT_PATH:build-arm
+    - docker tag  $CI_PROJECT_PATH:build-arm $CI_PROJECT_PATH:$VERSION-arm
+    - docker push $CI_PROJECT_PATH:$VERSION-arm
+    - docker manifest create $CI_PROJECT_PATH:$VERSION
+        $CI_PROJECT_PATH:$VERSION-amd64
+        $CI_PROJECT_PATH:$VERSION-arm
+    - docker manifest push -p $CI_PROJECT_PATH:$VERSION
+    - docker manifest create $CI_PROJECT_PATH:latest
+        $CI_PROJECT_PATH:$VERSION-amd64
+        $CI_PROJECT_PATH:$VERSION-arm
+    - docker manifest push -p $CI_PROJECT_PATH:latest
+
+github:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+  before_script:
+    - VERSION=$(grep -i ^version src/version.py | awk '{ print $3 }' | tr -d \');
+  script:
+    - git remote set-url origin "https://$GITHUB_USER:$GITHUB_TOKEN@github.com/$CI_PROJECT_PATH.git"
+    - git tag $VERSION
+    - git push --tags
