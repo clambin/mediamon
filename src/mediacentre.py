@@ -90,21 +90,27 @@ class MonitorProbe(APIProbe):
 
     def measure_calendar(self):
         calendar = self.call('api/calendar')
-        calendar = list(filter(lambda entry: not entry['hasFile'], calendar))
-        return len(calendar)
+        if calendar:
+            calendar = list(filter(lambda entry: not entry['hasFile'], calendar))
+            return len(calendar)
+        return 0
 
     def measure_queue(self):
         queue = self.call('api/queue')
-        return len(queue)
+        return len(queue) if queue else 0
 
     def measure_monitored(self):
         if self.app == self.App.sonarr:
             entries = self.call('api/series')
         elif self.app == self.App.radarr:
             entries = self.call('api/movie')
-        monitored = list(filter(lambda entry: entry['monitored'], entries))
-        unmonitored = list(filter(lambda entry: not entry['monitored'], entries))
-        return len(monitored), len(unmonitored)
+        else:
+            entries = None
+        if entries:
+            monitored = list(filter(lambda entry: entry['monitored'], entries))
+            unmonitored = list(filter(lambda entry: not entry['monitored'], entries))
+            return len(monitored), len(unmonitored)
+        return 0, 0
 
     def measure(self):
         return {
