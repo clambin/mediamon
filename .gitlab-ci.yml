@@ -194,7 +194,7 @@ github:
 
 swarm:
   stage: deploy
-  image: alpine
+  image: docker:stable
   rules:
     - if: $CI_COMMIT_BRANCH != "master"
     - changes:
