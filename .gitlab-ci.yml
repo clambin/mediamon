@@ -3,6 +3,7 @@ stages:
   - build
 #  - qa
   - release
+  - deploy
 
 # Don't run for new tags
 workflow:
@@ -181,3 +182,14 @@ github:
     - git remote set-url origin "https://$GITHUB_USER:$GITHUB_TOKEN@github.com/$CI_PROJECT_PATH.git"
     - git tag $VERSION
     - git push --tags
+
+swarm:
+  stage: deploy
+  image: docker:stable
+  rules:
+    - if: $CI_COMMIT_BRANCH != "master"
+  tags:
+    - docker
+    - shared
+  script:
+    - docker service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH --with-registry-auth mediacentre_mediamon
