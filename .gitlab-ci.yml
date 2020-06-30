@@ -202,5 +202,6 @@ swarm:
   script:
     - echo $SWARM_TOKEN $SWARM_HOST
     - docker -H docker:2376 swarm join --token $SWARM_TOKEN $SWARM_HOST
-    - docker service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH --with-registry-auth mediacentre_mediamon
+    - docker -H docker:2376 service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH --with-registry-auth mediacentre_mediamon
+  after_script:
     - docker -H docker:2376 swarm leave
