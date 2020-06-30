@@ -200,4 +200,5 @@ swarm:
     - changes:
         - .gitlab-ci.yml
   script:
+    - docker swarm join --token $SWARM_TOKEN $SWARM_HOST
     - docker service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH --with-registry-auth mediacentre_mediamon
