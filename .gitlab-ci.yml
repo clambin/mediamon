@@ -205,7 +205,7 @@ swarm:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
-    - ssh-keyscan $TARGET_HOST >> ~/.ssh/known_hosts
+    - ssh-keyscan $TARGET_HOST:$TARGET_PORT >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
     - ssh -4 -fTN -L localhost:8666:/var/run/docker.sock $$DEPLOY_USER@$TARGET_HOST:$TARGET_PORT
     - docker -H localhost:8666 stack service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH monitor_mediamon
