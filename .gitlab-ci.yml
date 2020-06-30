@@ -55,6 +55,15 @@ workflow:
     - arm
     - rpi
 
+.docker_arm_deploy
+  extends: .docker
+  tags:
+    - docker
+    - arm
+    - rpi
+    - deploy
+
+
 flake8:
   stage: unittest
   extends: .test_only
@@ -185,16 +194,10 @@ github:
 
 swarm:
   stage: deploy
-  image: docker:stable
+  extends: .docker_arm_build
   rules:
     - if: $CI_COMMIT_BRANCH != "master"
     - changes:
         - .gitlab-ci.yml
-  tags:
-    - docker
-    - shared
-  variables:
-    #DOCKER_DRIVER: overlay2
-    DOCKER_HOST: tcp://docker:2376
   script:
     - docker service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH --with-registry-auth mediacentre_mediamon
