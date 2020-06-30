@@ -194,14 +194,18 @@ github:
 
 swarm:
   stage: deploy
-  extends: .docker_arm_deploy
+  image: alpine
   rules:
     - if: $CI_COMMIT_BRANCH != "master"
     - changes:
         - .gitlab-ci.yml
   script:
-    - echo $SWARM_TOKEN $SWARM_HOST
-    - docker -H docker:2376 swarm join --token $SWARM_TOKEN $SWARM_HOST
-    - docker -H docker:2376 service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH --with-registry-auth mediacentre_mediamon
-  after_script:
-    - docker -H docker:2376 swarm leave
+    - which ssh-agent || ( apk add openssh-client )
+    - eval $(ssh-agent -s)
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - ssh-keyscan $TARGET_HOST >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - ssh -4 -fTN -L localhost:8666:/var/run/docker.sock $$DEPLOY_USER@$TARGET_HOST
+    - docker -H localhost:8666 stack service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH monitor_mediamon
