@@ -194,7 +194,7 @@ github:
 
 swarm:
   stage: deploy
-  extends: .docker_arm_build
+  extends: .docker_arm_deploy
   rules:
     - if: $CI_COMMIT_BRANCH != "master"
     - changes:
