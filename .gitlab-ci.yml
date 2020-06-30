@@ -55,7 +55,7 @@ workflow:
     - arm
     - rpi
 
-.docker_arm_deploy
+.docker_arm_deploy:
   extends: .docker
   tags:
     - docker
