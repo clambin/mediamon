@@ -19,7 +19,7 @@ workflow:
         - "src/*.py"
         - "tests/*.py"
         - "Pipfile*"
-        - .gitlab-ci.yml
+#        - .gitlab-ci.yml
 
 .build_only:
   rules:
@@ -28,7 +28,7 @@ workflow:
         - "src/*.py"
         - "Pipfile*"
         - "Dockerfile*"
-        - .gitlab-ci.yml
+#        - .gitlab-ci.yml
 
 .docker:
   image: docker:stable
@@ -188,8 +188,13 @@ swarm:
   image: docker:stable
   rules:
     - if: $CI_COMMIT_BRANCH != "master"
+    - changes:
+        - .gitlab-ci.yml
   tags:
     - docker
     - shared
+  variables:
+    #DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2376
   script:
     - docker service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH --with-registry-auth mediacentre_mediamon
