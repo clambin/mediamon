@@ -55,15 +55,6 @@ workflow:
     - arm
     - rpi
 
-.docker_arm_deploy:
-  extends: .docker
-  tags:
-    - docker
-    - arm
-    - rpi
-    - deploy
-
-
 flake8:
   stage: unittest
   extends: .test_only
@@ -194,17 +185,12 @@ github:
 
 swarm:
     stage: deploy
-    rules:
-      - if: $CI_COMMIT_BRANCH != "master"
-      - changes:
-          - .gitlab-ci.yml
     image: docker:stable
     variables:
       DOCKER_HOST: tcp://$DOCKER_SWARM_MANAGER
       DOCKER_TLS_VERIFY: 1
       DOCKER_TLS_CERTDIR: "certs"
       DOCKER_CERT_PATH: "certs/client"
-      #DOCKER_CLI_EXPERIMENTAL: enabled
     tags:
       - docker
       - arm
