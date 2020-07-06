@@ -192,20 +192,47 @@ github:
     - git tag $VERSION
     - git push --tags
 
+#swarm:
+#  stage: deploy
+#  image: docker:stable
+#  rules:
+#    - if: $CI_COMMIT_BRANCH != "master"
+#    - changes:
+#        - .gitlab-ci.yml
+#  script:
+#    - which ssh-agent || ( apk add openssh-client )
+#    - eval $(ssh-agent -s)
+#    - mkdir -p ~/.ssh
+#    - chmod 700 ~/.ssh
+#    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+#    - ssh-keyscan -p $TARGET_PORT $TARGET_HOST >> ~/.ssh/known_hosts
+#    - chmod 644 ~/.ssh/known_hosts
+#    - ssh -4 -p $TARGET_PORT -fTN -L localhost:8666:/var/run/docker.sock $DEPLOY_USER@$TARGET_HOST
+#    - docker -H localhost:8666 service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH monitor_mediamon
+
 swarm:
-  stage: deploy
-  image: docker:stable
-  rules:
-    - if: $CI_COMMIT_BRANCH != "master"
-    - changes:
-        - .gitlab-ci.yml
-  script:
-    - which ssh-agent || ( apk add openssh-client )
-    - eval $(ssh-agent -s)
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
-    - ssh-keyscan -p $TARGET_PORT $TARGET_HOST >> ~/.ssh/known_hosts
-    - chmod 644 ~/.ssh/known_hosts
-    - ssh -4 -p $TARGET_PORT -fTN -L localhost:8666:/var/run/docker.sock $DEPLOY_USER@$TARGET_HOST
-    - docker -H localhost:8666 service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH monitor_mediamon
+    stage: deploy
+    rules:
+      - if: $CI_COMMIT_BRANCH != "master"
+      - changes:
+          - .gitlab-ci.yml
+    image: docker:stable
+#    services:
+#      - docker:stable-dind
+#    variables:
+#      DOCKER_DRIVER: overlay2
+#      DOCKER_HOST: tcp://docker:2376
+#      DOCKER_TLS_VERIFY: 1
+#      DOCKER_TLS_CERTDIR: "/certs"
+#      DOCKER_CERT_PATH: "/certs/client"
+#      DOCKER_CLI_EXPERIMENTAL: enabled
+    tags:
+      - docker
+      - arm
+      - rpi
+#    before_script:
+#      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+#      - export CI_PROJECT_PATH=$(echo $CI_PROJECT_PATH | tr "[:upper:]" "[:lower:]")
+    script:
+      - docker -H $MANAGER service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH monitor_mediamon
+
