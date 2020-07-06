@@ -211,9 +211,9 @@ swarm:
       - rpi
     before_script:
       - mkdir -p $DOCKER_CERT_PATH || true
-      - echo "SDOCKER_CA" > $DOCKER_CERT_PATH/ca.pem
-      - echo "SDOCKER_CERT" > $DOCKER_CERT_PATH/cert.pem
-      - echo "SDOCKER_KEY" > $DOCKER_CERT_PATH/key.pem
+      - echo "$DOCKER_CA" > $DOCKER_CERT_PATH/ca.pem
+      - echo "$DOCKER_CERT" > $DOCKER_CERT_PATH/cert.pem
+      - echo "$DOCKER_KEY" > $DOCKER_CERT_PATH/key.pem
     script:
       - docker service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH monitor_mediamon
 
