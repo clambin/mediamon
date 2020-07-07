@@ -12,6 +12,7 @@ stages:
 
 variables:
   VERSION: '0.3'
+  DOCKER_SWARM_SERVICE: 'monitor_mediamon'
 
 # Don't run for new tags
 workflow:
