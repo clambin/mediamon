@@ -5,6 +5,11 @@ stages:
   - release
   - deploy
 
+include:
+  - project: 'clambin/gitlab-ci-templates'
+    ref: master
+    file: 'python-tests.yml'
+
 # Don't run for new tags
 workflow:
   rules:
@@ -54,40 +59,6 @@ workflow:
     - docker
     - arm
     - rpi
-
-flake8:
-  stage: unittest
-  extends: .test_only
-  image: python:3.7
-  before_script:
-    - pip install flake8
-  script:
-    - flake8 --max-line-length 120
-
-pytest:
-  stage: unittest
-  extends: .test_only
-  image: python:3.7
-  before_script:
-    - if [ ! -d tests ]; then echo "No unit tests directory found. Skipped"; return 0; fi
-    - pip install pipenv
-    - pipenv install --dev
-  script:
-    - cd tests && pipenv run pytest --cov --junitxml=report.xml
-    - pipenv run bash <(curl -s https://codecov.io/bash) -s tests
-  artifacts:
-    reports:
-      junit: tests/report.xml
-
-sast:
-  stage: unittest
-  extends: .test_only
-  image: python:3.7
-  before_script:
-    - pip install bandit safety
-  script:
-    - safety check
-    - bandit -r -x ./tests .
 
 build_amd64:
   stage: build
