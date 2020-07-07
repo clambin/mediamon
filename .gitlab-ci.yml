@@ -69,6 +69,7 @@ pytest:
   extends: .test_only
   image: python:3.7
   before_script:
+    - if [ ! -d tests ]; then echo "No unit tests directory found. Skipped"; return 0; fi
     - pip install pipenv
     - pipenv install --dev
   script:
