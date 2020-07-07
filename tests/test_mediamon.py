@@ -1,5 +1,5 @@
 import argparse
-from src.mediamon import mediamon, initialise
+from src.mediamon import initialise
 from src.mediacentre import TransmissionProbe, MonitorProbe
 
 

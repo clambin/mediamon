@@ -62,7 +62,7 @@ flake8:
   before_script:
     - pip install flake8
   script:
-    - flake8 --max-line-length 120 *.py src/*.py
+    - flake8 --max-line-length 120
 
 pytest:
   stage: unittest
@@ -72,7 +72,6 @@ pytest:
     - pip install pipenv
     - pipenv install --dev
   script:
-    - pipenv check
     - cd tests && pipenv run pytest --cov --junitxml=report.xml
     - pipenv run bash <(curl -s https://codecov.io/bash) -s tests
   artifacts:
@@ -84,9 +83,10 @@ sast:
   extends: .test_only
   image: python:3.7
   before_script:
-    - pip install bandit
+    - pip install bandit safety
   script:
-    - bandit -r src/*.py
+    - safety check
+    - bandit -r -x ./tests .
 
 build_amd64:
   stage: build

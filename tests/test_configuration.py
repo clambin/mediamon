@@ -34,4 +34,3 @@ def test_default_config():
     assert config.sonarr_apikey == ''
     assert config.radarr == ''
     assert config.radarr_apikey == ''
-
