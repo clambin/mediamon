@@ -1,16 +1,17 @@
+include:
+  - remote: 'https://gitlab.com/clambin/raw/master/python-tests.yml'
+  - remote: 'https://gitlab.com/clambin/raw/master/docker-build-multiarch.yml'
+  - remote: 'https://gitlab.com/clambin/raw/master/docker-swarm-deploy.yml'
+  - remote: 'https://gitlab.com/clambin/raw/master/github.yml'
+
 stages:
   - unittest
   - build
   - release
   - deploy
 
-include:
-  - project: 'clambin/gitlab-ci-templates'
-    ref: master
-    file: 'python-tests.yml'
-  - project: 'clambin/gitlab-ci-templates'
-    ref: master
-    file: 'docker-build-multiarch.yml'
+variables:
+  VERSION: '0.2'
 
 # Don't run for new tags
 workflow:
@@ -18,39 +19,3 @@ workflow:
     - if: $CI_COMMIT_TAG
       when: never
     - when: always
-
-publish_master:
-  variables:
-    VERSION: '0.1'
-
-github:
-  stage: release
-  rules:
-    - if: $CI_COMMIT_BRANCH == "master"
-  before_script:
-    - VERSION=$(grep -i ^version src/version.py | awk '{ print $3 }' | tr -d \');
-  script:
-    - git remote set-url origin "https://$GITHUB_USER:$GITHUB_TOKEN@github.com/$CI_PROJECT_PATH.git"
-    - git tag $VERSION
-    - git push --tags
-
-swarm:
-    stage: deploy
-    image: docker:stable
-    variables:
-      DOCKER_HOST: tcp://$DOCKER_SWARM_MANAGER
-      DOCKER_TLS_VERIFY: 1
-      DOCKER_TLS_CERTDIR: "certs"
-      DOCKER_CERT_PATH: "certs/client"
-    tags:
-      - docker
-      - arm
-      - rpi
-    before_script:
-      - mkdir -p $DOCKER_CERT_PATH || true
-      - echo "$DOCKER_CA" > $DOCKER_CERT_PATH/ca.pem
-      - echo "$DOCKER_CERT" > $DOCKER_CERT_PATH/cert.pem
-      - echo "$DOCKER_KEY" > $DOCKER_CERT_PATH/key.pem
-    script:
-      - docker service update --image $CI_PROJECT_PATH:$CI_COMMIT_BRANCH monitor_mediamon
-
