@@ -1,0 +1,171 @@
+{
+  "MediaContainer": {
+    "size": 1,
+    "Metadata": [
+      {
+        "addedAt": "1595804595",
+        "art": "/library/metadata/4126/art/1596102183",
+        "contentRating": "TV-14",
+        "duration": "2583008",
+        "grandparentArt": "/library/metadata/4126/art/1596102183",
+        "grandparentGuid": "com.plexapp.agents.thetvdb://350665?lang=en",
+        "grandparentKey": "/library/metadata/4126",
+        "grandparentRatingKey": "4126",
+        "grandparentTheme": "/library/metadata/4126/theme/1596102183",
+        "grandparentThumb": "/library/metadata/4126/thumb/1596102183",
+        "grandparentTitle": "The Rookie",
+        "guid": "com.plexapp.agents.thetvdb://350665/2/5?lang=en",
+        "index": "5",
+        "key": "/library/metadata/4155",
+        "lastViewedAt": "1596536677",
+        "librarySectionID": "2",
+        "librarySectionKey": "/library/sections/2",
+        "librarySectionTitle": "TV Shows",
+        "originallyAvailableAt": "2019-10-27",
+        "parentGuid": "com.plexapp.agents.thetvdb://350665/2?lang=en",
+        "parentIndex": "2",
+        "parentKey": "/library/metadata/4137",
+        "parentRatingKey": "4137",
+        "parentThumb": "/library/metadata/4137/thumb/1596102182",
+        "parentTitle": "Season 2",
+        "ratingKey": "4155",
+        "sessionKey": "6",
+        "summary": "As part of their second phase of training, the rookies are asked to develop their first confidential informants. Nolan soon discovers that no two informants are the same and struggles with his newest task. Chen’s mother complicates her home life when she comes to stay with her.",
+        "thumb": "/library/metadata/4155/thumb/1596102177",
+        "title": "Tough Love",
+        "type": "episode",
+        "updatedAt": "1596102177",
+        "viewOffset": "584000",
+        "year": "2019",
+        "Media": [
+          {
+            "aspectRatio": "1.78",
+            "audioChannels": "6",
+            "audioCodec": "eac3",
+            "bitrate": "9693",
+            "container": "mkv",
+            "duration": "2583008",
+            "height": "1080",
+            "id": "8447",
+            "videoCodec": "h264",
+            "videoFrameRate": "24p",
+            "videoProfile": "high",
+            "videoResolution": "1080",
+            "width": "1920",
+            "selected": true,
+            "Part": [
+              {
+                "container": "mkv",
+                "duration": "2583008",
+                "file": "/shows/The Rookie/Season 2/The.Rookie.S02E05.Tough.Love.REPACK.1080p.AMZN.WEBRip.DDP5.1.x264-NTb[rarbg].mkv",
+                "id": "9899",
+                "key": "/library/parts/9899/1595804342/file.mkv",
+                "size": "3130186121",
+                "videoProfile": "high",
+                "decision": "directplay",
+                "selected": true,
+                "Stream": [
+                  {
+                    "bitDepth": "8",
+                    "bitrate": "9052",
+                    "chromaLocation": "left",
+                    "chromaSubsampling": "4:2:0",
+                    "codec": "h264",
+                    "codedHeight": "1088",
+                    "codedWidth": "1920",
+                    "colorPrimaries": "bt709",
+                    "colorRange": "tv",
+                    "colorSpace": "bt709",
+                    "colorTrc": "bt709",
+                    "default": "1",
+                    "displayTitle": "1080p (H.264)",
+                    "extendedDisplayTitle": "1080p (H.264)",
+                    "frameRate": "23.976",
+                    "hasScalingMatrix": "0",
+                    "height": "1080",
+                    "id": "25026",
+                    "index": "0",
+                    "level": "40",
+                    "profile": "high",
+                    "refFrames": "4",
+                    "scanType": "progressive",
+                    "streamType": "1",
+                    "width": "1920",
+                    "location": "direct"
+                  },
+                  {
+                    "audioChannelLayout": "5.1(side)",
+                    "bitrate": "640",
+                    "channels": "6",
+                    "codec": "eac3",
+                    "default": "1",
+                    "displayTitle": "English (EAC3 5.1)",
+                    "extendedDisplayTitle": "English (EAC3 5.1)",
+                    "id": "25027",
+                    "index": "1",
+                    "language": "English",
+                    "languageCode": "eng",
+                    "samplingRate": "48000",
+                    "selected": "1",
+                    "streamType": "2",
+                    "location": "direct"
+                  },
+                  {
+                    "bitrate": "0",
+                    "codec": "srt",
+                    "displayTitle": "English (SRT)",
+                    "extendedDisplayTitle": "SDH (English SRT)",
+                    "id": "25028",
+                    "index": "2",
+                    "language": "English",
+                    "languageCode": "eng",
+                    "selected": "1",
+                    "streamType": "3",
+                    "title": "SDH",
+                    "decision": "ignore"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "Writer": [
+          {
+            "filter": "writer=11610",
+            "id": "11610",
+            "tag": "Vincent Angell"
+          }
+        ],
+        "User": {
+          "id": "1",
+          "thumb": "https://plex.tv/users/35c1a6fd2b630943/avatar?c=1594498803",
+          "title": "clambin"
+        },
+        "Player": {
+          "address": "10.0.0.2",
+          "device": "",
+          "machineIdentifier": "anr1d54xjwccdk4nhu8hporl",
+          "model": "standalone",
+          "platform": "osx",
+          "platformVersion": "10.15",
+          "product": "Plex for Mac",
+          "profile": "Plex Desktop",
+          "remotePublicAddress": "81.164.72.79",
+          "state": "playing",
+          "title": "Christophes-iMac.local",
+          "vendor": "",
+          "version": "1.16.0.1364-da192ff7",
+          "local": true,
+          "relayed": false,
+          "secure": true,
+          "userID": 1
+        },
+        "Session": {
+          "id": "xgcnbjg8yk122up9a9hg2i3u",
+          "bandwidth": 10889,
+          "location": "lan"
+        }
+      }
+    ]
+  }
+}
