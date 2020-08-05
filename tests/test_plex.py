@@ -111,3 +111,11 @@ def test_plexserver():
     assert probes[0].addresses == ['1', '2', '3', '4']
     assert probes[1].name == 'Plex Server 2'
     assert probes[1].addresses == ['5']
+    oldprobes = set(probes)
+    probes[1].connecting = False
+    server._healthcheck()
+    probes = server.probes
+    assert len(probes) == 2
+    newprobes = set(probes)
+    assert oldprobes != newprobes
+    assert set([probe.name for probe in probes]) == {'Plex Server 1', 'Plex Server 2'}
