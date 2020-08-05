@@ -5,7 +5,6 @@ from src.configuration import print_configuration
 from src.mediacentre import TransmissionProbe, MonitorProbe
 from src.plex import PlexServer
 from pimetrics.scheduler import Scheduler
-import os
 
 
 def initialise(config):

@@ -1,4 +1,3 @@
-import pytest
 import json
 import logging
 from src.plex import PlexProbe, AddressManager, PlexServer
@@ -68,5 +67,4 @@ def test_plexserver_parser():
         assert len(servers) == 2
         assert servers[0] == {'name': 'Plex Server 1', 'addresses': ['1', '2', '3', '4']}
         assert servers[1] == {'name': 'Plex Server 2', 'addresses': ['5']}
-
 

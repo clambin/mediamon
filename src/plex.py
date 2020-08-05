@@ -96,8 +96,7 @@ class PlexProbe(APIProbe, AddressManager):
                 len([entry for entry in output if entry['transcode']]),
             'transcoder_type_count': {
                 mode: len([entry for entry in output if entry['mode'] == mode])
-                for mode in modes
-            },
+                for mode in modes},
             'transcoder_speed_total':
                 sum([entry['speed'] for entry in output]),
             'transcoder_encoding_count':
@@ -190,7 +189,7 @@ class PlexServer:
         except KeyError as e:
             logging.warning(f'Failed to parse server list: missing tag {e}')
         except TypeError:
-            logging.warning(f'Failed to parse server list. Unexpected tags found')
+            logging.warning('Failed to parse server list. Unexpected tags found')
         except xml.parsers.expat.ExpatError as e:
             logging.warning(f'Failed to parse server list: {e}')
         return []
