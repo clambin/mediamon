@@ -170,7 +170,7 @@ class PlexServer:
         return False
 
     @staticmethod
-    def _parse_servers(output, encoding):
+    def _parse_servers(output, encoding='UTF-8'):
         try:
             result = xmltodict.parse(output, encoding)
             size = int(result['MediaContainer']['@size'])
@@ -179,11 +179,13 @@ class PlexServer:
             if size == 1:
                 return [{
                     'name': servers['@name'],
+                    'port': int(servers['@port']),
                     'addresses': servers['@localAddresses'].split(',')
                 }]
             else:
                 return [{
                     'name': server['@name'],
+                    'port': int(server['@port']),
                     'addresses': server['@localAddresses'].split(',')
                 } for server in servers]
         except KeyError as e:
@@ -194,21 +196,29 @@ class PlexServer:
             logging.warning(f'Failed to parse server list: {e}')
         return []
 
+    def call(self, url, headers):
+        # separate method so we can stub the API in unittests
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            logging.debug(response.content)
+            return response.content
+        else:
+            logging.error(f'Failed to retrieve server list from plex.tv: {response.status_code} - {response.reason}')
+            return None
+
     def _get_servers(self):
         if not self.authtoken and not self._login():
             return []
         headers = self.base_headers
         headers['X-Plex-Token'] = self.authtoken
-        response = requests.get('https://plex.tv/pms/servers.xml', headers=headers)
-        if response.status_code == 200:
-            logging.debug(response.content)
-            return self._parse_servers(response.content, response.encoding)
-        else:
-            logging.error(f'Failed to retrieve server list from plex.tv: {response.status_code} - {response.reason}')
+        response = self.call('https://plex.tv/pms/servers.xml', headers=headers)
+        if response:
+            return self._parse_servers(response)
         return []
 
     def make_probes(self):
-        self.probes = [PlexProbe(self.authtoken, server['name'], server['addresses']) for server in self._get_servers()]
+        self.probes = [PlexProbe(self.authtoken, server['name'], server['addresses'], server['port'])
+                       for server in self._get_servers()]
         return self.probes
 
     def _healthcheck(self):

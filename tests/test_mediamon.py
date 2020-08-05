@@ -1,6 +1,7 @@
 import argparse
 from src.mediamon import initialise
-from src.mediacentre import TransmissionProbe, MonitorProbe
+from src.transmission import TransmissionProbe
+from src.xxxarr import MonitorProbe
 
 
 def test_initialise():

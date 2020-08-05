@@ -2,7 +2,8 @@ import logging
 from prometheus_client import start_http_server
 from src.version import version
 from src.configuration import print_configuration
-from src.mediacentre import TransmissionProbe, MonitorProbe
+from src.transmission import TransmissionProbe
+from src.xxxarr import MonitorProbe
 from src.plex import PlexServer
 from pimetrics.scheduler import Scheduler
 

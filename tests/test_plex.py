@@ -1,6 +1,23 @@
 import json
 import logging
+
 from src.plex import PlexProbe, AddressManager, PlexServer
+from tests.utils import APIStub
+
+
+class PlexTestProbe(APIStub, PlexProbe):
+    def __init__(self, authtoken, name, addresses, port=32400):
+        PlexProbe.__init__(self, authtoken, name, addresses, port)
+        APIStub.__init__(self)
+
+
+class PlexServerTest(APIStub, PlexServer):
+    def __init__(self, username, password):
+        PlexServer.__init__(self, username, password)
+        APIStub.__init__(self)
+
+    def _login(self):
+        return True
 
 
 def test_address_manager():
@@ -65,5 +82,33 @@ def test_plexserver_parser():
         content = f.read()
         servers = PlexServer._parse_servers(content, 'UTF-8')
         assert len(servers) == 2
-        assert servers[0] == {'name': 'Plex Server 1', 'addresses': ['1', '2', '3', '4']}
-        assert servers[1] == {'name': 'Plex Server 2', 'addresses': ['5']}
+        assert servers[0] == {'name': 'Plex Server 1', 'port': 32400, 'addresses': ['1', '2', '3', '4']}
+        assert servers[1] == {'name': 'Plex Server 2', 'port': 80, 'addresses': ['5']}
+
+
+def test_plexprobe():
+    probe = PlexTestProbe('', '', '')
+    probe.set_response('samples/plex_session_multiple.json', mode=APIStub.Mode.json)
+    probe.run()
+    measured = probe.measured()
+    assert measured == {
+        'session_count': 2,
+        'transcoder_count': 1,
+        'transcoder_encoding_count': 1,
+        'transcoder_speed_total': 3.1,
+        'transcoder_type_count': {'copy': 1}
+    }
+
+
+def test_plexserver():
+    server = PlexServerTest('', '')
+    server.set_response('samples/plex_servers.xml')
+    probes = server.make_probes()
+    assert len(probes) == 2
+    assert probes[0].name == 'Plex Server 1'
+    assert probes[0].addresses == ['1', '2', '3', '4']
+    assert probes[0].port == 32400
+    assert probes[1].name == 'Plex Server 2'
+    assert probes[1].addresses == ['5']
+    assert probes[1].port == 80
+
