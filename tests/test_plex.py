@@ -30,6 +30,8 @@ def test_address_manager():
     assert mgr.address == 'c'
     mgr.switch()
     assert mgr.address == 'a'
+    mgr.connecting = False
+    assert mgr.connecting is False
 
 
 def get_sessions(filename):
@@ -82,8 +84,8 @@ def test_plexserver_parser():
         content = f.read()
         servers = PlexServer._parse_servers(content, 'UTF-8')
         assert len(servers) == 2
-        assert servers[0] == {'name': 'Plex Server 1', 'port': 32400, 'addresses': ['1', '2', '3', '4']}
-        assert servers[1] == {'name': 'Plex Server 2', 'port': 80, 'addresses': ['5']}
+        assert servers[0] == {'name': 'Plex Server 1', 'addresses': ['1', '2', '3', '4']}
+        assert servers[1] == {'name': 'Plex Server 2', 'addresses': ['5']}
 
 
 def test_plexprobe():
@@ -107,7 +109,5 @@ def test_plexserver():
     assert len(probes) == 2
     assert probes[0].name == 'Plex Server 1'
     assert probes[0].addresses == ['1', '2', '3', '4']
-    assert probes[0].port == 32400
     assert probes[1].name == 'Plex Server 2'
     assert probes[1].addresses == ['5']
-    assert probes[1].port == 80

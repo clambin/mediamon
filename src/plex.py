@@ -179,13 +179,11 @@ class PlexServer:
             if size == 1:
                 return [{
                     'name': servers['@name'],
-                    'port': int(servers['@port']),
                     'addresses': servers['@localAddresses'].split(',')
                 }]
             else:
                 return [{
                     'name': server['@name'],
-                    'port': int(server['@port']),
                     'addresses': server['@localAddresses'].split(',')
                 } for server in servers]
         except KeyError as e:
@@ -207,6 +205,8 @@ class PlexServer:
             return None
 
     def _get_servers(self):
+        # FIXME: switch to https://plex.tv/devices.xml?provides=server
+        # Connections provide the port for each server.
         if not self.authtoken and not self._login():
             return []
         headers = self.base_headers
@@ -217,7 +217,7 @@ class PlexServer:
         return []
 
     def make_probes(self):
-        self.probes = [PlexProbe(self.authtoken, server['name'], server['addresses'], server['port'])
+        self.probes = [PlexProbe(self.authtoken, server['name'], server['addresses'])
                        for server in self._get_servers()]
         return self.probes
 
