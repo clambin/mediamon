@@ -111,4 +111,3 @@ def test_plexserver():
     assert probes[1].name == 'Plex Server 2'
     assert probes[1].addresses == ['5']
     assert probes[1].port == 80
-
