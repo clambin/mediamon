@@ -8,6 +8,7 @@ def test_initialise():
                                 transmission='http://localhost:8080',
                                 sonarr='http://localhost:8081', sonarr_apikey='notreallyakey',
                                 radarr='http://localhost:8082', radarr_apikey='notreallyakey',
+                                plex_username='', plex_password='',
                                 once=True, stub=True, debug=True)
     scheduler = initialise(config)
     assert len(scheduler.scheduled_items) == 3
@@ -23,6 +24,7 @@ def test_missing_sonarr_apikey():
                                 transmission='http://localhost:8080',
                                 sonarr='http://localhost:8081', sonarr_apikey='',
                                 radarr='http://localhost:8082', radarr_apikey='notreallyakey',
+                                plex_username='', plex_password='',
                                 once=True, stub=True, debug=True)
     scheduler = initialise(config)
     assert len(scheduler.scheduled_items) == 2
@@ -36,6 +38,7 @@ def test_missing_radarr_apikey():
                                 transmission='http://localhost:8080',
                                 sonarr='http://localhost:8081', sonarr_apikey='notreallyakey',
                                 radarr='http://localhost:8082', radarr_apikey='',
+                                plex_username='', plex_password='',
                                 once=True, stub=True, debug=True)
     scheduler = initialise(config)
     assert len(scheduler.scheduled_items) == 2
@@ -44,10 +47,3 @@ def test_missing_radarr_apikey():
     assert scheduler.scheduled_items[1].probe.app == MonitorProbe.App.sonarr
 
 
-# def test_mediamon():
-#    config = argparse.Namespace(interval=0, port=8080,
-#                                transmission='http://localhost:8080',
-#                                sonarr='http://localhost:8081', sonarr_apikey='notreallyakey',
-#                                radarr='http://localhost:8082', radarr_apikey='notreallyakey',
-#                                once=True, stub=True, debug=True)
-#    assert mediamon(config) == 0

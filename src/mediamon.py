@@ -3,7 +3,7 @@ from prometheus_client import start_http_server
 from src.version import version
 from src.configuration import print_configuration
 from src.mediacentre import TransmissionProbe, MonitorProbe
-from src.plex import PlexProbeManager
+from src.plex import PlexServer
 from pimetrics.scheduler import Scheduler
 import os
 
@@ -23,8 +23,8 @@ def initialise(config):
             scheduler.register(MonitorProbe(config.radarr, MonitorProbe.App.radarr, config.radarr_apikey), 300)
         else:
             logging.warning('radarr url specified but apikey missing. Ignoring')
-    if True:
-        scheduler.register(PlexProbeManager(os.environ.get('PLEX_USER'), os.environ.get('PLEX_PASSWORD')))
+    if config.plex_username and config.plex_password:
+        scheduler.register(PlexServer(config.plex_username, config.plex_password))
     return scheduler
 
 

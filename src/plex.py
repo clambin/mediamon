@@ -4,15 +4,20 @@ import xmltodict
 import xml
 from pimetrics.probe import APIProbe
 import src.version
-from prometheus_client import Gauge, start_http_server
+from prometheus_client import Gauge
 
 GAUGES = {
-    'plex_users': Gauge('mediaserver_plex_user_count', 'Active Plex viewing users', ['user']),
-    'plex_clients': Gauge('mediaserver_plex_client_count', 'Active Plex viewing clients', ['client']),
-    'plex_transcoder_count': Gauge('mediaserver_plex_transcoder_count', 'Active Transcoder count', ['mode']),
-    'plex_transcoder_throttled_count':
-        Gauge('mediaserver_plex_transcoder_throttled_count', 'Number of throttled transcoders', ['mode']),
-    'plex_transcoder_speed': Gauge('mediaserver_plex_transcoder_speed', 'Speed of transcoders', ['mode']),
+    'session_count':
+        Gauge('mediaserver_plex_session_count', 'Active Plex sessions', ['server']),
+    'transcoder_count':
+        Gauge('mediaserver_plex_transcoder_count', 'Active Transcoder count', ['server']),
+    'transcoder_type_count':
+        Gauge('mediaserver_plex_transcoder_type_count', 'Active Transcoder count by type', ['server', 'mode']),
+    'transcoder_speed_total':
+        Gauge('mediaserver_plex_transcoder_speed_total', 'Speed of active transcoders', ['server']),
+    'transcoder_encoding_count':
+        Gauge('mediaserver_plex_transcoder_encoding_count', 'Number of transcoders that are acticely encoding',
+              ['server']),
 }
 
 
@@ -48,6 +53,7 @@ class PlexProbe(APIProbe, AddressManager):
             'X-Plex-Token': authtoken,
             'Accept': 'application/json'
         }
+        self.modes = set()
 
     def call(self, endpoint):
         first_server = None
@@ -70,72 +76,71 @@ class PlexProbe(APIProbe, AddressManager):
         return None
 
     def report(self, output):
-        if output:
-            logging.debug(output)
-            for user, count in output['users'].items():
-                GAUGES['plex_users'].labels(user).set(count)
-            for client, count in output['clients'].items():
-                GAUGES['plex_clients'].labels(client).set(count)
-            for mode, attribs in output['transcoders'].items():
-                GAUGES['plex_transcoder_count'].labels(mode).set(attribs['count'])
-                GAUGES['plex_transcoder_throttled_count'].labels(mode).set(attribs['throttled'])
-                GAUGES['plex_transcoder_speed'].labels(mode).set(attribs['speed'])
+        logging.debug(f'Reporting {output}')
+        for key, value in output.items():
+            if key == 'transcoder_type_count':
+                # run through all discovered modes so we report zero when a mode is no longer running
+                for mode in self.modes:
+                    GAUGES[key].labels(self.name, mode).set(value[mode] if mode in value else 0)
+            else:
+                GAUGES[key].labels(self.name).set(value)
 
     def process(self, output):
-        if output:
-            logging.debug(output)
-            users = set([entry['user'] for entry in output])
-            clients = set([entry['client'] for entry in output])
-            modes = set([entry['mode'] for entry in output if entry['transcode']])
-            return {
-                'users': {
-                    user: len([entry for entry in output if entry['user'] == user]) for user in users
-                },
-                'clients': {
-                    client: len([entry for entry in output if entry['client'] == client]) for client in clients
-                },
-                'transcoders': {
-                    mode: {
-                        'count': len([entry for entry in output if entry['mode']]),
-                        'throttled': len([entry for entry in output if entry['mode'] == mode and entry['throttled']]),
-                        'speed': sum([entry['speed'] for entry in output if entry['mode'] == mode])
-                    } for mode in modes
-                }
-            }
-        return {}
+        logging.debug(f'Processing {output}')
+        modes = set([entry['mode'] for entry in output if entry['transcode']])
+        self.modes.update(modes)
+        return {
+            'session_count':
+                len(output),
+            'transcoder_count':
+                len([entry for entry in output if entry['transcode']]),
+            'transcoder_type_count': {
+                mode: len([entry for entry in output if entry['mode'] == mode])
+                for mode in modes
+            },
+            'transcoder_speed_total':
+                sum([entry['speed'] for entry in output]),
+            'transcoder_encoding_count':
+                len([entry for entry in output if entry['transcode'] and not entry['throttled']]),
+        }
 
     @staticmethod
-    def measure_session(session):
-        values = {
-            'client': session['Player']['product'],
-            'user': session['User']['title'],
-            'transcode': 'TranscodeSession' in session,
-            'mode': None,
-            'throttled': 0,
-            'speed': 0}
+    def parse_session(session):
         if 'TranscodeSession' in session:
-            values['mode'] = session['TranscodeSession']['videoDecision']
-            values['throttled'] = session['TranscodeSession']['throttled']
-            values['speed'] = float(session['TranscodeSession']['speed'])
-        return values
+            return {
+                'transcode': True,
+                'mode': session['TranscodeSession']['videoDecision'],
+                'throttled': session['TranscodeSession']['throttled'],
+                'speed': float(session['TranscodeSession']['speed'])
+            }
+        else:
+            return {
+                'transcode': False,
+                'mode': None,
+                'throttled': False,
+                'speed': 0
+            }
 
-    def measure_sessions(self):
+    @staticmethod
+    def parse_sessions(response):
+        logging.debug(f'/status/session result: {response}')
         try:
-            response = self.call('/status/sessions')
-            logging.debug(response)
             if 'Metadata' in response['MediaContainer']:
-                return [self.measure_session(session) for session in response['MediaContainer']['Metadata']]
+                return [PlexProbe.parse_session(session) for session in response['MediaContainer']['Metadata']]
         except KeyError as e:
             logging.warning(f'Failed to get sessions: missing {e}')
         except TypeError as e:
             logging.warning(f'Failed to get sessions: missing {e}')
         return []
 
+    def measure_sessions(self):
+        return PlexProbe.parse_sessions(self.call('/status/sessions'))
+
     def measure(self):
         return self.measure_sessions()
 
 
-class PlexProbeManager:
+class PlexServer:
     def __init__(self, username, password):
         self.authtext = f'user%5Blogin%5D={username}&user%5Bpassword%5D={password}'
         self.base_headers = {
@@ -167,12 +172,6 @@ class PlexProbeManager:
 
     @staticmethod
     def _parse_servers(output, encoding):
-        # output = '<?xml version="1.0" encoding="UTF-8"?>' \
-        #          '<MediaContainer friendlyName="myPlex" identifier="com.plexapp.plugins.myplex" machineIdentifier="d16f8930d56547ff9ceabc1d09bd13bbec195c4b" size="2">' \
-        #          '<Server accessToken="_o6iPBdHfAHM5n2YFv6G" name="Plex On Pi" address="81.164.72.79" port="80" version="1.19.5.3112-b23ab3896" scheme="http" host="81.164.72.79" localAddresses="192.168.0.10,10.0.6.34,172.18.0.8,10.0.8.22,10.0.0.54" machineIdentifier="9ee90fdb3204a90502f599a56f68eb07d54cc831" createdAt="1573850338" updatedAt="1596408667" owned="1" synced="0"/>' \
-        #          '<Server accessToken="_o6iPBdHfAHM5n2YFv6G" name="Plex On Pi" address="81.164.72.79" port="80" version="1.19.5.3112-b23ab3896" scheme="http" host="81.164.72.79" localAddresses="192.168.0.10,10.0.6.34,172.18.0.8,10.0.8.22,10.0.0.54" machineIdentifier="9ee90fdb3204a90502f599a56f68eb07d54cc831" createdAt="1573850338" updatedAt="1596408667" owned="1" synced="0"/>' \
-        #          '</MediaContainer>'
-        # encoding = 'UTF-8'
         try:
             result = xmltodict.parse(output, encoding)
             size = int(result['MediaContainer']['@size'])
@@ -183,10 +182,11 @@ class PlexProbeManager:
                     'name': servers['@name'],
                     'addresses': servers['@localAddresses'].split(',')
                 }]
-            return [{
-                'name': server['@name'],
-                'addresses': server['@localAddresses'].split(',')
-            } for server in servers]
+            else:
+                return [{
+                    'name': server['@name'],
+                    'addresses': server['@localAddresses'].split(',')
+                } for server in servers]
         except KeyError as e:
             logging.warning(f'Failed to parse server list: missing tag {e}')
         except TypeError:

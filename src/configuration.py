@@ -18,6 +18,7 @@ def get_configuration(args=None):
     default_interval = 5
     default_port = 8080
 
+    # FIXME: allow credentials to be retrieved from file rather than cmdline options
     parser = argparse.ArgumentParser()
     parser.add_argument('--version', action='version', version=f'%(prog)s {version}')
     parser.add_argument('--interval', type=int, default=default_interval,
@@ -41,6 +42,10 @@ def get_configuration(args=None):
                         help='Radarr address (<host>:<port>)')
     parser.add_argument('--radarr-apikey', default='',
                         help='Radarr API Key')
+    parser.add_argument('--plex-username', default='',
+                        help='Plex username')
+    parser.add_argument('--plex-password', default='',
+                        help='Plex password')
     return parser.parse_args(args)
 
 
