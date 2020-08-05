@@ -45,4 +45,3 @@ def test_missing_radarr_apikey():
     assert type(scheduler.scheduled_items[0].probe) is TransmissionProbe
     assert type(scheduler.scheduled_items[1].probe) is MonitorProbe
     assert scheduler.scheduled_items[1].probe.app == MonitorProbe.App.sonarr
-

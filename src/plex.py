@@ -32,7 +32,7 @@ class AddressManager:
         return self.addresses[self.address_index]
 
     def switch(self):
-        self.address_index = (self.address_index+1) % len(self.addresses)
+        self.address_index = (self.address_index + 1) % len(self.addresses)
 
     @property
     def connecting(self):
