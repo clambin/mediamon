@@ -22,6 +22,10 @@ class MonitorProbe(APIProbe):
         super().__init__(f'http://{host}/')
         self.api_key = api_key
         self.app = app
+        self.connecting = True
+
+    def app_name(self):
+        return 'sonarr' if self.app == MonitorProbe.App.sonarr else 'radarr'
 
     def report(self, output):
         if output:
@@ -40,11 +44,15 @@ class MonitorProbe(APIProbe):
             headers = {'X-Api-Key': self.api_key}
             response = self.get(endpoint=endpoint, headers=headers)
             if response.status_code == 200:
+                if not self.connecting:
+                    logging.info(f'Connection with {self.app_name()} re-established')
+                    self.connecting = True
                 result = response.json()
             else:
                 logging.error("%d - %s" % (response.status_code, response.reason))
         except requests.exceptions.RequestException as err:
             logging.warning(f'Failed to call "{self.url}": "{err}')
+        self.connecting = False
         return result
 
     def measure_calendar(self):

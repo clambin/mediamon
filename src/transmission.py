@@ -17,6 +17,7 @@ class TransmissionProbe(APIProbe):
     def __init__(self, host):
         super().__init__(f'http://{host}/')
         self.api_key = ''
+        self.connecting = True
 
     def report(self, output):
         if output:
@@ -35,7 +36,11 @@ class TransmissionProbe(APIProbe):
             body = {"method": "session-stats"}
             response = self.post(endpoint='transmission/rpc', headers=headers, body=body)
             if response.status_code == 200:
+                if not self.connecting:
+                    logging.info('Connection with Transmission re-established')
+                    self.connecting = True
                 return response.json()['arguments']
+            self.connecting = False
             if response.status_code == 409:
                 try:
                     self.api_key = response.headers['X-Transmission-Session-Id']
