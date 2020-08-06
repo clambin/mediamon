@@ -40,15 +40,15 @@ class TransmissionProbe(APIProbe):
                     logging.info('Connection with Transmission re-established')
                     self.connecting = True
                 return response.json()['arguments']
-            self.connecting = False
             if response.status_code == 409:
                 try:
                     self.api_key = response.headers['X-Transmission-Session-Id']
                     return self.measure()
                 except KeyError:
                     logging.warning('Could not get new X-Transmission-Session-Id')
-                    return None
-            logging.warning(f'Transmission call failed: {response.status_code}')
+            else:
+                logging.warning(f'Transmission call failed: {response.status_code}')
         except requests.exceptions.RequestException as err:
             logging.warning(f'Transmission call failed: {err}')
+        self.connecting = False
         return None
