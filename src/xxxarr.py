@@ -47,7 +47,7 @@ class MonitorProbe(APIProbe):
                 if not self.connecting:
                     logging.info(f'Connection with {self.app_name()} re-established')
                     self.connecting = True
-                result = response.json()
+                return response.json()
             else:
                 logging.error("%d - %s" % (response.status_code, response.reason))
         except requests.exceptions.RequestException as err:
