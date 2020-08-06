@@ -29,8 +29,16 @@ def test_default_config():
     assert config.interval == 5
     assert config.port == 8080
     assert config.stub is False
-    assert config.transmission == ''
-    assert config.sonarr == ''
-    assert config.sonarr_apikey == ''
-    assert config.radarr == ''
-    assert config.radarr_apikey == ''
+    assert config.services == {}
+
+
+def test_services():
+    args = '--services samples/services.yml'.split()
+    config = get_configuration(args)
+    assert config.services['transmission']['host'] == '192.168.0.10:9091'
+    assert config.services['sonarr']['host'] == '192.168.0.10:8989'
+    assert config.services['sonarr']['apikey'] == 'sonar-api-key'
+    assert config.services['radarr']['host'] == '192.168.0.10:7878'
+    assert config.services['radarr']['apikey'] == 'radar-api-key'
+    assert config.services['plex']['username'] == 'email@example.com'
+    assert config.services['plex']['password'] == 'some-password'

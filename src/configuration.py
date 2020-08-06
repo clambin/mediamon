@@ -1,4 +1,7 @@
 import argparse
+import yaml
+import logging
+import sys
 
 from src.version import version
 
@@ -31,22 +34,24 @@ def get_configuration(args=None):
                         help='Use stubs (for debugging only')
     parser.add_argument('--debug', action='store_true',
                         help='Set logging level to debug')
-    # Media server monitoring
-    parser.add_argument('--transmission', default='',
-                        help='Transmission address (<host>:<port>)')
-    parser.add_argument('--sonarr', default='',
-                        help='Sonarr address (<host>:<port>)')
-    parser.add_argument('--sonarr-apikey', default='',
-                        help='Sonarr API Key')
-    parser.add_argument('--radarr', default='',
-                        help='Radarr address (<host>:<port>)')
-    parser.add_argument('--radarr-apikey', default='',
-                        help='Radarr API Key')
-    parser.add_argument('--plex-username', default='',
-                        help='Plex username')
-    parser.add_argument('--plex-password', default='',
-                        help='Plex password')
-    return parser.parse_args(args)
+    parser.add_argument('--services', default='',
+                        help='Service configuration file')
+    config = parser.parse_args(args)
+
+    if config.services:
+        try:
+            with open(config.services, 'r') as f:
+                config.services = yaml.safe_load(f)
+        except FileNotFoundError as e:
+            logging.critical(f'Could not open services file: {e}')
+            sys.exit(1)
+        except AttributeError as e:
+            logging.critical(f'Could not parse services file: {e}')
+            sys.exit(1)
+    else:
+        config.services = {}
+
+    return config
 
 
 def print_configuration(config):

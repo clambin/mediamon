@@ -1,5 +1,5 @@
 import logging
-from prometheus_client import start_http_server
+import prometheus_client
 from src.version import version
 from src.configuration import print_configuration
 from src.transmission import TransmissionProbe
@@ -11,20 +11,54 @@ from pimetrics.scheduler import Scheduler
 def initialise(config):
     scheduler = Scheduler()
 
-    if config.transmission:
-        scheduler.register(TransmissionProbe(config.transmission), 5)
-    if config.sonarr:
-        if config.sonarr_apikey:
-            scheduler.register(MonitorProbe(config.sonarr, MonitorProbe.App.sonarr, config.sonarr_apikey), 300)
-        else:
-            logging.warning('sonarr url specified but apikey missing. Ignoring')
-    if config.radarr:
-        if config.radarr_apikey:
-            scheduler.register(MonitorProbe(config.radarr, MonitorProbe.App.radarr, config.radarr_apikey), 300)
-        else:
-            logging.warning('radarr url specified but apikey missing. Ignoring')
-    if config.plex_username and config.plex_password:
-        scheduler.register(PlexServer(config.plex_username, config.plex_password))
+    if 'transmission' in config.services:
+        try:
+            scheduler.register(
+                TransmissionProbe(config.services['transmission']['host']),
+                5
+            )
+        except KeyError as e:
+            logging.warning(f'transmission config missing {e}. Skipping')
+
+    if 'sonarr' in config.services:
+        try:
+            scheduler.register(
+                MonitorProbe(
+                    config.services['sonarr']['host'],
+                    MonitorProbe.App.sonarr,
+                    config.services['sonarr']['apikey']
+                ),
+                300
+            )
+        except KeyError as e:
+            logging.warning(f'sonarr config missing {e}. Skipping')
+
+    if 'radarr' in config.services:
+        try:
+            scheduler.register(
+                MonitorProbe(
+                    config.services['radarr']['host'],
+                    MonitorProbe.App.radarr,
+                    config.services['radarr']['apikey']),
+                300
+            )
+        except KeyError as e:
+            logging.warning(f'radarr config missing {e}. Skipping')
+
+    if 'plex' in config.services:
+        try:
+            scheduler.register(
+                PlexServer(config.services['plex']['username'], config.services['plex']['password']),
+                5
+            )
+        except KeyError as e:
+            logging.warning(f'plex config missing {e}. Skipping')
+
+    if len(scheduler.scheduled_items) == 0:
+        logging.error('No services defined')
+        # TODO: fix this in pimetrics
+        scheduler.min_interval = 5
+
     return scheduler
 
 
@@ -34,7 +68,7 @@ def mediamon(config):
     logging.info(f'Starting mediamon v{version}')
     logging.info(f'Configuration: {print_configuration(config)}')
 
-    start_http_server(config.port)
+    prometheus_client.start_http_server(config.port)
 
     scheduler = initialise(config)
     if config.once:

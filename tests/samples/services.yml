@@ -1,0 +1,11 @@
+transmission:
+    host: '192.168.0.10:9091'
+sonarr:
+    host: '192.168.0.10:8989'
+    apikey: 'sonar-api-key'
+radarr:
+    host: '192.168.0.10:7878'
+    apikey: 'radar-api-key'
+plex:
+    username: 'email@example.com'
+    password: 'some-password'
