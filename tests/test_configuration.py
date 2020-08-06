@@ -35,6 +35,7 @@ def test_default_config():
 def test_services():
     args = '--services samples/services.yml'.split()
     config = get_configuration(args)
+    print(config)
     assert config.services['transmission']['host'] == '192.168.0.10:9091'
     assert config.services['sonarr']['host'] == '192.168.0.10:8989'
     assert config.services['sonarr']['apikey'] == 'sonar-api-key'
