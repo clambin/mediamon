@@ -189,13 +189,16 @@ class PlexServer:
 
     def call(self, url, headers):
         # separate method so we can stub the API in unittests
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            logging.debug(response.content)
-            return response.content
-        else:
-            logging.error(f'Failed to retrieve server list from plex.tv: {response.status_code} - {response.reason}')
-            return None
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                logging.debug(response.content)
+                return response.content
+            else:
+                logging.error(f'Failed to get server list from plex.tv: {response.status_code} - {response.reason}')
+        except requests.exceptions.ConnectionError as e:
+            logging.warning(f'Failed to connect to {url}: {e}')
+        return None
 
     def _get_servers(self):
         if not self.authtoken and not self._login():
@@ -208,8 +211,10 @@ class PlexServer:
         return []
 
     def make_probes(self):
-        self.probes = [PlexProbe(self.authtoken, server['name'], server['addresses'])
-                       for server in self._get_servers()]
+        servers = self._get_servers()
+        for server in servers:
+            logging.info(f'Plex server found: {server["name"]}: {",".join(server["addresses"])}')
+        self.probes = [PlexProbe(self.authtoken, server['name'], server['addresses']) for server in servers]
         return self.probes
 
     def _healthcheck(self):
