@@ -6,8 +6,8 @@ from tests.utils import APIStub
 
 
 class PlexTestProbe(APIStub, PlexProbe):
-    def __init__(self, authtoken, name, addresses, port=32400):
-        PlexProbe.__init__(self, authtoken, name, addresses, port)
+    def __init__(self, authtoken, name, addresses):
+        PlexProbe.__init__(self, authtoken, name, addresses)
         APIStub.__init__(self)
 
 
@@ -112,13 +112,9 @@ def test_plexprobe():
 
 def test_plexserver():
     server = PlexServerTest('', '')
-    server.set_response('samples/plex_servers.xml')
+    server.set_response('samples/plex_devices.xml')
     probes = server.make_probes()
     assert len(probes) == 2
-    assert probes[0].name == 'Plex Server 1'
-    assert probes[0].addresses == ['1', '2', '3', '4']
-    assert probes[1].name == 'Plex Server 2'
-    assert probes[1].addresses == ['5']
     oldprobes = set(probes)
     probes[1].connecting = False
     server._healthcheck()
