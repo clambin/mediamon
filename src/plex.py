@@ -2,6 +2,7 @@ import requests
 import logging
 import xmltodict
 import xml
+from collections import OrderedDict
 from pimetrics.probe import APIProbe
 import src.version
 from prometheus_client import Gauge
@@ -172,10 +173,11 @@ class PlexServer:
     def _parse_servers(output, encoding='UTF-8'):
         try:
             result = xmltodict.parse(output, encoding)
-
             return [{
                 'name': device['@name'],
-                'addresses': [connection['@uri'] for connection in device['Connection']]
+                'addresses':
+                    [device['Connection']['@uri']] if type(device['Connection']) == OrderedDict else
+                    [connection['@uri'] for connection in device['Connection']]
             } for device in result['MediaContainer']['Device'] if device['@provides'] == 'server']
         except KeyError as e:
             logging.warning(f'Failed to parse server list: missing tag {e}')

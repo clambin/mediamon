@@ -80,12 +80,20 @@ def test_plexprobe_parser():
 
 
 def test_plexserver_parser():
-    with open('samples/plex_servers.xml') as f:
+    with open('samples/plex_devices.xml') as f:
         content = f.read()
         servers = PlexServer._parse_servers(content, 'UTF-8')
         assert len(servers) == 2
-        assert servers[0] == {'name': 'Plex Server 1', 'addresses': ['1', '2', '3', '4']}
-        assert servers[1] == {'name': 'Plex Server 2', 'addresses': ['5']}
+        assert servers[0] == {'name': 'Plex Server 1', 'addresses': [
+            'http://192.168.0.10:32400',
+            'http://10.0.6.34:32400',
+            'http://172.18.0.8:32400',
+            'http://10.0.8.22:32400',
+            'http://10.0.0.54:32400'
+        ]}
+        assert servers[1] == {'name': 'Plex Server 2', 'addresses': [
+            'http://172.18.0.9:32400'
+        ]}
 
 
 def test_plexprobe():
