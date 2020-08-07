@@ -58,21 +58,23 @@ class PlexProbe(APIProbe, AddressManager):
     def call(self, endpoint):
         first_server = None
         while self.address != first_server:
-            if first_server is None:
-                first_server = self.address
-            url = f'{self.address}{endpoint}'
             try:
+                if first_server is None:
+                    first_server = self.address
+                url = f'{self.address}{endpoint}'
                 response = requests.get(url, headers=self.headers)
                 if response.status_code == 200:
-                    self.connecting = True
+                    if self.connecting is False:
+                        logging.info(f'Connection with {self.name} re-established on {self.address}')
+                        self.connecting = True
                     return response.json()
                 logging.warning(f'{self.name}: received {response.status_code} - {response.reason}')
             except requests.exceptions.ConnectionError as e:
                 logging.warning(f'{self.name}: failed to connect. {e}')
             logging.warning(f'{self.name}: failed on {self.address}. Moving to next server')
             self.switch()
+            self.connecting = False
         logging.warning(f'{self.name}: no working servers found')
-        self.connecting = False
         return None
 
     def report(self, output):
