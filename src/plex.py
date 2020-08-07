@@ -44,11 +44,10 @@ class AddressManager:
 
 
 class PlexProbe(APIProbe, AddressManager):
-    def __init__(self, authtoken, name, addresses, port=32400):
+    def __init__(self, authtoken, name, addresses):
         AddressManager.__init__(self, addresses)
         APIProbe.__init__(self, '')
         self.name = name
-        self.port = port
         self.headers = {
             'X-Plex-Token': authtoken,
             'Accept': 'application/json'
@@ -60,7 +59,7 @@ class PlexProbe(APIProbe, AddressManager):
         while self.address != first_server:
             if first_server is None:
                 first_server = self.address
-            url = f'http://{self.address}:{self.port}{endpoint}'
+            url = f'{self.address}{endpoint}'
             try:
                 response = requests.get(url, headers=self.headers)
                 if response.status_code == 200:
@@ -173,19 +172,11 @@ class PlexServer:
     def _parse_servers(output, encoding='UTF-8'):
         try:
             result = xmltodict.parse(output, encoding)
-            size = int(result['MediaContainer']['@size'])
-            servers = result['MediaContainer']['Server']
 
-            if size == 1:
-                return [{
-                    'name': servers['@name'],
-                    'addresses': servers['@localAddresses'].split(',')
-                }]
-            else:
-                return [{
-                    'name': server['@name'],
-                    'addresses': server['@localAddresses'].split(',')
-                } for server in servers]
+            return [{
+                'name': device['@name'],
+                'addresses': [connection['@uri'] for connection in device['Connection']]
+            } for device in result['MediaContainer']['Device'] if device['@provides'] == 'server']
         except KeyError as e:
             logging.warning(f'Failed to parse server list: missing tag {e}')
         except TypeError:
@@ -205,13 +196,11 @@ class PlexServer:
             return None
 
     def _get_servers(self):
-        # FIXME: switch to https://plex.tv/devices.xml?provides=server
-        # Connections provide the port for each server.
         if not self.authtoken and not self._login():
             return []
         headers = self.base_headers
         headers['X-Plex-Token'] = self.authtoken
-        response = self.call('https://plex.tv/pms/servers.xml', headers=headers)
+        response = self.call('https://plex.tv/devices.xml', headers=headers)
         if response:
             return self._parse_servers(response)
         return []
