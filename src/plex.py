@@ -212,14 +212,14 @@ class PlexServer:
         return None
 
     def _get_servers(self):
-        if not self.authtoken and not self._login():
-            return []
-        headers = self.base_headers
-        headers['X-Plex-Token'] = self.authtoken
-        response = self.call('https://plex.tv/devices.xml', headers=headers)
-        if response:
-            return self._parse_servers(response)
-        return []
+        servers = []
+        if self.authtoken or self._login():
+            headers = self.base_headers
+            headers['X-Plex-Token'] = self.authtoken
+            response = self.call('https://plex.tv/devices.xml', headers=headers)
+            if response:
+                servers = self._parse_servers(response)
+        return servers
 
     def make_probes(self):
         servers = self._get_servers()
