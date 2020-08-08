@@ -1,7 +1,8 @@
 import argparse
-import yaml
 import logging
 import sys
+
+import yaml
 
 from src.version import version
 
@@ -55,4 +56,12 @@ def get_configuration(args=None):
 
 
 def print_configuration(config):
-    return ', '.join([f'{key}={val}' for key, val in vars(config).items()])
+    redacted = config
+    if redacted.services:
+        if 'sonarr' in redacted.services:
+            redacted.services['sonarr']['apikey'] = '*' * 32
+        if 'radarr' in redacted.services:
+            redacted.services['radarr']['apikey'] = '*' * 32
+        if 'plex' in redacted.services:
+            redacted.services['plex']['password'] = '*' * 12
+    return ', '.join([f'{key}={val}' for key, val in vars(redacted).items()])

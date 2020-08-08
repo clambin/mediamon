@@ -65,15 +65,15 @@ class PlexProbe(APIProbe, AddressManager):
                 response = requests.get(url, headers=self.headers)
                 if response.status_code == 200:
                     if self.connecting is False:
-                        logging.info(f'Connection with {self.name} re-established on {self.address}')
+                        logging.info(f'{self.name}: connection established on {self.address}')
                         self.connecting = True
                     return response.json()
                 logging.warning(f'{self.name}: received {response.status_code} - {response.reason}')
             except requests.exceptions.ConnectionError as e:
-                logging.warning(f'{self.name}: failed to connect. {e}')
-            logging.warning(f'{self.name}: failed on {self.address}. Moving to next server')
-            self.switch()
+                logging.warning(f'{self.name}: failed to connect to {self.address}. {e}')
+            logging.warning(f'{self.name}: moving to next server')
             self.connecting = False
+            self.switch()
         logging.warning(f'{self.name}: no working servers found')
         return None
 

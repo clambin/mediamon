@@ -1,6 +1,6 @@
 import argparse
 import pytest
-from src.configuration import str2bool, get_configuration
+from src.configuration import str2bool, get_configuration, print_configuration
 
 
 def test_str2bool():
@@ -30,6 +30,18 @@ def test_default_config():
     assert config.port == 8080
     assert config.stub is False
     assert config.services == {}
+
+
+def test_print_config():
+    args = '--services samples/services.yml'.split()
+    config = get_configuration(args)
+    assert config.services is not None
+    output = print_configuration(config)
+    assert output == "interval=5, port=8080, once=False, stub=False, debug=False, " \
+                     "services={'transmission': {'host': '192.168.0.10:9091'}, " \
+                     "'sonarr': {'host': '192.168.0.10:8989', 'apikey': '********************************'}, " \
+                     "'radarr': {'host': '192.168.0.10:7878', 'apikey': '********************************'}, " \
+                     "'plex': {'username': 'email@example.com', 'password': '************'}}"
 
 
 def test_services():
