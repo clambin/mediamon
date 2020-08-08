@@ -72,7 +72,7 @@ def test_plexprobe_parser():
     probe = PlexProbe(None, None, None)
     sessions = get_sessions('samples/plex_session_multiple.json')
     output = probe.process(sessions)
-    assert output['session_count'] == 2
+    assert output['session_count'] == {'foo': 1, 'bar': 1}
     assert output['transcoder_count'] == 1
     assert output['transcoder_type_count'] == {'copy': 1}
     assert output['transcoder_speed_total'] == 3.1
@@ -102,7 +102,7 @@ def test_plexprobe():
     probe.run()
     measured = probe.measured()
     assert measured == {
-        'session_count': 2,
+        'session_count': {'foo': 1, 'bar': 1},
         'transcoder_count': 1,
         'transcoder_encoding_count': 1,
         'transcoder_speed_total': 3.1,

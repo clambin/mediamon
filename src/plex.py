@@ -9,7 +9,7 @@ from prometheus_client import Gauge
 
 GAUGES = {
     'session_count':
-        Gauge('mediaserver_plex_session_count', 'Active Plex sessions', ['server']),
+        Gauge('mediaserver_plex_session_count', 'Active Plex sessions', ['server', 'user']),
     'transcoder_count':
         Gauge('mediaserver_plex_transcoder_count', 'Active Transcoder count', ['server']),
     'transcoder_type_count':
@@ -53,6 +53,7 @@ class PlexProbe(APIProbe, AddressManager):
             'X-Plex-Token': authtoken,
             'Accept': 'application/json'
         }
+        self.users = set()
         self.modes = set()
 
     def call(self, endpoint):
@@ -81,24 +82,30 @@ class PlexProbe(APIProbe, AddressManager):
         logging.debug(f'Reporting {output}')
         for key, value in output.items():
             if key == 'transcoder_type_count':
-                # run through all discovered modes so we report zero when a mode is no longer running
+                # we keep a list of all discovered modes so we can report zero when no session is running for a mode
                 for mode in self.modes:
                     GAUGES[key].labels(self.name, mode).set(value[mode] if mode in value else 0)
+            elif key == 'session_count':
+                # we keep a list of all discovered users so we can report zero when a user is no longer logged in
+                for user in self.users:
+                    GAUGES[key].labels(self.name, user).set(value[user] if user in value else 0)
             else:
                 GAUGES[key].labels(self.name).set(value)
 
     def process(self, output):
         logging.debug(f'Processing {output}')
-        modes = set([entry['mode'] for entry in output if entry['transcode']])
-        self.modes.update(modes)
+        self.users.update(set([entry['user'] for entry in output]))
+        self.modes.update(set([entry['mode'] for entry in output if entry['transcode']]))
         return {
-            'session_count':
-                len(output),
+            'session_count': {
+                user: len([entry for entry in output if entry['user'] == user])
+                for user in self.users
+            },
             'transcoder_count':
                 len([entry for entry in output if entry['transcode']]),
             'transcoder_type_count': {
                 mode: len([entry for entry in output if entry['mode'] == mode])
-                for mode in modes},
+                for mode in self.modes},
             'transcoder_speed_total':
                 sum([entry['speed'] for entry in output]),
             'transcoder_encoding_count':
@@ -109,6 +116,7 @@ class PlexProbe(APIProbe, AddressManager):
     def parse_session(session):
         if 'TranscodeSession' in session:
             return {
+                'user': session['User']['title'],
                 'transcode': True,
                 'mode': session['TranscodeSession']['videoDecision'],
                 'throttled': session['TranscodeSession']['throttled'],
@@ -116,6 +124,7 @@ class PlexProbe(APIProbe, AddressManager):
             }
         else:
             return {
+                'user': session['User']['title'],
                 'transcode': False,
                 'mode': None,
                 'throttled': False,
