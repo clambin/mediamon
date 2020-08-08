@@ -54,3 +54,12 @@ def test_services():
     assert config.services['radarr']['apikey'] == 'radar-api-key'
     assert config.services['plex']['username'] == 'email@example.com'
     assert config.services['plex']['password'] == 'some-password'
+
+
+def test_invalid_services():
+    args = '--services samples/no_services.yml'.split()
+    config = get_configuration(args)
+    assert config.services == {}
+    args = '--services samples/plex_devices'.split()
+    config = get_configuration(args)
+    assert config.services == {}

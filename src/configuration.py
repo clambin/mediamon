@@ -1,6 +1,5 @@
 import argparse
 import logging
-import sys
 import copy
 
 import yaml
@@ -40,18 +39,16 @@ def get_configuration(args=None):
                         help='Service configuration file')
     config = parser.parse_args(args)
 
-    if config.services:
+    services_filename = config.services
+    config.services = {}
+    if services_filename:
         try:
-            with open(config.services, 'r') as f:
+            with open(services_filename, 'r') as f:
                 config.services = yaml.safe_load(f)
         except FileNotFoundError as e:
             logging.critical(f'Could not open services file: {e}')
-            sys.exit(1)
         except AttributeError as e:
             logging.critical(f'Could not parse services file: {e}')
-            sys.exit(1)
-    else:
-        config.services = {}
 
     return config
 
