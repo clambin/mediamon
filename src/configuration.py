@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+import copy
 
 import yaml
 
@@ -56,7 +57,7 @@ def get_configuration(args=None):
 
 
 def print_configuration(config):
-    redacted = config
+    redacted = copy.deepcopy(config)
     if redacted.services:
         if 'sonarr' in redacted.services:
             redacted.services['sonarr']['apikey'] = '*' * 32
