@@ -60,6 +60,6 @@ def test_invalid_services():
     args = '--services samples/no_services.yml'.split()
     config = get_configuration(args)
     assert config.services == {}
-    args = '--services samples/plex_devices'.split()
+    args = '--services samples/invalid-services.yml'.split()
     config = get_configuration(args)
     assert config.services == {}

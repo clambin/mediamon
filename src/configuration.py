@@ -3,6 +3,7 @@ import logging
 import copy
 
 import yaml
+import yaml.scanner
 
 from src.version import version
 
@@ -47,7 +48,7 @@ def get_configuration(args=None):
                 config.services = yaml.safe_load(f)
         except FileNotFoundError as e:
             logging.critical(f'Could not open services file: {e}')
-        except AttributeError as e:
+        except yaml.scanner.ScannerError as e:
             logging.critical(f'Could not parse services file: {e}')
 
     return config
