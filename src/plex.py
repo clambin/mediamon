@@ -126,7 +126,7 @@ class PlexProbe(APIProbe, AddressManager):
     def parse_sessions(response):
         logging.debug(f'/status/session result: {response}')
         try:
-            if 'Metadata' in response['MediaContainer']:
+            if response and 'Metadata' in response['MediaContainer']:
                 return [PlexProbe.parse_session(session) for session in response['MediaContainer']['Metadata']]
         except KeyError as e:
             logging.warning(f'Failed to get sessions: missing {e}')
