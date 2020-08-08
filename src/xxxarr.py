@@ -67,17 +67,16 @@ class MonitorProbe(APIProbe):
         return len(queue) if queue else 0
 
     def measure_monitored(self):
+        entries = None
         if self.app == self.App.sonarr:
             entries = self.call('api/series')
         elif self.app == self.App.radarr:
             entries = self.call('api/movie')
-        else:
-            entries = None
+        monitored = unmonitored = []
         if entries:
             monitored = list(filter(lambda entry: entry['monitored'], entries))
             unmonitored = list(filter(lambda entry: not entry['monitored'], entries))
-            return len(monitored), len(unmonitored)
-        return 0, 0
+        return len(monitored), len(unmonitored)
 
     def measure(self):
         return {

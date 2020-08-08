@@ -735,8 +735,12 @@ class MonitorTestProbe(MonitorProbe):
 
 def test_sonarr():
     probe = MonitorTestProbe('', MonitorProbe.App.sonarr, '')
+    assert probe.app_name() == 'sonarr'
+    probe.connecting = False
     probe.run()
+    assert probe.connecting is True
     measured = probe.measured()
+    assert measured
     assert measured['calendar'] == 1
     assert measured['queue'] == 1
     assert measured['monitored'] == (1, 1)
@@ -744,8 +748,12 @@ def test_sonarr():
 
 def test_radarr():
     probe = MonitorTestProbe('', MonitorProbe.App.radarr, '')
+    assert probe.app_name() == 'radarr'
+    probe.connecting = False
     probe.run()
+    assert probe.connecting is True
     measured = probe.measured()
+    assert measured
     assert measured['calendar'] == 0
     assert measured['queue'] == 2
     assert measured['monitored'] == (1, 1)
