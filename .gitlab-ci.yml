@@ -11,7 +11,7 @@ stages:
   - deploy
 
 variables:
-  VERSION: '0.3'
+  VERSION: '0.4'
   DOCKER_SWARM_SERVICE: 'monitor_mediamon'
 
 # Don't run for new tags
