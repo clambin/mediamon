@@ -1,0 +1,23 @@
+FROM multiarch/qemu-user-static:x86_64-aarch64 as qemu
+FROM arm64v8/python:3.7-alpine
+MAINTAINER Christophe Lambin <christophe.lambin@gmail.com>
+
+COPY --from=qemu /usr/bin/qemu-aarch64-static /usr/bin
+
+EXPOSE 8080
+
+RUN addgroup -S -g 1000 abc && adduser -S --uid 1000 --ingroup abc abc
+
+WORKDIR /app
+COPY Pipfile Pipfile.lock ./
+
+RUN pip install --upgrade pip && \
+    pip install pipenv && \
+    pipenv install --system --ignore-pipfile
+
+COPY *.py ./
+COPY src src/
+
+USER abc
+ENTRYPOINT ["/usr/local/bin/python3", "mediamon.py"]
+CMD []
