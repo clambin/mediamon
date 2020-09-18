@@ -1,14 +1,14 @@
 include:
   - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/master/python-tests.yml'
-  - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/arm64/docker-build-multiarch.yml'
-  - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/master/docker-swarm-deploy.yml'
+#  - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/arm64/docker-build-multiarch.yml'
+#  - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/master/docker-swarm-deploy.yml'
   - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/master/github.yml'
 
 stages:
   - unittest
   - build
   - release
-  - deploy
+#  - deploy
 
 variables:
   VERSION: '0.4'
@@ -20,3 +20,43 @@ workflow:
     - if: $CI_COMMIT_TAG
       when: never
     - when: always
+
+.docker:
+  image: docker:stable
+  services:
+    - docker:stable-dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_CERT_PATH: "/certs/client"
+    DOCKER_CLI_EXPERIMENTAL: enabled
+  tags:
+    - k3s
+    - arm
+    - rpi
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+    - export CI_PROJECT_PATH=$(echo $CI_PROJECT_PATH | tr "[:upper:]" "[:lower:]")
+
+
+build:
+  stage: build
+  extends:
+    - .docker
+  script:
+    - docker build --pull -t $CI_PROJECT_PATH:$CI_COMMIT_BRANCH .
+    - docker push $CI_PROJECT_PATH:$CI_COMMIT_BRANCH
+
+publish:
+  stage: release
+  extends: .docker
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+  script:
+    - docker pull $CI_PROJECT_PATH:$CI_COMMIT_BRANCH
+    - docker tag  $CI_PROJECT_PATH:$CI_COMMIT_BRANCH $CI_PROJECT_PATH:$VERSION
+    - docker push $CI_PROJECT_PATH:$VERSION
+    - docker tag  $CI_PROJECT_PATH:$CI_COMMIT_BRANCH $CI_PROJECT_PATH:latest
+    - docker push $CI_PROJECT_PATH:latest
