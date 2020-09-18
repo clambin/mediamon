@@ -29,8 +29,8 @@ workflow:
     DOCKER_DRIVER: overlay2
     DOCKER_HOST: tcp://localhost:2376
     DOCKER_TLS_VERIFY: 1
-    #DOCKER_TLS_CERTDIR: "/certs"
-    #DOCKER_CERT_PATH: "/certs/client"
+    DOCKER_TLS_CERTDIR: "/etc/gitlab-runner/certs"
+    DOCKER_CERT_PATH: "/etc/gitlab-runner/certs/client"
     DOCKER_CLI_EXPERIMENTAL: enabled
   tags:
     - k3s
@@ -60,47 +60,3 @@ publish:
     - docker push $CI_PROJECT_PATH:$VERSION
     - docker tag  $CI_PROJECT_PATH:$CI_COMMIT_BRANCH $CI_PROJECT_PATH:latest
     - docker push $CI_PROJECT_PATH:latest
-
-flake8:
-  stage: unittest
-  image: python:3.7
-  tags:
-    - k3s
-    - arm
-    - rpi
-  before_script:
-    - pip install flake8
-  script:
-    - flake8 --max-line-length 120
-
-pytest:
-  stage: unittest
-  image: python:3.7
-  tags:
-    - k3s
-    - arm
-    - rpi
-  before_script:
-    - if [ ! -d tests ]; then echo "No unit tests directory found. Skipped"; return 0; fi
-    - pip install pipenv
-    - pipenv install --dev
-    - export PYTHONPATH=$(pwd)
-  script:
-    - cd tests && pipenv run pytest --cov --junitxml=report.xml
-    - pipenv run bash <(curl -s https://codecov.io/bash) -s tests
-  artifacts:
-    reports:
-      junit: tests/report.xml
-
-sast:
-  stage: unittest
-  image: python:3.7
-  tags:
-    - k3s
-    - arm
-    - rpi
-  before_script:
-    - pip install bandit safety
-  script:
-    - safety check
-    - bandit -r -x ./tests .
