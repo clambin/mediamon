@@ -27,10 +27,10 @@ workflow:
     - docker:stable-dind
   variables:
     DOCKER_DRIVER: overlay2
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_CERT_PATH: "/certs/client"
+    DOCKER_HOST: tcp://localhost:2375
+    #DOCKER_TLS_VERIFY: 1
+    #DOCKER_TLS_CERTDIR: "/certs"
+    #DOCKER_CERT_PATH: "/certs/client"
     DOCKER_CLI_EXPERIMENTAL: enabled
   tags:
     - k3s
