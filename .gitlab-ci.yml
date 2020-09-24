@@ -27,10 +27,9 @@ workflow:
     - docker:stable-dind
   variables:
     DOCKER_DRIVER: overlay2
-    DOCKER_HOST: tcp://localhost:2376
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_TLS_CERTDIR: "/etc/gitlab-runner/certs"
-    DOCKER_CERT_PATH: "/etc/gitlab-runner/certs/client"
+    # gitlab-runner installed w/ helm doesn't support TLS
+    DOCKER_HOST: tcp://localhost:2375
+    DOCKER_TLS_CERTDIR: ""
     DOCKER_CLI_EXPERIMENTAL: enabled
   tags:
     - k3s
