@@ -64,6 +64,10 @@ publish:
 k3s-deploy:
   stage: deploy
   image: clambin/kube-installer:v1.18.8-arm
+  tags:
+    - k3s
+    - arm
+    - rpi
   before_script:
     - mkdir -p ~/.kube
     - echo "$KUBECONFIG" | base64 -d > ~/.kube/config
