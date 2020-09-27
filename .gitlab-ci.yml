@@ -72,4 +72,4 @@ k3s-deploy:
     - mkdir -p ~/.kube
     - echo "$KUBECONFIG" | base64 -d > ~/.kube/config
   script:
-    - kubeconfig apply -f manifests/deployment.yml
+    - kubectl apply -f manifests/deployment.yml
