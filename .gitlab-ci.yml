@@ -45,7 +45,8 @@ build:
   extends:
     - .docker
   script:
-    - docker build --pull -t $CI_PROJECT_PATH:$CI_COMMIT_BRANCH .
+    # add "-network host": IPv6 issue when running in docker containers
+    - docker build -network host --pull -t $CI_PROJECT_PATH:$CI_COMMIT_BRANCH .
     - docker push $CI_PROJECT_PATH:$CI_COMMIT_BRANCH
 
 publish:
@@ -62,7 +63,7 @@ publish:
 
 k3s-deploy:
   stage: deploy
-  image: clambin/kube-installer:v1.18.9-arm
+  image: clambin/kube-installer:v1.18.8-arm
   before_script:
     - mkdir -p ~/.kube
     - echo "$KUBECONFIG" | base64 -d > ~/.kube/config
