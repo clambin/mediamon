@@ -46,7 +46,7 @@ build:
     - .docker
   script:
     # add "-network host": IPv6 issue when running in docker containers
-    - docker build -network host --pull -t $CI_PROJECT_PATH:$CI_COMMIT_BRANCH .
+    - docker build --network host --pull -t $CI_PROJECT_PATH:$CI_COMMIT_BRANCH .
     - docker push $CI_PROJECT_PATH:$CI_COMMIT_BRANCH
 
 publish:
