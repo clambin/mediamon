@@ -8,7 +8,7 @@ stages:
   - unittest
   - build
   - release
-#  - deploy
+  - deploy
 
 variables:
   VERSION: '0.4'
@@ -59,3 +59,12 @@ publish:
     - docker push $CI_PROJECT_PATH:$VERSION
     - docker tag  $CI_PROJECT_PATH:$CI_COMMIT_BRANCH $CI_PROJECT_PATH:latest
     - docker push $CI_PROJECT_PATH:latest
+
+k3s-deploy:
+  stage: deploy
+  image: clambin/kube-installer:v1.18.9-arm
+  before_script:
+    - mkdir -p ~/.kube
+    - echo "$KUBECONFIG" | base64 -d > ~/.kube/config
+  script:
+    - kubeconfig apply -f manifest/deployment.yml
