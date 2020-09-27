@@ -31,8 +31,8 @@ k3s-deploy:
   before_script:
     - mkdir -p ~/.kube
     - echo "$KUBECONFIG" | base64 -d > ~/.kube/config
-    - if [[ -f $DEPLOYMENT.template ]]; then \
-        sed -e "s#__IMAGE__#$IMAGE#g" -e "s#__TAG__#$TAG#g" $DEPLOYMENT.template > $DEPLOYMENT; \
+    - if [[ -f $DEPLOYMENT.template ]]; then
+        sed -e "s#__IMAGE__#$CI_PROJECT_PATH#g" -e "s#__TAG__#$CI_COMMIT_BRANCH#g" $DEPLOYMENT.template > $DEPLOYMENT;
       fi
   script:
     # TODO: requires cluster-admin. Restrict permissions?
