@@ -16,6 +16,8 @@ spec:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
+        app.gitlab.com/app: "__CI_PROJECT_PATH_SLUG__"
+        app.gitlab.com/env: "__CI_ENVIRONMENT_SLUG__"
     spec:
       containers:
       - name: mediamon
