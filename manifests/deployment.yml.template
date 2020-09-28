@@ -4,6 +4,9 @@ metadata:
   name: mediamon
   labels:
     app: mediamon
+  annotations:
+    app.gitlab.com/app: "__CI_PROJECT_PATH_SLUG__"
+    app.gitlab.com/env: "__CI_ENVIRONMENT_SLUG__"
 spec:
   replicas: 1
   selector:
