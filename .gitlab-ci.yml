@@ -1,7 +1,7 @@
 include:
   - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/master/python-tests.yml'
   - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/master/k3s-docker-build-multiarch.yml'
-  - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/master/k3s-deploy.yml'
+  - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/-/raw/k3s-dynamic/k3s-deploy.yml'
   - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/master/github.yml'
 
 stages:
@@ -13,6 +13,7 @@ stages:
 variables:
   VERSION: '0.4'
   DEPLOYMENT: manifests/deployment.yml
+  TARGET_NAMESPACE: media
 
 # Don't run for new tags
 workflow:
