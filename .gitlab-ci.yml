@@ -11,7 +11,7 @@ stages:
   - deploy
 
 variables:
-  VERSION: '0.4'
+  VERSION: '0.5'
   DEPLOYMENT: manifests/deployment.yml
   TARGET_NAMESPACE: media
 

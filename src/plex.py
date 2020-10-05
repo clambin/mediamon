@@ -64,13 +64,17 @@ class PlexProbe(APIProbe, AddressManager):
                     first_server = self.address
                 url = f'{self.address}{endpoint}'
                 response = requests.get(url, headers=self.headers)
-                if response.status_code == 200 and 'X-Plex-Protocol' in response.headers:
+                if response.status_code == 200:
                     logging.debug(response.headers)
-                    if self.connecting is False:
-                        logging.info(f'{self.name}: connection established on {self.address}')
-                        self.connecting = True
-                    return response.json()
-                logging.warning(f'{self.name}: received {response.status_code} - {response.reason}')
+                    if 'X-Plex-Protocol' in response.headers:
+                        if self.connecting is False:
+                            logging.info(f'{self.name}: connection established on {self.address}')
+                            self.connecting = True
+                        return response.json()
+                    else:
+                        logging.info(f'{url} responded, but X-Plex-Protocol header missing. Ignoring server.')
+                else:
+                    logging.warning(f'{self.name}: received {response.status_code} - {response.reason}')
             except requests.exceptions.ConnectionError as e:
                 logging.warning(f'{self.name}: failed to connect to {self.address}. {e}')
             logging.warning(f'{self.name}: moving to next server')

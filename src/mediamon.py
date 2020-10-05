@@ -15,7 +15,7 @@ def initialise(config):
         try:
             scheduler.register(
                 TransmissionProbe(config.services['transmission']['host']),
-                5
+                30
             )
         except KeyError as e:
             logging.warning(f'transmission config missing {e}. Skipping')
@@ -49,7 +49,7 @@ def initialise(config):
         try:
             scheduler.register(
                 PlexServer(config.services['plex']['username'], config.services['plex']['password']),
-                5
+                30
             )
         except KeyError as e:
             logging.warning(f'plex config missing {e}. Skipping')
