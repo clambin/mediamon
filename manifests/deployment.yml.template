@@ -25,6 +25,7 @@ spec:
       containers:
       - name: mediamon
         image: __IMAGE__:__TAG__
+        imagePullPolicy: Always
         args:
         - --services=/etc/mediamon/mediamon.yml
         volumeMounts:
