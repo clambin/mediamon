@@ -64,7 +64,8 @@ class PlexProbe(APIProbe, AddressManager):
                     first_server = self.address
                 url = f'{self.address}{endpoint}'
                 response = requests.get(url, headers=self.headers)
-                if response.status_code == 200:
+                if response.status_code == 200 and 'X-Plex-Protocol' in response.headers:
+                    logging.debug(response.headers)
                     if self.connecting is False:
                         logging.info(f'{self.name}: connection established on {self.address}')
                         self.connecting = True
