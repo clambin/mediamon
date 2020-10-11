@@ -100,12 +100,12 @@ def test_plexprobe():
     probe.run()
     measured = probe.measured()
     assert measured == {
-        'session_count': {'foo': 1, 'bar': 1},
-        'transcoder_count': 1,
-        'transcoder_encoding_count': 1,
-        'transcoder_speed_total': 3.1,
-        'transcoder_type_count': {'copy': 1},
-        'version': {'server': 'plex', 'version': '1.20.2.3402-0fec14d92'}
+        'plex_session_count': {'foo': 1, 'bar': 1},
+        'plex_transcoder_count': 1,
+        'plex_transcoder_encoding_count': 1,
+        'plex_transcoder_speed_total': 3.1,
+        'plex_transcoder_type_count': {'copy': 1},
+        'version': '1.20.2.3402-0fec14d92'
     }
 
 

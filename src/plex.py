@@ -5,22 +5,7 @@ import xml
 from collections import OrderedDict
 from pimetrics.probe import APIProbe
 import src.version
-from prometheus_client import Gauge
-
-GAUGES = {
-    'session_count':
-        Gauge('mediaserver_plex_session_count', 'Active Plex sessions', ['server', 'user']),
-    'transcoder_count':
-        Gauge('mediaserver_plex_transcoder_count', 'Active Transcoder count', ['server']),
-    'transcoder_type_count':
-        Gauge('mediaserver_plex_transcoder_type_count', 'Active Transcoder count by type', ['server', 'mode']),
-    'transcoder_speed_total':
-        Gauge('mediaserver_plex_transcoder_speed_total', 'Speed of active transcoders', ['server']),
-    'transcoder_encoding_count':
-        Gauge('mediaserver_plex_transcoder_encoding_count', 'Number of transcoders that are acticely encoding',
-              ['server']),
-    'server_info': Gauge('mediaserver_plex_info', 'Plex version', ['server', 'version']),
-}
+from src import metrics
 
 
 class AddressManager:
@@ -86,37 +71,33 @@ class PlexProbe(APIProbe, AddressManager):
 
     def report(self, output):
         logging.debug(f'Reporting {output}')
-        for key, value in output.items():
-            if key == 'transcoder_type_count':
-                # we keep a list of all discovered modes so we can report zero when no session is running for a mode
-                for mode in self.modes:
-                    GAUGES[key].labels(self.name, mode).set(value[mode] if mode in value else 0)
-            elif key == 'session_count':
-                # we keep a list of all discovered users so we can report zero when a user is no longer logged in
-                for user in self.users:
-                    GAUGES[key].labels(self.name, user).set(value[user] if user in value else 0)
-            elif key == 'version':
-                GAUGES['server_info'].labels(value['server'], value['version']).set(1)
-            else:
-                GAUGES[key].labels(self.name).set(value)
+        # we keep a list of all discovered modes so we can report zero when no session is running for a mode
+        for mode in self.modes:
+            if mode not in output['plex_transcoder_type_count']:
+                output['plex_transcoder_type_count'][mode] = 0
+        # we keep a list of all discovered users so we can report zero when a user is no longer logged in
+        for user in self.users:
+            if user not in output['plex_session_count']:
+                output['plex_session_count'][user] = 0
+        metrics.report(output, 'plex')
 
     def process(self, output):
         logging.debug(f'Processing {output}')
         self.users.update(set([entry['user'] for entry in output['sessions']]))
         self.modes.update(set([entry['mode'] for entry in output['sessions'] if entry['transcode']]))
         return {
-            'session_count': {
+            'plex_session_count': {
                 user: len([entry for entry in output['sessions'] if entry['user'] == user])
                 for user in self.users
             },
-            'transcoder_count':
+            'plex_transcoder_count':
                 len([entry for entry in output['sessions'] if entry['transcode']]),
-            'transcoder_type_count': {
+            'plex_transcoder_type_count': {
                 mode: len([entry for entry in output['sessions'] if entry['mode'] == mode])
                 for mode in self.modes},
-            'transcoder_speed_total':
+            'plex_transcoder_speed_total':
                 sum([entry['speed'] for entry in output['sessions']]),
-            'transcoder_encoding_count':
+            'plex_transcoder_encoding_count':
                 len([entry for entry in output['sessions']
                      if entry['transcode'] and not entry['throttled']]),
             'version': output['version'],
@@ -162,7 +143,7 @@ class PlexProbe(APIProbe, AddressManager):
             except KeyError as e:
                 logging.warning(f'Failed to get version: missing {e}')
         else:
-            logging.warning(f'Failed to get version: no response received')
+            logging.warning('Failed to get version: no response received')
         return ''
 
     def measure_sessions(self):
@@ -174,7 +155,7 @@ class PlexProbe(APIProbe, AddressManager):
     def measure(self):
         return {
             'sessions': self.measure_sessions(),
-            'version': {'server': 'plex', 'version': self.measure_version()},
+            'version': self.measure_version(),
         }
 
 

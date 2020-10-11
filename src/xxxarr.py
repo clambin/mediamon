@@ -1,17 +1,8 @@
 import logging
 from enum import Enum
 import requests
-from prometheus_client import Gauge
-
 from pimetrics.probe import APIProbe
-
-GAUGES = {
-    'calendar_count': Gauge('mediaserver_calendar_count', 'Number of upcoming episodes', ['server']),
-    'queued_count': Gauge('mediaserver_queued_count', 'Number of queued torrents', ['server']),
-    'monitored_count': Gauge('mediaserver_monitored_count', 'Number of monitored entries', ['server']),
-    'unmonitored_count': Gauge('mediaserver_unmonitored_count', 'Number of unmonitored entries', ['server']),
-    'server_info': Gauge('mediaserver_server_info', 'Server info', ['server', 'version'])
-}
+from src import metrics
 
 
 class MonitorProbe(APIProbe):
@@ -30,18 +21,7 @@ class MonitorProbe(APIProbe):
         return 'sonarr' if self.app == MonitorProbe.App.sonarr else 'radarr'
 
     def report(self, output):
-        if output:
-            calendar = output['calendar']
-            queue = output['queue']
-            monitored = output['monitored'][0]
-            unmonitored = output['monitored'][1]
-            server = output['version']['server']
-            version = output['version']['version']
-            GAUGES['calendar_count'].labels(self.app.name).set(calendar)
-            GAUGES['queued_count'].labels(self.app.name).set(queue)
-            GAUGES['monitored_count'].labels(self.app.name).set(monitored)
-            GAUGES['unmonitored_count'].labels(self.app.name).set(unmonitored)
-            GAUGES['server_info'].labels(server, version).set(1)
+        metrics.report(output, self.name)
 
     def call(self, endpoint):
         result = None
@@ -84,19 +64,19 @@ class MonitorProbe(APIProbe):
         return len(monitored), len(unmonitored)
 
     def measure_version(self):
-        version = None
         entries = self.call('api/system/status')
         if entries and 'version' in entries:
-            version = entries['version']
-            logging.debug(f'version for {self.name}: {version}')
+            return entries['version']
         else:
             logging.debug('No version found')
-        return {'server': self.name, 'version': version}
+        return None
 
     def measure(self):
+        monitored, unmonitored = self.measure_monitored()
         return {
-            'calendar': self.measure_calendar(),
-            'queue': self.measure_queue(),
-            'monitored': self.measure_monitored(),
+            'xxxarr_calendar': self.measure_calendar(),
+            'xxxarr_queue': self.measure_queue(),
+            'xxxarr_monitored': monitored,
+            'xxxarr_unmonitored': unmonitored,
             'version': self.measure_version()
         }

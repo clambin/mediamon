@@ -39,10 +39,11 @@ def test_sonarr():
     assert probe.connecting is True
     measured = probe.measured()
     assert measured
-    assert measured['calendar'] == 1
-    assert measured['queue'] == 1
-    assert measured['monitored'] == (1, 1)
-    assert measured['version'] == {'server': 'sonarr', 'version': '2.0.0.5344'}
+    assert measured['xxxarr_calendar'] == 1
+    assert measured['xxxarr_queue'] == 1
+    assert measured['xxxarr_monitored'] == 1
+    assert measured['xxxarr_unmonitored'] == 1
+    assert measured['version'] == '2.0.0.5344'
 
 
 def test_radarr():
@@ -53,7 +54,8 @@ def test_radarr():
     assert probe.connecting is True
     measured = probe.measured()
     assert measured
-    assert measured['calendar'] == 0
-    assert measured['queue'] == 2
-    assert measured['monitored'] == (1, 1)
-    assert measured['version'] == {'server': 'radarr', 'version': '0.2.0.1504'}
+    assert measured['xxxarr_calendar'] == 0
+    assert measured['xxxarr_queue'] == 2
+    assert measured['xxxarr_monitored'] == 1
+    assert measured['xxxarr_unmonitored'] == 1
+    assert measured['version'] == '0.2.0.1504'
