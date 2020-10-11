@@ -10,6 +10,7 @@ GAUGES = {
     'queued_count': Gauge('mediaserver_queued_count', 'Number of queued torrents', ['server']),
     'monitored_count': Gauge('mediaserver_monitored_count', 'Number of monitored entries', ['server']),
     'unmonitored_count': Gauge('mediaserver_unmonitored_count', 'Number of unmonitored entries', ['server']),
+    'server_info': Gauge('mediaserver_server_info', 'Server info', ['server', 'version'])
 }
 
 
@@ -24,7 +25,8 @@ class MonitorProbe(APIProbe):
         self.app = app
         self.connecting = True
 
-    def app_name(self):
+    @property
+    def name(self):
         return 'sonarr' if self.app == MonitorProbe.App.sonarr else 'radarr'
 
     def report(self, output):
@@ -33,10 +35,12 @@ class MonitorProbe(APIProbe):
             queue = output['queue']
             monitored = output['monitored'][0]
             unmonitored = output['monitored'][1]
+            version = output['version']
             GAUGES['calendar_count'].labels(self.app.name).set(calendar)
             GAUGES['queued_count'].labels(self.app.name).set(queue)
             GAUGES['monitored_count'].labels(self.app.name).set(monitored)
             GAUGES['unmonitored_count'].labels(self.app.name).set(unmonitored)
+            GAUGES['server_info'].labels(self.app.name, version).set(1)
 
     def call(self, endpoint):
         result = None
@@ -45,7 +49,7 @@ class MonitorProbe(APIProbe):
             response = self.get(endpoint=endpoint, headers=headers)
             if response.status_code == 200:
                 if not self.connecting:
-                    logging.info(f'Connection with {self.app_name()} re-established')
+                    logging.info(f'Connection with {self.name} re-established')
                     self.connecting = True
                 return response.json()
             else:
@@ -78,9 +82,20 @@ class MonitorProbe(APIProbe):
             unmonitored = list(filter(lambda entry: not entry['monitored'], entries))
         return len(monitored), len(unmonitored)
 
+    def measure_version(self):
+        version = None
+        entries = self.call('api/system/status')
+        if entries and 'version' in entries:
+            version = entries['version']
+            logging.debug(f'version for {self.name}: {version}')
+        else:
+            logging.debug('No version found')
+        return version
+
     def measure(self):
         return {
             'calendar': self.measure_calendar(),
             'queue': self.measure_queue(),
-            'monitored': self.measure_monitored()
+            'monitored': self.measure_monitored(),
+            'version': self.measure_version()
         }

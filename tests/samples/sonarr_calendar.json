@@ -1,0 +1,133 @@
+[
+  {
+    "seriesId": 33,
+    "episodeFileId": 3923,
+    "seasonNumber": 7,
+    "episodeNumber": 12,
+    "title": "XXXX",
+    "airDate": "2020-04-16",
+    "airDateUtc": "2020-04-17T00:30:00Z",
+    "overview": "XXXX",
+    "episodeFile": {
+      "seriesId": 33,
+      "seasonNumber": 7,
+      "relativePath": "XXXX",
+      "path": "XXXX",
+      "size": 546775439,
+      "dateAdded": "2020-04-17T03:50:58.417555Z",
+      "sceneName": "XXXX",
+      "quality": {
+        "quality": {
+          "id": 4,
+          "name": "HDTV-720p",
+          "source": "television",
+          "resolution": 720
+        },
+        "revision": {
+          "version": 1,
+          "real": 0
+        }
+      },
+      "mediaInfo": {
+        "audioChannels": 5.1,
+        "audioCodec": "AC3",
+        "videoCodec": "x264"
+      },
+      "originalFilePath": "XXXX",
+      "qualityCutoffNotMet": false,
+      "id": 3923
+    },
+    "hasFile": false,
+    "monitored": true,
+    "absoluteEpisodeNumber": 142,
+    "unverifiedSceneNumbering": false,
+    "series": {
+      "title": "XXXX",
+      "sortTitle": "XXXX",
+      "seasonCount": 7,
+      "status": "continuing",
+      "overview": "XXXX",
+      "network": "XXXX",
+      "airTime": "20:30",
+      "images": [
+        {
+          "coverType": "fanart",
+          "url": "XXXX"
+        },
+        {
+          "coverType": "banner",
+          "url": "XXXX"
+        },
+        {
+          "coverType": "poster",
+          "url": "XXXX"
+        }
+      ],
+      "seasons": [
+        {
+          "seasonNumber": 0,
+          "monitored": false
+        },
+        {
+          "seasonNumber": 1,
+          "monitored": false
+        },
+        {
+          "seasonNumber": 2,
+          "monitored": false
+        },
+        {
+          "seasonNumber": 3,
+          "monitored": false
+        },
+        {
+          "seasonNumber": 4,
+          "monitored": false
+        },
+        {
+          "seasonNumber": 5,
+          "monitored": false
+        },
+        {
+          "seasonNumber": 6,
+          "monitored": false
+        },
+        {
+          "seasonNumber": 7,
+          "monitored": true
+        }
+      ],
+      "year": 2013,
+      "path": "XXXX",
+      "profileId": 6,
+      "seasonFolder": true,
+      "monitored": true,
+      "useSceneNumbering": false,
+      "runtime": 25,
+      "tvdbId": 1,
+      "tvRageId": 1,
+      "tvMazeId": 1,
+      "firstAired": "2013-08-10T22:00:00Z",
+      "lastInfoSync": "2020-04-17T12:20:35.667424Z",
+      "seriesType": "standard",
+      "cleanTitle": "XXXX",
+      "imdbId": "XXXX",
+      "titleSlug": "XXXX",
+      "certification": "TV-14",
+      "genres": [
+        "Action",
+        "Comedy",
+        "Crime"
+      ],
+      "tags": [],
+      "added": "2020-02-01T20:27:00.262442Z",
+      "ratings": {
+        "votes": 2679,
+        "value": 8.6
+      },
+      "qualityProfileId": 6,
+      "id": 1
+    },
+    "id": 1
+  }
+]

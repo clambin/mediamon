@@ -1,0 +1,97 @@
+[
+  {
+    "title": "XXXX",
+    "alternativeTitles": [
+      {
+        "sourceType": "tmdb",
+        "movieId": 2,
+        "title": "XXXX",
+        "sourceId": 1,
+        "votes": 0,
+        "voteCount": 0,
+        "language": "english",
+        "id": 1
+      }
+    ],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "XXXX",
+    "sizeOnDisk": 0,
+    "status": "announced",
+    "overview": "The plot is unknown at this time.",
+    "inCinemas": "2021-12-20T23:00:00Z",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "XXXX"
+      }
+    ],
+    "website": "",
+    "downloaded": false,
+    "year": 2021,
+    "hasFile": false,
+    "youTubeTrailerId": "XXXX",
+    "path": "XXXX",
+    "profileId": 1,
+    "pathState": "static",
+    "monitored": true,
+    "minimumAvailability": "announced",
+    "isAvailable": true,
+    "folderName": "XXXX",
+    "runtime": 0,
+    "lastInfoSync": "2020-04-17T21:07:17.963456Z",
+    "cleanTitle": "XXXX",
+    "imdbId": "XXXX",
+    "tmdbId": 1,
+    "titleSlug": "XXXX",
+    "genres": [],
+    "tags": [],
+    "added": "2019-11-16T21:21:53.23528Z",
+    "ratings": {
+      "votes": 0,
+      "value": 0.0
+    },
+    "qualityProfileId": 1,
+    "id": 2
+  },
+  {
+    "title": "XXXX",
+    "alternativeTitles": [],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "clue",
+    "sizeOnDisk": 0,
+    "status": "announced",
+    "overview": "XXXX",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "XXXX"
+      }
+    ],
+    "downloaded": false,
+    "year": 0,
+    "hasFile": false,
+    "studio": "XXXX",
+    "path": "XXXX",
+    "profileId": 1,
+    "pathState": "static",
+    "monitored": false,
+    "minimumAvailability": "announced",
+    "isAvailable": true,
+    "folderName": "XXXX",
+    "runtime": 0,
+    "lastInfoSync": "2020-04-17T21:07:01.150801Z",
+    "cleanTitle": "XXXX",
+    "imdbId": "XXXX",
+    "tmdbId": 1,
+    "titleSlug": "XXXX",
+    "genres": [],
+    "tags": [],
+    "added": "2019-11-16T21:22:25.391927Z",
+    "ratings": {
+      "votes": 0,
+      "value": 0.0
+    },
+    "qualityProfileId": 1,
+    "id": 4
+  }
+]

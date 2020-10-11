@@ -1,0 +1,102 @@
+[
+  {
+    "series": {
+      "title": "XXXX",
+      "sortTitle": "XXXX",
+      "seasonCount": 1,
+      "status": "continuing",
+      "overview": "XXXX",
+      "network": "XXXX",
+      "airTime": "22:30",
+      "images": [
+        {
+          "coverType": "fanart",
+          "url": "XXXX"
+        },
+        {
+          "coverType": "banner",
+          "url": "XXXX"
+        },
+        {
+          "coverType": "poster",
+          "url": "XXXX"
+        }
+      ],
+      "seasons": [
+        {
+          "seasonNumber": 1,
+          "monitored": true
+        }
+      ],
+      "year": 2020,
+      "path": "XXXX",
+      "profileId": 3,
+      "seasonFolder": true,
+      "monitored": true,
+      "useSceneNumbering": false,
+      "runtime": 30,
+      "tvdbId": 1,
+      "tvRageId": 0,
+      "tvMazeId": 1,
+      "firstAired": "2020-04-11T22:00:00Z",
+      "lastInfoSync": "2020-04-18T21:26:31.930624Z",
+      "seriesType": "standard",
+      "cleanTitle": "XXXX",
+      "imdbId": "XXXX",
+      "titleSlug": "XXXX",
+      "certification": "XXXX",
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance",
+        "Thriller"
+      ],
+      "tags": [],
+      "added": "2020-04-18T21:26:31.622049Z",
+      "ratings": {
+        "votes": 0,
+        "value": 0.0
+      },
+      "qualityProfileId": 3,
+      "id": 40
+    },
+    "episode": {
+      "seriesId": 40,
+      "episodeFileId": 0,
+      "seasonNumber": 1,
+      "episodeNumber": 1,
+      "title": "XXXX",
+      "airDate": "2020-04-12",
+      "airDateUtc": "2020-04-13T02:30:00Z",
+      "overview": "XXXX",
+      "hasFile": false,
+      "monitored": true,
+      "unverifiedSceneNumbering": false,
+      "lastSearchTime": "2020-04-18T21:26:32.814329Z",
+      "id": 1736
+    },
+    "quality": {
+      "quality": {
+        "id": 5,
+        "name": "WEBDL-720p",
+        "source": "web",
+        "resolution": 720
+      },
+      "revision": {
+        "version": 2,
+        "real": 0
+      }
+    },
+    "size": 489530639.0,
+    "title": "XXXX",
+    "sizeleft": 485965824.0,
+    "timeleft": "03:47:14",
+    "estimatedCompletionTime": "2020-04-19T01:15:20.195938Z",
+    "status": "Downloading",
+    "trackedDownloadStatus": "Ok",
+    "statusMessages": [],
+    "downloadId": "XXXX",
+    "protocol": "torrent",
+    "id": 1
+  }
+]
