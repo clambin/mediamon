@@ -6,15 +6,15 @@ from tests.utils import APIStub
 
 
 class PlexTestProbe(APIStub, PlexProbe):
-    def __init__(self, authtoken, name, addresses):
+    def __init__(self, authtoken, name, addresses, testfiles=None):
         PlexProbe.__init__(self, authtoken, name, addresses)
-        APIStub.__init__(self)
+        APIStub.__init__(self, testfiles)
 
 
 class PlexServerTest(APIStub, PlexServer):
-    def __init__(self, username, password):
+    def __init__(self, username, password, testfiles=None):
         PlexServer.__init__(self, username, password)
-        APIStub.__init__(self)
+        APIStub.__init__(self, testfiles)
 
     def _login(self):
         return True
@@ -68,17 +68,6 @@ def test_parse_sessions():
     assert sessions[1]['speed'] == 3.1
 
 
-def test_plexprobe_parser():
-    probe = PlexProbe(None, None, None)
-    sessions = get_sessions('samples/plex_session_multiple.json')
-    output = probe.process(sessions)
-    assert output['session_count'] == {'foo': 1, 'bar': 1}
-    assert output['transcoder_count'] == 1
-    assert output['transcoder_type_count'] == {'copy': 1}
-    assert output['transcoder_speed_total'] == 3.1
-    assert output['transcoder_encoding_count'] == 1
-
-
 def test_plexserver_parser():
     with open('samples/plex_devices.xml') as f:
         content = f.read()
@@ -96,9 +85,18 @@ def test_plexserver_parser():
         ]}
 
 
+plex_responses = {
+    '/status/sessions': {
+        'filename': 'samples/plex_session_multiple.json',
+    },
+    '/identity': {
+        'filename': 'samples/plex_identity.json',
+    },
+}
+
+
 def test_plexprobe():
-    probe = PlexTestProbe('', '', '')
-    probe.set_response('samples/plex_session_multiple.json', mode=APIStub.Mode.json)
+    probe = PlexTestProbe('', '', '', plex_responses)
     probe.run()
     measured = probe.measured()
     assert measured == {
@@ -106,13 +104,21 @@ def test_plexprobe():
         'transcoder_count': 1,
         'transcoder_encoding_count': 1,
         'transcoder_speed_total': 3.1,
-        'transcoder_type_count': {'copy': 1}
+        'transcoder_type_count': {'copy': 1},
+        'version': {'server': 'plex', 'version': '1.20.2.3402-0fec14d92'}
     }
 
 
+plex_server_responses = {
+    'https://plex.tv/devices.xml': {
+        'filename': 'samples/plex_devices.xml',
+        'raw': True,
+    }
+}
+
+
 def test_plexserver():
-    server = PlexServerTest('', '')
-    server.set_response('samples/plex_devices.xml')
+    server = PlexServerTest('', '', plex_server_responses)
     probes = server.make_probes()
     assert len(probes) == 2
     oldprobes = set(probes)

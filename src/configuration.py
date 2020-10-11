@@ -23,7 +23,6 @@ def get_configuration(args=None):
     default_interval = 5
     default_port = 8080
 
-    # FIXME: allow credentials to be retrieved from file rather than cmdline options
     parser = argparse.ArgumentParser()
     parser.add_argument('--version', action='version', version=f'%(prog)s {version}')
     parser.add_argument('--interval', type=int, default=default_interval,

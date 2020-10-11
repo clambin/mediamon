@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<MediaContainer friendlyName="myPlex" identifier="com.plexapp.plugins.myplex" machineIdentifier="d16f8930d56547ff9ceabc1d09bd13bbec195c4b" size="2">'
-    <Server accessToken="foo" name="Plex Server 1" address="XXXX" port="32400" version="" scheme="http" host="" localAddresses="1,2,3,4" machineIdentifier="" createdAt="" updatedAt="" owned="1" synced="0"/>
-    <Server accessToken="bar" name="Plex Server 2" address="XXXX" port="80" version="" scheme="http" host="" localAddresses="5" machineIdentifier="" createdAt="" updatedAt="" owned="1" synced="0"/>
-</MediaContainer>

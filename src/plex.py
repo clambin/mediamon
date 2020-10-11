@@ -19,6 +19,7 @@ GAUGES = {
     'transcoder_encoding_count':
         Gauge('mediaserver_plex_transcoder_encoding_count', 'Number of transcoders that are acticely encoding',
               ['server']),
+    'server_info': Gauge('mediaserver_plex_info', 'Plex version', ['server', 'version']),
 }
 
 
@@ -94,27 +95,31 @@ class PlexProbe(APIProbe, AddressManager):
                 # we keep a list of all discovered users so we can report zero when a user is no longer logged in
                 for user in self.users:
                     GAUGES[key].labels(self.name, user).set(value[user] if user in value else 0)
+            elif key == 'version':
+                GAUGES['server_info'].labels(value['server'], value['version']).set(1)
             else:
                 GAUGES[key].labels(self.name).set(value)
 
     def process(self, output):
         logging.debug(f'Processing {output}')
-        self.users.update(set([entry['user'] for entry in output]))
-        self.modes.update(set([entry['mode'] for entry in output if entry['transcode']]))
+        self.users.update(set([entry['user'] for entry in output['sessions']]))
+        self.modes.update(set([entry['mode'] for entry in output['sessions'] if entry['transcode']]))
         return {
             'session_count': {
-                user: len([entry for entry in output if entry['user'] == user])
+                user: len([entry for entry in output['sessions'] if entry['user'] == user])
                 for user in self.users
             },
             'transcoder_count':
-                len([entry for entry in output if entry['transcode']]),
+                len([entry for entry in output['sessions'] if entry['transcode']]),
             'transcoder_type_count': {
-                mode: len([entry for entry in output if entry['mode'] == mode])
+                mode: len([entry for entry in output['sessions'] if entry['mode'] == mode])
                 for mode in self.modes},
             'transcoder_speed_total':
-                sum([entry['speed'] for entry in output]),
+                sum([entry['speed'] for entry in output['sessions']]),
             'transcoder_encoding_count':
-                len([entry for entry in output if entry['transcode'] and not entry['throttled']]),
+                len([entry for entry in output['sessions']
+                     if entry['transcode'] and not entry['throttled']]),
+            'version': output['version'],
         }
 
     @staticmethod
@@ -148,11 +153,29 @@ class PlexProbe(APIProbe, AddressManager):
             logging.warning(f'Failed to get sessions: missing {e}')
         return []
 
+    @staticmethod
+    def parse_version(response):
+        logging.debug(f'/identity result: {response}')
+        if response:
+            try:
+                return response['MediaContainer']['version']
+            except KeyError as e:
+                logging.warning(f'Failed to get version: missing {e}')
+        else:
+            logging.warning(f'Failed to get version: no response received')
+        return ''
+
     def measure_sessions(self):
         return PlexProbe.parse_sessions(self.call('/status/sessions'))
 
+    def measure_version(self):
+        return PlexProbe.parse_version(self.call('/identity'))
+
     def measure(self):
-        return self.measure_sessions()
+        return {
+            'sessions': self.measure_sessions(),
+            'version': {'server': 'plex', 'version': self.measure_version()},
+        }
 
 
 class PlexServer:

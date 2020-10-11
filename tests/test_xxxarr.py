@@ -17,6 +17,7 @@ radarr_test_files = {
 }
 
 
+# TODO: align plex/xxxarr stubbing approaches
 class MonitorTestProbe(MonitorProbe):
     def __init__(self, host, name, api_key, testfiles=None):
         self.testfiles = testfiles if testfiles is not None else dict()
@@ -41,7 +42,7 @@ def test_sonarr():
     assert measured['calendar'] == 1
     assert measured['queue'] == 1
     assert measured['monitored'] == (1, 1)
-    assert measured['version'] == '2.0.0.5344'
+    assert measured['version'] == {'server': 'sonarr', 'version': '2.0.0.5344'}
 
 
 def test_radarr():
@@ -55,4 +56,4 @@ def test_radarr():
     assert measured['calendar'] == 0
     assert measured['queue'] == 2
     assert measured['monitored'] == (1, 1)
-    assert measured['version'] == '0.2.0.1504'
+    assert measured['version'] == {'server': 'radarr', 'version': '0.2.0.1504'}

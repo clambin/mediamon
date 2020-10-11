@@ -35,12 +35,13 @@ class MonitorProbe(APIProbe):
             queue = output['queue']
             monitored = output['monitored'][0]
             unmonitored = output['monitored'][1]
-            version = output['version']
+            server = output['version']['server']
+            version = output['version']['version']
             GAUGES['calendar_count'].labels(self.app.name).set(calendar)
             GAUGES['queued_count'].labels(self.app.name).set(queue)
             GAUGES['monitored_count'].labels(self.app.name).set(monitored)
             GAUGES['unmonitored_count'].labels(self.app.name).set(unmonitored)
-            GAUGES['server_info'].labels(self.app.name, version).set(1)
+            GAUGES['server_info'].labels(server, version).set(1)
 
     def call(self, endpoint):
         result = None
@@ -90,7 +91,7 @@ class MonitorProbe(APIProbe):
             logging.debug(f'version for {self.name}: {version}')
         else:
             logging.debug('No version found')
-        return version
+        return {'server': self.name, 'version': version}
 
     def measure(self):
         return {
