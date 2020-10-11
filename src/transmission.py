@@ -1,7 +1,5 @@
-import json
 import logging
 import requests
-from prometheus_client import Gauge
 from pimetrics.probe import APIProbe
 from src import metrics
 
