@@ -16,6 +16,10 @@ GAUGES = {
     'xxxarr_queue': Gauge('mediaserver_queued_count', 'Number of queued torrents', ['server']),
     'xxxarr_monitored': Gauge('mediaserver_monitored_count', 'Number of monitored entries', ['server']),
     'xxxarr_unmonitored': Gauge('mediaserver_unmonitored_count', 'Number of unmonitored entries', ['server']),
+    'active_torrent_count': Gauge('mediaserver_active_torrent_count', 'Active torrents', ['server']),
+    'paused_torrent_count': Gauge('mediaserver_paused_torrent_count', 'Paused torrents', ['server']),
+    'download_speed': Gauge('mediaserver_download_speed', 'Transmission download speed in bytes/sec', ['server']),
+    'upload_speed': Gauge('mediaserver_upload_speed', 'Transmission upload speed in bytes/sec', ['server']),
     'version': Gauge('mediaserver_server_info', 'Server info', ['server', 'version'])
 }
 
