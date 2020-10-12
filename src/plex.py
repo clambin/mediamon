@@ -12,7 +12,7 @@ class AddressManager:
     def __init__(self, addresses):
         self.addresses = addresses
         self.address_index = 0
-        self.status = None
+        self.healthy = True
 
     @property
     def address(self):
@@ -20,14 +20,6 @@ class AddressManager:
 
     def switch(self):
         self.address_index = (self.address_index + 1) % len(self.addresses)
-
-    @property
-    def connecting(self):
-        return self.status is None or self.status
-
-    @connecting.setter
-    def connecting(self, status):
-        self.status = status
 
 
 class PlexProbe(APIProbe, AddressManager):
@@ -53,9 +45,9 @@ class PlexProbe(APIProbe, AddressManager):
                 if response.status_code == 200:
                     logging.debug(response.headers)
                     if 'X-Plex-Protocol' in response.headers:
-                        if self.connecting is False:
+                        if self.healthy is False:
                             logging.info(f'{self.name}: connection established on {self.address}')
-                            self.connecting = True
+                            self.healthy = True
                         return response.json()
                     else:
                         logging.info(f'{url} responded, but X-Plex-Protocol header missing. Ignoring server.')
@@ -64,7 +56,7 @@ class PlexProbe(APIProbe, AddressManager):
             except requests.exceptions.ConnectionError as e:
                 logging.warning(f'{self.name}: failed to connect to {self.address}. {e}')
             logging.warning(f'{self.name}: moving to next server')
-            self.connecting = False
+            self.healthy = False
             self.switch()
         logging.warning(f'{self.name}: no working servers found')
         return None
@@ -230,7 +222,7 @@ class PlexServer:
                 servers = self._parse_servers(response)
         return servers
 
-    def make_probes(self):
+    def _make_probes(self):
         servers = self._get_servers()
         for server in servers:
             logging.info(f'Plex server found: {server["name"]}: {",".join(server["addresses"])}')
@@ -238,9 +230,9 @@ class PlexServer:
         return self.probes
 
     def _healthcheck(self):
-        unhealthy = [probe for probe in self.probes if probe.connecting is False]
+        unhealthy = [probe for probe in self.probes if probe.healthy is False]
         if unhealthy:
-            healthy = [probe for probe in self.probes if probe.connecting]
+            healthy = [probe for probe in self.probes if probe.healthy]
             # TODO: force log in again to get a fresh authtoken?
             servers = self._get_servers()
             for probe in unhealthy:
@@ -252,7 +244,7 @@ class PlexServer:
 
     def run(self):
         if not self.probes:
-            self.make_probes()
+            self._make_probes()
         for probe in self.probes:
             probe.run()
         self._healthcheck()
