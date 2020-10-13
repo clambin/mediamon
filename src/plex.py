@@ -217,8 +217,7 @@ class PlexServer:
         if self.authtoken or self._login():
             headers = self.base_headers
             headers['X-Plex-Token'] = self.authtoken
-            response = self.call('https://plex.tv/devices.xml', headers=headers)
-            if response:
+            if response := self.call('https://plex.tv/devices.xml', headers=headers):
                 servers = self._parse_servers(response)
         return servers
 
@@ -230,8 +229,7 @@ class PlexServer:
         return self.probes
 
     def _healthcheck(self):
-        unhealthy = [probe for probe in self.probes if probe.healthy is False]
-        if unhealthy:
+        if unhealthy := [probe for probe in self.probes if probe.healthy is False]:
             healthy = [probe for probe in self.probes if probe.healthy]
             # TODO: force log in again to get a fresh authtoken?
             servers = self._get_servers()

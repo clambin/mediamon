@@ -41,8 +41,7 @@ class MonitorProbe(APIProbe):
         return result
 
     def measure_calendar(self):
-        calendar = self.call('api/calendar')
-        if calendar:
+        if calendar := self.call('api/calendar'):
             calendar = list(filter(lambda entry: not entry['hasFile'], calendar))
             return len(calendar)
         return 0
