@@ -48,10 +48,10 @@ class TransmissionProbe(APIProbe):
     def measure_stats(self):
         stats = self.call('session-stats')
         return {
-            'active_torrent_count': stats['activeTorrentCount'],
-            'paused_torrent_count': stats['pausedTorrentCount'],
-            'download_speed': stats['downloadSpeed'],
-            'upload_speed': stats['uploadSpeed'],
+            'active_torrent_count': stats['activeTorrentCount'] if stats else 0,
+            'paused_torrent_count': stats['pausedTorrentCount'] if stats else 0,
+            'download_speed': stats['downloadSpeed'] if stats else 0,
+            'upload_speed': stats['uploadSpeed'] if stats else 0,
         }
 
     def measure_version(self):
