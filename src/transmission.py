@@ -56,7 +56,7 @@ class TransmissionProbe(APIProbe):
 
     def measure_version(self):
         stats = self.call('session-get')
-        return stats['version']
+        return stats['version'] if stats else 0
 
     def measure(self):
         return {
