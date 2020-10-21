@@ -21,6 +21,7 @@ class MonitorProbe(APIProbe):
         return 'sonarr' if self.app == MonitorProbe.App.sonarr else 'radarr'
 
     def report(self, output):
+        logging.debug(f'{self.name}: {output}')
         metrics.report(output, self.name)
 
     def call(self, endpoint):
