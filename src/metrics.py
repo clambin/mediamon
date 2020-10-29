@@ -33,6 +33,7 @@ def report(metrics, application):
             for user in value.keys():
                 GAUGES[key].labels(application, user).set(value[user])
         elif key == 'version':
-            GAUGES[key].labels(application, value).set(1)
+            if value is not None:
+                GAUGES[key].labels(application, value).set(1)
         else:
             GAUGES[key].labels(application).set(value)
