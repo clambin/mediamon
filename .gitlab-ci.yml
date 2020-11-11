@@ -1,5 +1,5 @@
 include:
-  - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/python38/python-tests.yml'
+  - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/python39/python-tests.yml'
   - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/master/k3s-docker-build-multiarch.yml'
   - remote: 'https://gitlab.com/clambin/gitlab-ci-templates/raw/master/k3s-deploy.yml'
 
