@@ -1,4 +1,4 @@
-from src.transmission import TransmissionProbe
+from mediamon.transmission import TransmissionProbe
 from tests.utils import APIStub
 
 

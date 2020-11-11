@@ -1,4 +1,4 @@
-FROM python:3.7-alpine
+FROM python:3.9-alpine
 MAINTAINER Christophe Lambin <christophe.lambin@gmail.com>
 
 EXPOSE 8080
@@ -13,7 +13,7 @@ RUN pip install --upgrade pip && \
     pipenv install --system --ignore-pipfile
 
 COPY *.py ./
-COPY src src/
+COPY mediamon mediamon/
 
 USER abc
 ENTRYPOINT ["/usr/local/bin/python3", "mediamon.py"]

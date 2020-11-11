@@ -1,6 +1,6 @@
 import argparse
 import pytest
-from src.configuration import str2bool, get_configuration, print_configuration
+from mediamon.configuration import str2bool, get_configuration, print_configuration
 
 
 def test_str2bool():

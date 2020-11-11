@@ -5,7 +5,7 @@ import copy
 import yaml
 import yaml.scanner
 
-from src.version import version
+from mediamon.version import version
 
 
 def str2bool(v):

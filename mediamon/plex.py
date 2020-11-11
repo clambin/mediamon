@@ -4,8 +4,8 @@ import xmltodict
 import xml
 from collections import OrderedDict
 from pimetrics.probe import APIProbe
-import src.version
-from src import metrics
+import mediamon.version
+from mediamon import metrics
 
 
 class AddressManager:
@@ -156,9 +156,9 @@ class PlexServer:
         self.authtext = f'user%5Blogin%5D={username}&user%5Bpassword%5D={password}'
         self.base_headers = {
             'X-Plex-Product': 'mediamon',
-            'X-Plex-Version': src.version.version,
+            'X-Plex-Version': mediamon.version.version,
             # FIXME: generate UUID
-            'X-Plex-Client-Identifier': f'mediamon-v{src.version.version}'
+            'X-Plex-Client-Identifier': f'mediamon-v{mediamon.version.version}'
         }
         self.authtoken = None
         self.probes = []
@@ -217,8 +217,7 @@ class PlexServer:
         if self.authtoken or self._login():
             headers = self.base_headers
             headers['X-Plex-Token'] = self.authtoken
-            response = self.call('https://plex.tv/devices.xml', headers=headers)
-            if response:
+            if response := self.call('https://plex.tv/devices.xml', headers=headers):
                 servers = self._parse_servers(response)
         return servers
 
@@ -230,8 +229,7 @@ class PlexServer:
         return self.probes
 
     def _healthcheck(self):
-        unhealthy = [probe for probe in self.probes if probe.healthy is False]
-        if unhealthy:
+        if unhealthy := [probe for probe in self.probes if probe.healthy is False]:
             healthy = [probe for probe in self.probes if probe.healthy]
             # TODO: force log in again to get a fresh authtoken?
             servers = self._get_servers()

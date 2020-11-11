@@ -1,8 +1,8 @@
 import argparse
-from src.mediamon import initialise
-from src.transmission import TransmissionProbe
-from src.xxxarr import MonitorProbe
-from src.plex import PlexServer
+from mediamon.mediamon import initialise
+from mediamon.transmission import TransmissionProbe
+from mediamon.xxxarr import MonitorProbe
+from mediamon.plex import PlexServer
 
 
 def test_initialise():

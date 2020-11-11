@@ -1,5 +1,5 @@
 import json
-from src.xxxarr import MonitorProbe
+from mediamon.xxxarr import MonitorProbe
 from tests.utils import FakeResponse
 
 sonarr_test_files = {

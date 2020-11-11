@@ -1,7 +1,7 @@
 import logging
 import requests
 from pimetrics.probe import APIProbe
-from src import metrics
+from mediamon import metrics
 
 
 class TransmissionProbe(APIProbe):

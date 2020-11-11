@@ -2,7 +2,7 @@ import logging
 from enum import Enum
 import requests
 from pimetrics.probe import APIProbe
-from src import metrics
+from mediamon import metrics
 
 
 class MonitorProbe(APIProbe):

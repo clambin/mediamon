@@ -1,6 +1,6 @@
 import json
 
-from src.plex import PlexProbe, AddressManager, PlexServer
+from mediamon.plex import PlexProbe, AddressManager, PlexServer
 from tests.utils import APIStub
 
 
@@ -88,8 +88,8 @@ plex_server_responses = {
 
 class PlexTestServer(APIStub, PlexServer):
     def __init__(self, username, password, testfiles=None):
-        PlexServer.__init__(self, username, password)
         APIStub.__init__(self, testfiles)
+        PlexServer.__init__(self, username, password)
 
     def _login(self):
         return True

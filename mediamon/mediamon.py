@@ -1,10 +1,10 @@
 import logging
 import prometheus_client
-from src.version import version
-from src.configuration import print_configuration
-from src.transmission import TransmissionProbe
-from src.xxxarr import MonitorProbe
-from src.plex import PlexServer
+from mediamon.version import version
+from mediamon.configuration import print_configuration
+from mediamon.transmission import TransmissionProbe
+from mediamon.xxxarr import MonitorProbe
+from mediamon.plex import PlexServer
 from pimetrics.scheduler import Scheduler
 
 
