@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mediamon
+  namespace: media
+  labels:
+    app: mediamon
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mediamon
+  template:
+    metadata:
+      labels:
+        app: mediamon
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+      - name: mediamon
+        image: clambin/mediamon:develop
+        imagePullPolicy: Always
+        args:
+        - --services=/etc/mediamon/mediamon.yml
+        volumeMounts:
+        - name: mediamon-config
+          mountPath: "/etc/mediamon"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 20Mi
+          limits:
+            memory: 40Mi
+      volumes:
+        - name: mediamon-config
+          configMap:
+            name: mediamon-config
