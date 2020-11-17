@@ -1,34 +1,28 @@
-import json
 from mediamon.xxxarr import MonitorProbe
-from tests.utils import FakeResponse
+from tests.utils import APIStub
 
 sonarr_test_files = {
-    'api/system/status': 'samples/sonarr_version.json',
-    'api/calendar': 'samples/sonarr_calendar.json',
-    'api/queue': 'samples/sonarr_queue.json',
-    'api/series': 'samples/sonarr_series.json',
+    'api/system/status': {'filename': 'samples/sonarr_version.json'},
+    'api/calendar': {'filename': 'samples/sonarr_calendar.json'},
+    'api/queue': {'filename': 'samples/sonarr_queue.json'},
+    'api/series': {'filename': 'samples/sonarr_series.json'},
 }
 
 radarr_test_files = {
-    'api/system/status': 'samples/radarr_version.json',
-    'api/calendar': 'samples/radarr_calendar.json',
-    'api/queue': 'samples/radarr_queue.json',
-    'api/movie': 'samples/radarr_movie.json',
+    'api/system/status': {'filename': 'samples/radarr_version.json'},
+    'api/calendar': {'filename': 'samples/radarr_calendar.json'},
+    'api/queue': {'filename': 'samples/radarr_queue.json'},
+    'api/movie': {'filename': 'samples/radarr_movie.json'},
 }
 
 
-# TODO: align plex/xxxarr stubbing approaches
-class MonitorTestProbe(MonitorProbe):
+class MonitorTestProbe(APIStub, MonitorProbe):
     def __init__(self, host, name, api_key, testfiles=None):
-        self.testfiles = testfiles if testfiles is not None else dict()
-        super().__init__(host, name, api_key)
+        APIStub.__init__(self, testfiles)
+        MonitorProbe.__init__(self, host, name, api_key)
 
-    def get(self, endpoint=None, headers=None, body=None, params=None):
-        if endpoint in self.testfiles:
-            with open(self.testfiles[endpoint], 'r') as f:
-                return FakeResponse(200, {}, json.load(f))
-        else:
-            return FakeResponse(404, {}, '')
+    def _login(self):
+        return True
 
 
 def test_sonarr():

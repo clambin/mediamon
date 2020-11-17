@@ -15,7 +15,7 @@ class APIStub:
     def __init__(self, testfiles=None):
         self.testfiles = testfiles if testfiles is not None else dict()
 
-    def call(self, endpoint, headers=None):
+    def _call(self, endpoint, headers=None):
         if endpoint in self.testfiles:
             with open(self.testfiles[endpoint]['filename'], 'r') as f:
                 content = f.read()

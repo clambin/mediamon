@@ -24,7 +24,7 @@ class MonitorProbe(APIProbe):
         logging.debug(f'{self.name}: {output}')
         metrics.report(output, self.name)
 
-    def call(self, endpoint):
+    def _call(self, endpoint):
         result = None
         try:
             headers = {'X-Api-Key': self.api_key}
@@ -39,6 +39,15 @@ class MonitorProbe(APIProbe):
         except requests.exceptions.RequestException as err:
             logging.warning(f'Failed to call "{self.url}": "{err}')
         self.connecting = False
+        return result
+
+    def call(self, endpoint):
+        if result := self._call(endpoint):
+            if not self.connecting:
+                logging.info(f'Connection with {self.name} re-established')
+                self.connecting = True
+        else:
+            self.connecting = False
         return result
 
     def measure_calendar(self):
