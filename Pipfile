@@ -13,7 +13,7 @@ flake8 = "*"
 
 [packages]
 requests = "*"
-pimetrics = "*"
+pimetrics = "==0.4.0"
 prometheus-client = "*"
 xmltodict = "*"
 pyyaml = "*"

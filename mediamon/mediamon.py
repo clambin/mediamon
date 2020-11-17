@@ -56,8 +56,6 @@ def initialise(config):
 
     if len(scheduler.scheduled_items) == 0:
         logging.error('No services defined')
-        # TODO: fix this in pimetrics
-        scheduler.min_interval = 5
 
     return scheduler
 

@@ -1,6 +1,10 @@
 name: Build
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - develop
 
 jobs:
   test:
@@ -15,13 +19,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install pipenv
         pipenv install --dev
-    - name: Lint with flake8
-      run: |
-        pipenv run flake8 --max-line-length 120
-    - name: SAST
-      run: |
-        pipenv run safety check
-        pipenv run bandit -r -x ./tests .
     - name: pytest
       run: |
         cd tests && pipenv run pipenv run pytest --cov=.. --cov-report=xml
