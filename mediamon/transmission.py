@@ -22,26 +22,33 @@ class TransmissionProbe(APIProbe):
             'version': output['version'],
         }
 
-    def call(self, method):
+    def _call(self, method):
         try:
             headers = {'X-Transmission-Session-Id': self.api_key}
             body = {"method": method}
             response = self.post(endpoint='transmission/rpc', headers=headers, body=body)
             if response.status_code == 200:
-                if not self.connecting:
-                    logging.info('Connection with Transmission re-established')
-                    self.connecting = True
-                return response.json()['arguments']
-            if response.status_code == 409:
+                return response.json()
+            elif response.status_code == 409:
                 try:
                     self.api_key = response.headers['X-Transmission-Session-Id']
-                    return self.call(method)
+                    return self._call(method)
                 except KeyError:
                     logging.warning('Could not get new X-Transmission-Session-Id')
             else:
                 logging.warning(f'Transmission call failed: {response.status_code}')
         except requests.exceptions.RequestException as err:
             logging.warning(f'Transmission call failed: {err}')
+        return None
+
+    def call(self, method):
+        if response := self._call(method):
+            if 'arguments' in response:
+                if not self.connecting:
+                    logging.info('Connection with Transmission re-established')
+                    self.connecting = True
+                    return response['arguments']
+            logging.warning('Could not parse Transmission response: missing \'arguments\' payload')
         self.connecting = False
         return None
 
