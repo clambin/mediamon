@@ -34,7 +34,8 @@ class PlexProbe(APIProbe, AddressManager):
         self.users = set()
         self.modes = set()
 
-    def call(self, endpoint):
+    # FIXME: rework so we can test reconnecting logic in unittests
+    def _call(self, endpoint):
         first_server = None
         while self.address != first_server:
             try:
@@ -60,6 +61,9 @@ class PlexProbe(APIProbe, AddressManager):
             self.switch()
         logging.warning(f'{self.name}: no working servers found')
         return None
+
+    def call(self, endpoint):
+        return self._call(endpoint)
 
     def report(self, output):
         logging.debug(f'Reporting {output}')
@@ -199,7 +203,7 @@ class PlexServer:
             logging.warning(f'Failed to parse server list: {e}')
         return []
 
-    def call(self, url, headers):
+    def _call(self, url, headers):
         # separate method so we can stub the API in unittests
         try:
             response = requests.get(url, headers=headers)
@@ -211,6 +215,9 @@ class PlexServer:
         except requests.exceptions.ConnectionError as e:
             logging.warning(f'Failed to connect to {url}: {e}')
         return None
+
+    def call(self, url, headers):
+        return self._call(url, headers)
 
     def _get_servers(self):
         servers = []

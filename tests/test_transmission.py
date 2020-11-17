@@ -8,7 +8,7 @@ class TransmissionTestProbe(TransmissionProbe, APIStub):
         TransmissionProbe.__init__(self, '')
 
     def call(self, method):
-        output = APIStub.call(self, method)
+        output = APIStub._call(self, method)
         return output['arguments']
 
 

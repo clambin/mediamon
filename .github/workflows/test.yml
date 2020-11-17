@@ -1,0 +1,29 @@
+name: Test
+
+on:
+  push:
+    branches-ignore:
+      - master
+      - develop
+  pull_request_target:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pipenv install --dev
+    - name: Test with pytest
+      run: |
+        cd tests && pipenv run pipenv run pytest --cov=.. --cov-report=xml
+    - uses: codecov/codecov-action@v1
+      with:
+        file: tests/coverage.xml
+        token: ${{ secrets.CODECOV_TOKEN }}
