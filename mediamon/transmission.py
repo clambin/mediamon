@@ -43,11 +43,11 @@ class TransmissionProbe(APIProbe):
 
     def call(self, method):
         if response := self._call(method):
-            if 'arguments' in response:
+            if 'arguments' in response.keys():
                 if not self.connecting:
                     logging.info('Connection with Transmission re-established')
                     self.connecting = True
-                    return response['arguments']
+                return response['arguments']
             logging.warning('Could not parse Transmission response: missing \'arguments\' payload')
         self.connecting = False
         return None

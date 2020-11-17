@@ -2,14 +2,10 @@ from mediamon.transmission import TransmissionProbe
 from tests.utils import APIStub
 
 
-class TransmissionTestProbe(TransmissionProbe, APIStub):
+class TransmissionTestProbe(APIStub, TransmissionProbe):
     def __init__(self, test_files):
         APIStub.__init__(self, test_files)
         TransmissionProbe.__init__(self, '')
-
-    def call(self, method):
-        output = APIStub._call(self, method)
-        return output['arguments']
 
 
 testfiles = {
