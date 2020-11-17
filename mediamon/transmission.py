@@ -48,7 +48,7 @@ class TransmissionProbe(APIProbe):
                     logging.info('Connection with Transmission re-established')
                     self.connecting = True
                     return response['arguments']
-            logging.warning(f'Could not parse Transmission response: missing \'arguments\' payload')
+            logging.warning('Could not parse Transmission response: missing \'arguments\' payload')
         self.connecting = False
         return None
 
