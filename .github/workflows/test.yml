@@ -1,10 +1,11 @@
-name: Push
+name: Test
 
 on:
   push:
     branches-ignore:
       - master
       - develop
+  pull_request_target:
 
 jobs:
   test:
