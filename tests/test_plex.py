@@ -65,7 +65,7 @@ plex_responses = {
 
 
 def test_plexprobe():
-    probe = PlexTestProbe('', '', '', plex_responses)
+    probe = PlexTestProbe('', 'Plex', ['foo', 'bar'], plex_responses)
     probe.run()
     measured = probe.measured()
     assert measured == {

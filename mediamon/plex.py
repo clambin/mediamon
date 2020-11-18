@@ -16,7 +16,9 @@ class AddressManager:
 
     @property
     def address(self):
-        return self.addresses[self.address_index]
+        if self.addresses and len(self.addresses) > 0:
+            return self.addresses[self.address_index]
+        return None
 
     def switch(self):
         self.address_index = (self.address_index + 1) % len(self.addresses)
@@ -46,7 +48,7 @@ class PlexProbe(APIProbe, AddressManager):
                     if self.healthy is False:
                         logging.info(f'{self.name}: connection established on {self.address}')
                         self.healthy = True
-                    return response.json()
+                    return response
                 else:
                     logging.warning(f'{self.name}: failed to get data from {self.address}')
             except requests.exceptions.ConnectionError as e:
