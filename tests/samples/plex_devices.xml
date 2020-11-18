@@ -3,13 +3,10 @@
   <Device name="plexmon" publicAddress="" product="plexmon" productVersion="1.0" platform="" platformVersion="" device="" model="" vendor="" provides="" clientIdentifier="plexmon-v1.0" version="1.0" id="" token="" createdAt="" lastSeenAt="" screenResolution="" screenDensity=""></Device>
   <Device name="Chrome" publicAddress="" product="Plex Web" productVersion="4.30.2" platform="Chrome" platformVersion="83.0" device="OSX" model="bundled" vendor="" provides="" clientIdentifier="" version="4.30.2" id="" token="" createdAt="" lastSeenAt="" screenResolution="" screenDensity=""></Device>
   <Device name="Plex Server 1" publicAddress="" product="Plex Media Server" productVersion="1.19.5.3112-b23ab3896" platform="Linux" platformVersion="5.4.51-v7l+" device="Docker Container (LinuxServer.io)" model="armv7l" vendor="Docker" provides="server" clientIdentifier="" version="" id="" token="" createdAt="" lastSeenAt="" screenResolution="" screenDensity="">
-    <Connection uri="http://192.168.0.10:32400"/>
-    <Connection uri="http://10.0.6.34:32400"/>
-    <Connection uri="http://172.18.0.8:32400"/>
-    <Connection uri="http://10.0.8.22:32400"/>
-    <Connection uri="http://10.0.0.54:32400"/>
+    <Connection uri="http://127.0.0.1:32400"/>
+    <Connection uri="http://127.0.0.1:32401"/>
   </Device>
   <Device name="Plex Server 2" publicAddress="" product="Plex Media Server" productVersion="1.19.5.3112-b23ab3896" platform="Linux" platformVersion="5.4.51-v7l+" device="Docker Container (LinuxServer.io)" model="armv7l" vendor="Docker" provides="server" clientIdentifier="" version="" id="" token="" createdAt="" lastSeenAt="" screenResolution="" screenDensity="">
-    <Connection uri="http://172.18.0.9:32400"/>
+    <Connection uri="http://127.0.0.1:32402"/>
   </Device>
 </MediaContainer>

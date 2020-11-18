@@ -1,5 +1,6 @@
 import argparse
-from mediamon.mediamon import initialise
+from mediamon.mediamon import initialise, mediamon
+from mediamon.configuration import get_configuration
 from mediamon.transmission import TransmissionProbe
 from mediamon.xxxarr import MonitorProbe
 from mediamon.plex import PlexServer
@@ -24,3 +25,9 @@ def test_initialise():
     assert scheduler.scheduled_items[2].probe.app == MonitorProbe.App.radarr
     assert type(scheduler.scheduled_items[2].probe) is MonitorProbe
     assert type(scheduler.scheduled_items[3].probe) is PlexServer
+
+
+def test_mediamon():
+    configuration = get_configuration(['--once'])
+    assert configuration.once is True
+    assert mediamon(configuration) == 0

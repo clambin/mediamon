@@ -1,16 +1,6 @@
 import json
 
 
-class FakeResponse:
-    def __init__(self, status_code, headers, text):
-        self.status_code = status_code
-        self.headers = headers
-        self.text = text
-
-    def json(self):
-        return self.text
-
-
 class APIStub:
     def __init__(self, testfiles=None):
         self.testfiles = testfiles if testfiles is not None else dict()

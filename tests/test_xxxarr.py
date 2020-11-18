@@ -21,9 +21,6 @@ class MonitorTestProbe(APIStub, MonitorProbe):
         APIStub.__init__(self, testfiles)
         MonitorProbe.__init__(self, host, name, api_key)
 
-    def _login(self):
-        return True
-
 
 def test_sonarr():
     probe = MonitorTestProbe('', MonitorProbe.App.sonarr, '', sonarr_test_files)
