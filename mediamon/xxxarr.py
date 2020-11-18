@@ -24,44 +24,35 @@ class MonitorProbe(APIProbe):
         logging.debug(f'{self.name}: {output}')
         metrics.report(output, self.name)
 
-    def _call(self, endpoint):
+    def apicall(self, endpoint):
         try:
-            headers = {'X-Api-Key': self.api_key}
-            response = self.get(endpoint=endpoint, headers=headers)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logging.error("%d - %s" % (response.status_code, response.reason))
+            if result := self.call(endpoint):
+                if not self.healthy:
+                    logging.info(f'Connection with {self.name} re-established')
+                    self.healthy = True
+                return result
         except requests.exceptions.RequestException as err:
             logging.warning(f'Failed to call "{self.url}": "{err}')
+        self.healthy = False
         return None
 
-    def call(self, endpoint):
-        if result := self._call(endpoint):
-            if not self.healthy:
-                logging.info(f'Connection with {self.name} re-established')
-                self.healthy = True
-        else:
-            self.healthy = False
-        return result
-
     def measure_calendar(self):
-        calendar = self.call('api/calendar')
+        calendar = self.apicall('api/calendar')
         if calendar:
             calendar = list(filter(lambda entry: not entry['hasFile'], calendar))
             return len(calendar)
         return 0
 
     def measure_queue(self):
-        queue = self.call('api/queue')
+        queue = self.apicall('api/queue')
         return len(queue) if queue else 0
 
     def measure_monitored(self):
         entries = None
         if self.app == self.App.sonarr:
-            entries = self.call('api/series')
+            entries = self.apicall('api/series')
         elif self.app == self.App.radarr:
-            entries = self.call('api/movie')
+            entries = self.apicall('api/movie')
         monitored = unmonitored = []
         if entries:
             monitored = list(filter(lambda entry: entry['monitored'], entries))
@@ -69,7 +60,7 @@ class MonitorProbe(APIProbe):
         return len(monitored), len(unmonitored)
 
     def measure_version(self):
-        entries = self.call('api/system/status')
+        entries = self.apicall('api/system/status')
         if entries and 'version' in entries:
             return entries['version']
         else:

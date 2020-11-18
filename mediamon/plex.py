@@ -34,26 +34,21 @@ class PlexProbe(APIProbe, AddressManager):
         self.users = set()
         self.modes = set()
 
-    # FIXME: rework so we can test reconnecting logic in unittests
-    def _call(self, endpoint):
+    def apicall(self, endpoint):
         first_server = None
         while self.address != first_server:
             try:
                 if first_server is None:
                     first_server = self.address
-                url = f'{self.address}{endpoint}'
-                response = requests.get(url, headers=self.headers)
-                if response.status_code == 200:
-                    logging.debug(response.headers)
-                    if 'X-Plex-Protocol' in response.headers:
-                        if self.healthy is False:
-                            logging.info(f'{self.name}: connection established on {self.address}')
-                            self.healthy = True
-                        return response.json()
-                    else:
-                        logging.info(f'{url} responded, but X-Plex-Protocol header missing. Ignoring server.')
+                self.url = self.address
+                response = self.call(endpoint, headers=self.headers)
+                if response:
+                    if self.healthy is False:
+                        logging.info(f'{self.name}: connection established on {self.address}')
+                        self.healthy = True
+                    return response.json()
                 else:
-                    logging.warning(f'{self.name}: received {response.status_code} - {response.reason}')
+                    logging.warning(f'{self.name}: failed to get data from {self.address}')
             except requests.exceptions.ConnectionError as e:
                 logging.warning(f'{self.name}: failed to connect to {self.address}. {e}')
             logging.warning(f'{self.name}: moving to next server')
@@ -61,9 +56,6 @@ class PlexProbe(APIProbe, AddressManager):
             self.switch()
         logging.warning(f'{self.name}: no working servers found')
         return None
-
-    def call(self, endpoint):
-        return self._call(endpoint)
 
     def report(self, output):
         logging.debug(f'Reporting {output}')
@@ -203,28 +195,29 @@ class PlexServer:
             logging.warning(f'Failed to parse server list: {e}')
         return []
 
-    def _call(self, url, headers):
+    def call(self, url, headers):
         # separate method so we can stub the API in unittests
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            logging.debug(response.content)
+            return response.content
+        else:
+            logging.error(f'Failed to get server list from plex.tv: {response.status_code} - {response.reason}')
+        return None
+
+    def apicall(self, url, headers):
         try:
-            response = requests.get(url, headers=headers)
-            if response.status_code == 200:
-                logging.debug(response.content)
-                return response.content
-            else:
-                logging.error(f'Failed to get server list from plex.tv: {response.status_code} - {response.reason}')
+            return self.call(url, headers)
         except requests.exceptions.ConnectionError as e:
             logging.warning(f'Failed to connect to {url}: {e}')
         return None
-
-    def call(self, url, headers):
-        return self._call(url, headers)
 
     def _get_servers(self):
         servers = []
         if self.authtoken or self._login():
             headers = self.base_headers
             headers['X-Plex-Token'] = self.authtoken
-            if response := self.call('https://plex.tv/devices.xml', headers=headers):
+            if response := self.apicall('https://plex.tv/devices.xml', headers=headers):
                 servers = self._parse_servers(response)
         return servers
 

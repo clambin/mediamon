@@ -22,17 +22,17 @@ class TransmissionProbe(APIProbe):
             'version': output['version'],
         }
 
-    def _call(self, method):
+    def call(self, endpoint=None, headers=None, body=None, params=None, method=None):
         try:
             headers = {'X-Transmission-Session-Id': self.api_key}
-            body = {"method": method}
+            body = {"method": endpoint}
             response = self.post(endpoint='transmission/rpc', headers=headers, body=body)
             if response.status_code == 200:
                 return response.json()
             elif response.status_code == 409:
                 try:
                     self.api_key = response.headers['X-Transmission-Session-Id']
-                    return self._call(method)
+                    return self.call(endpoint)
                 except KeyError:
                     logging.warning('Could not get new X-Transmission-Session-Id')
             else:
@@ -41,8 +41,8 @@ class TransmissionProbe(APIProbe):
             logging.warning(f'Transmission call failed: {err}')
         return None
 
-    def call(self, method):
-        if response := self._call(method):
+    def apicall(self, endpoint):
+        if response := self.call(endpoint):
             if 'arguments' in response:
                 if not self.healthy:
                     logging.info('Connection with Transmission re-established')
@@ -53,7 +53,7 @@ class TransmissionProbe(APIProbe):
         return None
 
     def measure_stats(self):
-        stats = self.call('session-stats')
+        stats = self.apicall('session-stats')
         return {
             'active_torrent_count': stats['activeTorrentCount'] if stats else 0,
             'paused_torrent_count': stats['pausedTorrentCount'] if stats else 0,
@@ -62,7 +62,7 @@ class TransmissionProbe(APIProbe):
         }
 
     def measure_version(self):
-        stats = self.call('session-get')
+        stats = self.apicall('session-get')
         return stats['version'] if stats else 0
 
     def measure(self):
