@@ -15,6 +15,7 @@ def initialise(config):
         try:
             scheduler.register(
                 TransmissionProbe(config.services['transmission']['host']),
+                # TODO: make these part of services.yml
                 30
             )
         except KeyError as e:
