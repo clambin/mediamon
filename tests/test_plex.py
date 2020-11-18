@@ -102,16 +102,16 @@ def test_plexserver():
     assert set([probe.name for probe in probes]) == {'Plex Server 1', 'Plex Server 2'}
     assert probes[0].name == 'Plex Server 1'
     assert probes[0].addresses == [
-            'http://192.168.0.10:32400',
-            'http://10.0.6.34:32400',
-            'http://172.18.0.8:32400',
-            'http://10.0.8.22:32400',
-            'http://10.0.0.54:32400'
-        ]
+        'http://192.168.0.10:32400',
+        'http://10.0.6.34:32400',
+        'http://172.18.0.8:32400',
+        'http://10.0.8.22:32400',
+        'http://10.0.0.54:32400'
+    ]
     assert probes[1].name == 'Plex Server 2'
     assert probes[1].addresses == [
-            'http://172.18.0.9:32400'
-        ]
+        'http://172.18.0.9:32400'
+    ]
     oldprobes = set(probes)
     probes[1].healthy = False
     server._healthcheck()
