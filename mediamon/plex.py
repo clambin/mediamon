@@ -135,10 +135,10 @@ class PlexProbe(APIProbe, AddressManager):
         return ''
 
     def measure_sessions(self):
-        return PlexProbe.parse_sessions(self.call('/status/sessions'))
+        return PlexProbe.parse_sessions(self.apicall('/status/sessions'))
 
     def measure_version(self):
-        return PlexProbe.parse_version(self.call('/identity'))
+        return PlexProbe.parse_version(self.apicall('/identity'))
 
     def measure(self):
         return {
@@ -196,7 +196,6 @@ class PlexServer:
         return []
 
     def call(self, url, headers):
-        # separate method so we can stub the API in unittests
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             logging.debug(response.content)

@@ -26,7 +26,7 @@ class MonitorProbe(APIProbe):
 
     def apicall(self, endpoint):
         try:
-            if result := self.call(endpoint):
+            if result := self.call(endpoint, headers={'X-Api-Key': self.api_key}):
                 if not self.healthy:
                     logging.info(f'Connection with {self.name} re-established')
                     self.healthy = True
