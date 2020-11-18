@@ -28,9 +28,9 @@ class MonitorTestProbe(APIStub, MonitorProbe):
 def test_sonarr():
     probe = MonitorTestProbe('', MonitorProbe.App.sonarr, '', sonarr_test_files)
     assert probe.name == 'sonarr'
-    probe.connecting = False
+    probe.healthy = False
     probe.run()
-    assert probe.connecting is True
+    assert probe.healthy is True
     measured = probe.measured()
     assert measured
     assert measured['xxxarr_calendar'] == 1
@@ -43,9 +43,9 @@ def test_sonarr():
 def test_radarr():
     probe = MonitorTestProbe('', MonitorProbe.App.radarr, '', radarr_test_files)
     assert probe.name == 'radarr'
-    probe.connecting = False
+    probe.healthy = False
     probe.run()
-    assert probe.connecting is True
+    assert probe.healthy is True
     measured = probe.measured()
     assert measured
     assert measured['xxxarr_calendar'] == 0

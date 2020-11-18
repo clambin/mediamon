@@ -14,7 +14,7 @@ class MonitorProbe(APIProbe):
         super().__init__(f'http://{host}/')
         self.api_key = api_key
         self.app = app
-        self.connecting = True
+        self.healthy = True
 
     @property
     def name(self):
@@ -25,29 +25,24 @@ class MonitorProbe(APIProbe):
         metrics.report(output, self.name)
 
     def _call(self, endpoint):
-        result = None
         try:
             headers = {'X-Api-Key': self.api_key}
             response = self.get(endpoint=endpoint, headers=headers)
             if response.status_code == 200:
-                if not self.connecting:
-                    logging.info(f'Connection with {self.name} re-established')
-                    self.connecting = True
                 return response.json()
             else:
                 logging.error("%d - %s" % (response.status_code, response.reason))
         except requests.exceptions.RequestException as err:
             logging.warning(f'Failed to call "{self.url}": "{err}')
-        self.connecting = False
-        return result
+        return None
 
     def call(self, endpoint):
         if result := self._call(endpoint):
-            if not self.connecting:
+            if not self.healthy:
                 logging.info(f'Connection with {self.name} re-established')
-                self.connecting = True
+                self.healthy = True
         else:
-            self.connecting = False
+            self.healthy = False
         return result
 
     def measure_calendar(self):

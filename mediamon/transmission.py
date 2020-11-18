@@ -8,7 +8,7 @@ class TransmissionProbe(APIProbe):
     def __init__(self, host):
         super().__init__(f'http://{host}/')
         self.api_key = ''
-        self.connecting = True
+        self.healthy = True
 
     def report(self, output):
         metrics.report(output, 'transmission')
@@ -36,20 +36,20 @@ class TransmissionProbe(APIProbe):
                 except KeyError:
                     logging.warning('Could not get new X-Transmission-Session-Id')
             else:
-                logging.warning(f'Transmission call failed: {response.status_code}')
+                logging.warning(f'Transmission call failed: {response.status_code} - {response.reason}')
         except requests.exceptions.RequestException as err:
             logging.warning(f'Transmission call failed: {err}')
         return None
 
     def call(self, method):
         if response := self._call(method):
-            if 'arguments' in response.keys():
-                if not self.connecting:
+            if 'arguments' in response:
+                if not self.healthy:
                     logging.info('Connection with Transmission re-established')
-                    self.connecting = True
+                    self.healthy = True
                 return response['arguments']
             logging.warning('Could not parse Transmission response: missing \'arguments\' payload')
-        self.connecting = False
+        self.healthy = False
         return None
 
     def measure_stats(self):
