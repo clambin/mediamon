@@ -149,8 +149,9 @@ class PlexProbe(APIProbe, AddressManager):
         }
 
 
-class PlexServer:
+class PlexServer(APIProbe):
     def __init__(self, username, password):
+        super().__init__('https://plex.tv')
         self.authtext = f'user%5Blogin%5D={username}&user%5Bpassword%5D={password}'
         self.base_headers = {
             'X-Plex-Product': 'mediamon',
@@ -161,20 +162,43 @@ class PlexServer:
         self.authtoken = None
         self.probes = []
 
+    def measure(self):
+        raise AssertionError('should never be called')
+
+    def call(self, endpoint=None, headers=None, body=None, params=None, method=APIProbe.Method.GET):
+        try:
+            if method == APIProbe.Method.GET:
+                response = self.get(endpoint=endpoint, headers=headers, body=body, params=params)
+                if response.status_code == 200:
+                    return response.content
+            else:
+                # FIXME: extend APIProbe to use data rather than json to post content?
+                response = requests.post(f'{self.url}{endpoint}', headers=headers, data=body, params=params)
+                if response.status_code == 201:
+                    return response.content
+            logging.error("%d - %s" % (response.status_code, response.reason))
+        except requests.exceptions.RequestException as err:
+            logging.warning(f'Failed to call "{self.url}": "{err}')
+        return None
+
+    def apicall(self, endpoint, headers=None, body=None, method=APIProbe.Method.GET):
+        try:
+            return self.call(endpoint, headers=headers, body=body, method=method)
+        except requests.exceptions.ConnectionError as e:
+            logging.warning(f'Failed to connect to {self.url}{endpoint}: {e}')
+        return None
+
     def _login(self):
         try:
-            response = requests.post('https://plex.tv/users/sign_in.xml',
-                                     headers=self.base_headers,
-                                     data=self.authtext)
-            if response.status_code == 201:
+            content = self.apicall('/users/sign_in.xml', headers=self.base_headers, body=self.authtext,
+                                   method=APIProbe.Method.POST)
+            if content:
                 try:
-                    result = xmltodict.parse(response.content, response.encoding)
+                    result = xmltodict.parse(content, 'UTF-8')
                     self.authtoken = result['user']['@authenticationToken']
                     return True
                 except KeyError as e:
                     logging.error(f'Could not parse login response: {e}')
-            else:
-                logging.error(f'Failed to log in to plex.tv: {response.status_code} - {response.reason}')
         except requests.exceptions.ConnectionError as e:
             logging.warning(f'Failed to connect to plex.tv: {e}')
         return False
@@ -197,29 +221,14 @@ class PlexServer:
             logging.warning(f'Failed to parse server list: {e}')
         return []
 
-    def call(self, url, headers):
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            logging.debug(response.content)
-            return response.content
-        else:
-            logging.error(f'Failed to get server list from plex.tv: {response.status_code} - {response.reason}')
-        return None
-
-    def apicall(self, url, headers):
-        try:
-            return self.call(url, headers)
-        except requests.exceptions.ConnectionError as e:
-            logging.warning(f'Failed to connect to {url}: {e}')
-        return None
-
     def _get_servers(self):
         servers = []
         if self.authtoken or self._login():
             headers = self.base_headers
             headers['X-Plex-Token'] = self.authtoken
-            if response := self.apicall('https://plex.tv/devices.xml', headers=headers):
-                servers = self._parse_servers(response)
+            content = self.apicall('/devices.xml', headers=headers)
+            if content:
+                servers = self._parse_servers(content)
         return servers
 
     def _make_probes(self):
