@@ -79,7 +79,11 @@ def test_plexprobe():
 
 
 plex_server_responses = {
-    'https://plex.tv/devices.xml': {
+    '/users/sign_in.xml': {
+        'filename': 'samples/plex_sign_in.xml',
+        'raw': True,
+    },
+    '/devices.xml': {
         'filename': 'samples/plex_devices.xml',
         'raw': True,
     }
@@ -91,13 +95,11 @@ class PlexTestServer(APIStub, PlexServer):
         APIStub.__init__(self, testfiles)
         PlexServer.__init__(self, username, password)
 
-    def _login(self):
-        return True
-
 
 def test_plexserver():
     server = PlexTestServer('', '', plex_server_responses)
     server.run()
+    assert server.authtoken == '!!!!!!!!!!!!!!!!!!!!'
     assert len(server.probes) == 2
     assert set([probe.name for probe in server.probes]) == {'Plex Server 1', 'Plex Server 2'}
     assert server.probes[0].name == 'Plex Server 1'
