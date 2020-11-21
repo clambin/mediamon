@@ -15,8 +15,7 @@ def initialise(config):
         try:
             scheduler.register(
                 TransmissionProbe(config.services['transmission']['host']),
-                # TODO: make these part of services.yml
-                30
+                config.services['transmission']['interval']
             )
         except KeyError as e:
             logging.warning(f'transmission config missing {e}. Skipping')
@@ -29,7 +28,7 @@ def initialise(config):
                     MonitorProbe.App.sonarr,
                     config.services['sonarr']['apikey']
                 ),
-                300
+                config.services['sonarr']['interval']
             )
         except KeyError as e:
             logging.warning(f'sonarr config missing {e}. Skipping')
@@ -41,7 +40,7 @@ def initialise(config):
                     config.services['radarr']['host'],
                     MonitorProbe.App.radarr,
                     config.services['radarr']['apikey']),
-                300
+                config.services['radarr']['interval']
             )
         except KeyError as e:
             logging.warning(f'radarr config missing {e}. Skipping')
@@ -50,7 +49,7 @@ def initialise(config):
         try:
             scheduler.register(
                 PlexServer(config.services['plex']['username'], config.services['plex']['password']),
-                30
+                config.services['plex']['interval']
             )
         except KeyError as e:
             logging.warning(f'plex config missing {e}. Skipping')
