@@ -35,20 +35,22 @@ def get_configuration(args=None):
                         help='Use stubs (for debugging only')
     parser.add_argument('--debug', action='store_true',
                         help='Set logging level to debug')
-    parser.add_argument('--services', default='',
+    parser.add_argument('--file', '-f', default='',
                         help='Service configuration file')
     config = parser.parse_args(args)
 
-    services_filename = config.services
     config.services = {}
-    if services_filename:
+    if config.file:
         try:
-            with open(services_filename, 'r') as f:
+            with open(config.file, 'r') as f:
                 config.services = yaml.safe_load(f)
         except FileNotFoundError as e:
             logging.critical(f'Could not open services file: {e}')
         except yaml.scanner.ScannerError as e:
             logging.critical(f'Could not parse services file: {e}')
+        for service in ['transmission', 'sonarr', 'radarr', 'plex']:
+            if service in config.services and 'interval' not in config.services[service]:
+                config.services[service]['interval'] = config.interval
 
     return config
 
