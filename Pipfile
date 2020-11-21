@@ -13,10 +13,11 @@ flake8 = "*"
 
 [packages]
 requests = "*"
-pimetrics = "==0.4.1"
+pimetrics = "==0.4.4"
 prometheus-client = "*"
 xmltodict = "*"
 pyyaml = "*"
+setuptools = "==50.3.2"
 
 [requires]
 python_version = "3.9"

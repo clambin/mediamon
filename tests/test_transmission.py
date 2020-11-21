@@ -1,5 +1,5 @@
 from mediamon.transmission import TransmissionProbe
-from tests.utils import APIStub
+from pimetrics.stubs import APIStub
 
 
 class TransmissionTestProbe(APIStub, TransmissionProbe):

@@ -1,7 +1,7 @@
 import json
 
 from mediamon.plex import PlexProbe, AddressManager, PlexServer
-from tests.utils import APIStub
+from pimetrics.stubs import APIStub
 
 
 def test_address_manager():

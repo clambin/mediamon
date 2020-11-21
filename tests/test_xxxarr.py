@@ -1,5 +1,6 @@
 from mediamon.xxxarr import MonitorProbe
-from tests.utils import APIStub
+from pimetrics.stubs import APIStub
+
 
 sonarr_test_files = {
     'api/system/status': {'filename': 'samples/sonarr_version.json'},

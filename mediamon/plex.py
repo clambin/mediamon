@@ -151,7 +151,7 @@ class PlexProbe(APIProbe, AddressManager):
 
 class PlexServer(APIProbe):
     def __init__(self, username, password):
-        super().__init__('https://plex.tv')
+        super().__init__('https://plex.tv', is_json=False)
         self.authtext = f'user%5Blogin%5D={username}&user%5Bpassword%5D={password}'
         self.base_headers = {
             'X-Plex-Product': 'mediamon',
@@ -165,42 +165,15 @@ class PlexServer(APIProbe):
     def measure(self):
         raise AssertionError('should never be called')
 
-    def call(self, endpoint=None, headers=None, body=None, params=None, method=APIProbe.Method.GET):
-        try:
-            if method == APIProbe.Method.GET:
-                response = self.get(endpoint=endpoint, headers=headers, body=body, params=params)
-                if response.status_code == 200:
-                    return response.content
-            else:
-                # FIXME: extend APIProbe to use data rather than json to post content?
-                response = requests.post(f'{self.url}{endpoint}', headers=headers, data=body, params=params)
-                if response.status_code == 201:
-                    return response.content
-            logging.error("%d - %s" % (response.status_code, response.reason))
-        except requests.exceptions.RequestException as err:
-            logging.warning(f'Failed to call "{self.url}": "{err}')
-        return None
-
-    def apicall(self, endpoint, headers=None, body=None, method=APIProbe.Method.GET):
-        try:
-            return self.call(endpoint, headers=headers, body=body, method=method)
-        except requests.exceptions.ConnectionError as e:
-            logging.warning(f'Failed to connect to {self.url}{endpoint}: {e}')
-        return None
-
     def _login(self):
-        try:
-            content = self.apicall('/users/sign_in.xml', headers=self.base_headers, body=self.authtext,
-                                   method=APIProbe.Method.POST)
-            if content:
-                try:
-                    result = xmltodict.parse(content, 'UTF-8')
-                    self.authtoken = result['user']['@authenticationToken']
-                    return True
-                except KeyError as e:
-                    logging.error(f'Could not parse login response: {e}')
-        except requests.exceptions.ConnectionError as e:
-            logging.warning(f'Failed to connect to plex.tv: {e}')
+        if content := self.call('/users/sign_in.xml', headers=self.base_headers, body=self.authtext,
+                                method=APIProbe.Method.POST):
+            try:
+                result = xmltodict.parse(content, 'UTF-8')
+                self.authtoken = result['user']['@authenticationToken']
+                return True
+            except KeyError as e:
+                logging.error(f'Could not parse login response: {e}')
         return False
 
     @staticmethod
@@ -222,14 +195,12 @@ class PlexServer(APIProbe):
         return []
 
     def _get_servers(self):
-        servers = []
         if self.authtoken or self._login():
             headers = self.base_headers
             headers['X-Plex-Token'] = self.authtoken
-            content = self.apicall('/devices.xml', headers=headers)
-            if content:
-                servers = self._parse_servers(content)
-        return servers
+            if content := self.call('/devices.xml', headers=headers):
+                return self._parse_servers(content)
+        return []
 
     def _make_probes(self):
         servers = self._get_servers()
