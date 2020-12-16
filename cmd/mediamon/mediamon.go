@@ -49,9 +49,6 @@ func main() {
 		os.Exit(3)
 	}
 
-	// TODO: remove this as it contains secure information
-	log.Debugf("services: %v", cfg.services)
-
 	log.Info("media monitor v" + version.BuildVersion)
 
 	// Prometheus Metrics
