@@ -35,7 +35,7 @@ func TestProbe_Run(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, float64(1), count)
 
-		count, ok = metrics.LoadValue("xxxarr_queue", application)
+		count, ok = metrics.LoadValue("xxxarr_queued", application)
 		assert.True(t, ok)
 		assert.Equal(t, float64(2), count)
 

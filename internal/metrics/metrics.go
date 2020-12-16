@@ -29,8 +29,8 @@ var (
 			Name: "mediaserver_calendar_count",
 			Help: "Number of upcoming episodes / movies",
 		}, []string{"server"}),
-		"xxxarr_queue": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "mediaserver_queue_count",
+		"xxxarr_queued": promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "mediaserver_queued_count",
 			Help: "Number of queued torrents",
 		}, []string{"server"}),
 		"xxxarr_monitored": promauto.NewGaugeVec(prometheus.GaugeOpts{

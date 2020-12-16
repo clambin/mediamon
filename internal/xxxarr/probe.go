@@ -61,7 +61,7 @@ func (probe *Probe) Run() {
 	if count, err := probe.getQueue(); err != nil {
 		log.Warningf("could not get %s queue: %s", probe.application, err)
 	} else {
-		metrics.Publish("xxxarr_queue", float64(count), probe.application)
+		metrics.Publish("xxxarr_queued", float64(count), probe.application)
 	}
 
 	// Get monitored/unmonitored series / movies
