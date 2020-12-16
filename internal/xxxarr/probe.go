@@ -11,11 +11,13 @@ import (
 	"mediamon/internal/metrics"
 )
 
+// Probe to measure sonarr/radarr metrics
 type Probe struct {
 	client      *Client
 	application string
 }
 
+// NewProbe creates a new Probe
 func NewProbe(url string, apiKey string, application string) *Probe {
 	return NewProbeWithHTTPClient(&http.Client{}, url, apiKey, application)
 }
@@ -29,6 +31,8 @@ func isValid(application string) bool {
 	return false
 }
 
+// NewProbeWithHTTPClient creates a probe with a specified http.Client
+// Used to stub API calls during unit testing
 func NewProbeWithHTTPClient(client *http.Client, url string, apiKey string, application string) *Probe {
 	if !isValid(application) {
 		panic(errors.New("invalid application: " + application))
@@ -37,6 +41,7 @@ func NewProbeWithHTTPClient(client *http.Client, url string, apiKey string, appl
 	return &Probe{client: NewAPIWithHTTPClient(client, url, apiKey), application: application}
 }
 
+// Run the probe. Collect all requires metrics
 func (probe *Probe) Run() {
 	// Get the version
 	if version, err := probe.getVersion(); err != nil {

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 )
 
+// Config contains the different possible services for mediamon to monitor
 type Config struct {
 	Transmission struct {
 		URL      string
@@ -28,6 +29,7 @@ type Config struct {
 	}
 }
 
+// ParseConfigFile reads the configuration from the specified yaml file
 func ParseConfigFile(fileName string, config *Config) error {
 	content, err := ioutil.ReadFile(fileName)
 	if err == nil {
@@ -36,6 +38,7 @@ func ParseConfigFile(fileName string, config *Config) error {
 	return err
 }
 
+// ParseConfig reads the configuration from an in-memory buffer
 func ParseConfig(content []byte, config *Config) error {
 	return yaml.Unmarshal(content, config)
 }

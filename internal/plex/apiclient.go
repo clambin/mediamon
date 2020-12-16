@@ -11,7 +11,8 @@ import (
 	"net/http"
 )
 
-type APIClient struct {
+// Client to call the Plex APIs
+type Client struct {
 	httpClient *http.Client
 	url        string
 	username   string
@@ -19,11 +20,14 @@ type APIClient struct {
 	authToken  string
 }
 
-func NewAPIClient(httpClient *http.Client, url, username, password string) *APIClient {
-	return &APIClient{httpClient: httpClient, url: url, username: username, password: password}
+// NewAPIWithHTTPClient creates a new API Client
+func NewAPIWithHTTPClient(httpClient *http.Client, url, username, password string) *Client {
+	return &Client{httpClient: httpClient, url: url, username: username, password: password}
 }
 
-func (apiClient *APIClient) Call(endpoint string) ([]byte, error) {
+// Call calls a specific Transmission API endpoint
+// Business processing is done in the calling Probe function
+func (apiClient *Client) Call(endpoint string) ([]byte, error) {
 	if apiClient.authToken == "" {
 		if !apiClient.authenticate() {
 			return nil, errors.New("unable to sign in to plex.tv")
@@ -47,7 +51,9 @@ func (apiClient *APIClient) Call(endpoint string) ([]byte, error) {
 	return nil, err
 }
 
-func (apiClient *APIClient) authenticate() bool {
+// authenticate logs in to plex.tv and gets an authentication token
+// to be used for calls to the Plex server APIs
+func (apiClient *Client) authenticate() bool {
 	// TODO: there's three different places in the response where the authToken appears.
 	// Which is the officially supported version?
 	authResponse := struct {

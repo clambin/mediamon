@@ -8,18 +8,23 @@ import (
 	"net/http"
 )
 
+// Probe to measure Transmission metrics
 type Probe struct {
 	client *Client
 }
 
+// NewProbe creates a new Probe
 func NewProbe(url string) *Probe {
 	return NewProbeWithHTTPClient(&http.Client{}, url)
 }
 
+// NewProbeWithHTTPClient creates a probe with a specified http.Client
+// Used to stub API calls during unit testing
 func NewProbeWithHTTPClient(client *http.Client, url string) *Probe {
 	return &Probe{client: NewAPIWithHTTPClient(client, url)}
 }
 
+// Run the probe. Collect all requires metrics
 func (probe *Probe) Run() {
 	// Get the version
 	if version, err := probe.getVersion(); err != nil {

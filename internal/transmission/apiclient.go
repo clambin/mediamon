@@ -7,16 +7,20 @@ import (
 	"net/http"
 )
 
+// Client to call the Transmission APIs
 type Client struct {
 	client    *http.Client
 	url       string
 	sessionID string
 }
 
+// NewAPIWithHTTPClient creates a new API Client
 func NewAPIWithHTTPClient(client *http.Client, url string) *Client {
 	return &Client{client: client, url: url}
 }
 
+// Call calls a specific Transmission API endpoint
+// Business processing is done in the calling Probe function
 func (client *Client) Call(method string) ([]byte, error) {
 	if client.sessionID == "" {
 		if sessionID, err := client.getSessionID(); err == nil {

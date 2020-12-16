@@ -10,10 +10,12 @@ import (
 
 	"mediamon/internal/metrics"
 	"mediamon/internal/plex"
+
+	"mediamon/internal/httpstub"
 )
 
 func TestProbe_Run(t *testing.T) {
-	probe := plex.NewProbeWithHTTPClient(makeClient(), "", "user@example.com", "somepassword")
+	probe := plex.NewProbeWithHTTPClient(httpstub.NewTestClient(loopback), "", "user@example.com", "somepassword")
 
 	// log.SetLevel(log.DebugLevel)
 	probe.Run()
@@ -73,7 +75,7 @@ func TestProbe_Run(t *testing.T) {
 }
 
 func TestCachedUsers(t *testing.T) {
-	probe := plex.NewProbeWithHTTPClient(makeClient(), "", "user@example.com", "somepassword")
+	probe := plex.NewProbeWithHTTPClient(httpstub.NewTestClient(loopback), "", "user@example.com", "somepassword")
 
 	// log.SetLevel(log.DebugLevel)
 	probe.Run()
@@ -153,24 +155,60 @@ func TestCachedUsers(t *testing.T) {
 	}
 }
 
-// Stubbing the API Call
+// Server loopback function
 
-// RoundTripFunc .
-type RoundTripFunc func(req *http.Request) *http.Response
+func loopback(req *http.Request) *http.Response {
+	if req.URL.String() == "https://plex.tv/users/sign_in.xml" {
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			return &http.Response{
+				StatusCode: 500,
+				Status:     err.Error(),
+				Header:     nil,
+				Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+			}
+		}
+		if string(body) == `user%5Blogin%5D=user@example.com&user%5Bpassword%5D=somepassword` {
+			return &http.Response{
+				StatusCode: 201,
+				Header:     nil,
+				Body:       ioutil.NopCloser(bytes.NewBufferString(authResponse)),
+			}
+		}
+		return &http.Response{
+			StatusCode: 401,
+			Status:     "Unauthorized",
+			Header:     nil,
+			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+		}
 
-// RoundTrip .
-func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req), nil
-}
-
-//NewTestClient returns *http.Client with Transport replaced to avoid making real calls
-func NewTestClient(fn RoundTripFunc) *http.Client {
-	return &http.Client{
-		Transport: fn,
+	} else if req.URL.Path == "/identity" {
+		return &http.Response{
+			StatusCode: 200,
+			Header:     nil,
+			Body:       ioutil.NopCloser(bytes.NewBufferString(identityResponse)),
+		}
+	} else if req.URL.Path == "/status/sessions" {
+		return &http.Response{
+			StatusCode: 200,
+			Header:     nil,
+			Body:       ioutil.NopCloser(bytes.NewBufferString(sessionsResponse)),
+		}
+	}
+	return &http.Response{
+		StatusCode: 500,
+		Status:     "Not implemented",
+		Header:     nil,
+		Body:       ioutil.NopCloser(bytes.NewBufferString("")),
 	}
 }
 
 // Responses
+
+var (
+	// default session response answer
+	sessionsResponse = sessionsResponse1
+)
 
 const (
 	authResponse = `<?xml version="1.0" encoding="UTF-8"?>
@@ -277,58 +315,3 @@ const (
   }
 }`
 )
-
-var (
-	sessionsResponse = sessionsResponse1
-)
-
-// makeClient returns a stubbed covid.APIClient
-func makeClient() *http.Client {
-	header := make(http.Header)
-
-	return NewTestClient(func(req *http.Request) *http.Response {
-		if req.URL.String() == "https://plex.tv/users/sign_in.xml" {
-			body, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				return &http.Response{
-					StatusCode: 500,
-					Status:     err.Error(),
-					Header:     header,
-					Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-				}
-			}
-			if string(body) == `user%5Blogin%5D=user@example.com&user%5Bpassword%5D=somepassword` {
-				return &http.Response{
-					StatusCode: 201,
-					Header:     header,
-					Body:       ioutil.NopCloser(bytes.NewBufferString(authResponse)),
-				}
-			}
-			return &http.Response{
-				StatusCode: 401,
-				Status:     "Unauthorized",
-				Header:     header,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-			}
-
-		} else if req.URL.Path == "/identity" {
-			return &http.Response{
-				StatusCode: 200,
-				Header:     header,
-				Body:       ioutil.NopCloser(bytes.NewBufferString(identityResponse)),
-			}
-		} else if req.URL.Path == "/status/sessions" {
-			return &http.Response{
-				StatusCode: 200,
-				Header:     header,
-				Body:       ioutil.NopCloser(bytes.NewBufferString(sessionsResponse)),
-			}
-		}
-		return &http.Response{
-			StatusCode: 500,
-			Status:     "Not implemented",
-			Header:     header,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-		}
-	})
-}

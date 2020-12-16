@@ -2,13 +2,17 @@ package xxxarr_test
 
 import (
 	"bytes"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"mediamon/internal/metrics"
-	"mediamon/internal/xxxarr"
 	"net/http"
 	"testing"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+
+	"mediamon/internal/metrics"
+	"mediamon/internal/xxxarr"
+
+	"mediamon/internal/httpstub"
 )
 
 func TestProbe_InvalidProbe(t *testing.T) {
@@ -17,7 +21,7 @@ func TestProbe_InvalidProbe(t *testing.T) {
 
 func TestProbe_Run(t *testing.T) {
 	for _, application := range []string{"sonarr", "radarr"} {
-		probe := xxxarr.NewProbeWithHTTPClient(makeClient(), "http://example.com", "1234", application)
+		probe := xxxarr.NewProbeWithHTTPClient(httpstub.NewTestClient(loopback), "http://example.com", "1234", application)
 
 		log.SetLevel(log.DebugLevel)
 
@@ -45,20 +49,54 @@ func TestProbe_Run(t *testing.T) {
 	}
 }
 
-// Stubbing the API Call
+// Server loopback function
 
-// RoundTripFunc .
-type RoundTripFunc func(req *http.Request) *http.Response
-
-// RoundTrip .
-func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req), nil
-}
-
-//NewTestClient returns *http.Client with Transport replaced to avoid making real calls
-func NewTestClient(fn RoundTripFunc) *http.Client {
-	return &http.Client{
-		Transport: fn,
+func loopback(req *http.Request) *http.Response {
+	if req.Header.Get("X-Api-Key") != "1234" {
+		return &http.Response{
+			StatusCode: 409,
+			Status:     "No/invalid Application Key",
+			Header:     nil,
+			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+		}
+	}
+	switch req.URL.Path {
+	case "/api/system/status":
+		return &http.Response{
+			StatusCode: 200,
+			Header:     nil,
+			Body:       ioutil.NopCloser(bytes.NewBufferString(systemStatus)),
+		}
+	case "/api/calendar":
+		return &http.Response{
+			StatusCode: 200,
+			Header:     nil,
+			Body:       ioutil.NopCloser(bytes.NewBufferString(calendar)),
+		}
+	case "/api/queue":
+		return &http.Response{
+			StatusCode: 200,
+			Header:     nil,
+			Body:       ioutil.NopCloser(bytes.NewBufferString(queued)),
+		}
+	case "/api/series":
+		return &http.Response{
+			StatusCode: 200,
+			Header:     nil,
+			Body:       ioutil.NopCloser(bytes.NewBufferString(monitored)),
+		}
+	case "/api/movie":
+		return &http.Response{
+			StatusCode: 200,
+			Header:     nil,
+			Body:       ioutil.NopCloser(bytes.NewBufferString(monitored)),
+		}
+	default:
+		return &http.Response{
+			StatusCode: 404,
+			Header:     nil,
+			Body:       ioutil.NopCloser(bytes.NewBufferString(``)),
+		}
 	}
 }
 
@@ -81,55 +119,3 @@ const (
 
 	monitored = `[ { "monitored": true }, { "monitored": false }, { "monitored": true } ]`
 )
-
-// makeClient returns a stubbed covid.APIClient
-func makeClient() *http.Client {
-	return NewTestClient(func(req *http.Request) *http.Response {
-		if req.Header.Get("X-Api-Key") != "1234" {
-			return &http.Response{
-				StatusCode: 409,
-				Status:     "No/invalid Application Key",
-				Header:     make(http.Header),
-				Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-			}
-		}
-		switch req.URL.Path {
-		case "/api/system/status":
-			return &http.Response{
-				StatusCode: 200,
-				Header:     make(http.Header),
-				Body:       ioutil.NopCloser(bytes.NewBufferString(systemStatus)),
-			}
-		case "/api/calendar":
-			return &http.Response{
-				StatusCode: 200,
-				Header:     make(http.Header),
-				Body:       ioutil.NopCloser(bytes.NewBufferString(calendar)),
-			}
-		case "/api/queue":
-			return &http.Response{
-				StatusCode: 200,
-				Header:     make(http.Header),
-				Body:       ioutil.NopCloser(bytes.NewBufferString(queued)),
-			}
-		case "/api/series":
-			return &http.Response{
-				StatusCode: 200,
-				Header:     make(http.Header),
-				Body:       ioutil.NopCloser(bytes.NewBufferString(monitored)),
-			}
-		case "/api/movie":
-			return &http.Response{
-				StatusCode: 200,
-				Header:     make(http.Header),
-				Body:       ioutil.NopCloser(bytes.NewBufferString(monitored)),
-			}
-		default:
-			return &http.Response{
-				StatusCode: 404,
-				Header:     make(http.Header),
-				Body:       ioutil.NopCloser(bytes.NewBufferString(``)),
-			}
-		}
-	})
-}

@@ -2,18 +2,21 @@ package transmission_test
 
 import (
 	"bytes"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"mediamon/internal/metrics"
 	"net/http"
 	"testing"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+
+	"mediamon/internal/metrics"
 	"mediamon/internal/transmission"
+
+	"mediamon/internal/httpstub"
 )
 
 func TestProbe_Run(t *testing.T) {
-	probe := transmission.NewProbeWithHTTPClient(makeClient(), "http://example.com")
+	probe := transmission.NewProbeWithHTTPClient(httpstub.NewTestClient(loopback), "http://example.com")
 
 	log.SetLevel(log.DebugLevel)
 
@@ -39,20 +42,53 @@ func TestProbe_Run(t *testing.T) {
 	assert.Equal(t, float64(25), value)
 }
 
-// Stubbing the API Call
+// Server loopback function
 
-// RoundTripFunc .
-type RoundTripFunc func(req *http.Request) *http.Response
+func loopback(req *http.Request) *http.Response {
+	header := make(http.Header)
+	header.Set("X-Transmission-Session-Id", "1234")
 
-// RoundTrip .
-func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req), nil
-}
+	if req.Header.Get("X-Transmission-Session-Id") != "1234" {
+		return &http.Response{
+			StatusCode: 409,
+			Status:     "No Session ID",
+			Header:     header,
+			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+		}
+	}
 
-//NewTestClient returns *http.Client with Transport replaced to avoid making real calls
-func NewTestClient(fn RoundTripFunc) *http.Client {
-	return &http.Client{
-		Transport: fn,
+	body, err := ioutil.ReadAll(req.Body)
+
+	if err != nil {
+		return &http.Response{
+			StatusCode: 500,
+			Status:     err.Error(),
+			Header:     header,
+			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+		}
+	}
+
+	defer req.Body.Close()
+
+	if string(body) == `{ "method": "session-get" }` {
+		return &http.Response{
+			StatusCode: 200,
+			Header:     header,
+			Body:       ioutil.NopCloser(bytes.NewBufferString(sessionGet)),
+		}
+	} else if string(body) == `{ "method": "session-stats" }` {
+		return &http.Response{
+			StatusCode: 200,
+			Header:     make(http.Header),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(sessionStats)),
+		}
+	} else {
+		return &http.Response{
+			StatusCode: 404,
+			Status:     "Invalid method",
+			Header:     make(http.Header),
+			Body:       nil,
+		}
 	}
 }
 
@@ -161,45 +197,3 @@ const (
   "result": "success"
 }`
 )
-
-// makeClient returns a stubbed covid.APIClient
-func makeClient() *http.Client {
-	header := make(http.Header)
-	header.Set("X-Transmission-Session-Id", "1234")
-
-	return NewTestClient(func(req *http.Request) *http.Response {
-		if req.Header.Get("X-Transmission-Session-Id") != "1234" {
-			return &http.Response{
-				StatusCode: 409,
-				Status:     "No Session ID",
-				Header:     header,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-			}
-		}
-
-		body, err := ioutil.ReadAll(req.Body)
-
-		if err != nil {
-			return &http.Response{
-				StatusCode: 500,
-				Status:     err.Error(),
-				Header:     header,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-			}
-		}
-
-		if string(body) == "{ \"method\": \"session-get\" }" {
-			return &http.Response{
-				StatusCode: 200,
-				Header:     header,
-				Body:       ioutil.NopCloser(bytes.NewBufferString(sessionGet)),
-			}
-		} else {
-			return &http.Response{
-				StatusCode: 200,
-				Header:     make(http.Header),
-				Body:       ioutil.NopCloser(bytes.NewBufferString(sessionStats)),
-			}
-		}
-	})
-}

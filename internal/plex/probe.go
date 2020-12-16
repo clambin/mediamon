@@ -10,24 +10,29 @@ import (
 	"net/http"
 )
 
+// Probe to measure Plex metrics
 type Probe struct {
-	apiClient *APIClient
+	apiClient *Client
 	users     map[string]int
 	modes     map[string]int
 }
 
+// NewProbe creates a new Probe
 func NewProbe(url, username, password string) *Probe {
 	return NewProbeWithHTTPClient(&http.Client{}, url, username, password)
 }
 
+// NewProbeWithHTTPClient creates a probe with a specified http.Client
+// Used to stub API calls during unit testing
 func NewProbeWithHTTPClient(client *http.Client, url, username, password string) *Probe {
 	return &Probe{
-		apiClient: NewAPIClient(client, url, username, password),
+		apiClient: NewAPIWithHTTPClient(client, url, username, password),
 		users:     make(map[string]int),
 		modes:     make(map[string]int),
 	}
 }
 
+// Run the probe. Collect all requires metrics
 func (probe *Probe) Run() {
 	// Get the version
 	if version, err := probe.getVersion(); err != nil {
