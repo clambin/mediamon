@@ -104,6 +104,7 @@ func Init(port int) {
 func Publish(metric string, value float64, labels ...string) bool {
 	// FIXME: support unlabelled gauges
 	if gauge, ok := gauges[metric]; ok {
+		log.Debugf("%s(%s): %f", metric, labels, value)
 		gauge.WithLabelValues(labels...).Set(value)
 		SaveValue(metric, value, labels...)
 		return true
