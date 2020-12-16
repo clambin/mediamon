@@ -59,7 +59,6 @@ func (probe *Probe) getVersion() (string, error) {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
 		if err == nil {
-			log.Debugf("API call result: %v", stats)
 			return stats.MediaContainer.Version, nil
 		}
 	}
@@ -87,8 +86,6 @@ func (probe *Probe) getSessions() (map[string]int, map[string]int, int, float64,
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
 		if err == nil {
-			log.Debugf("API call result: %v", stats)
-
 			users := make(map[string]int, 0)
 			modes := make(map[string]int, 0)
 			transcoding := 0

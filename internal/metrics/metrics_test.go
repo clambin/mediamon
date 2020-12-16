@@ -16,3 +16,8 @@ func TestLoadValue(t *testing.T) {
 	loaded, ok = metrics.LoadValue("metric", "label1", "label3")
 	assert.False(t, ok)
 }
+
+func TestInit(t *testing.T) {
+	assert.NotPanics(t, func() { metrics.Init(8080) })
+	assert.Panics(t, func() { metrics.Init(8080) })
+}

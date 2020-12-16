@@ -37,10 +37,10 @@ func TestProbe_Run(t *testing.T) {
 		ok    bool
 		value float64
 	}{
-		{"foo", true, float64(1)},
-		{"bar", true, float64(1)},
-		{"snafu", true, float64(1)},
-		{"arya", false, float64(-1)},
+		{"foo", true, 1.0},
+		{"bar", true, 1.0},
+		{"snafu", true, 2.0},
+		{"ufans", false, -1.0},
 	} {
 		userCount, ok := metrics.LoadValue("plex_session_count", testCase.user)
 		assert.Equal(t, testCase.ok, ok, testCase.user)
@@ -51,31 +51,31 @@ func TestProbe_Run(t *testing.T) {
 
 	// Test transcoder
 	for _, testCase := range []struct {
-		user  string
+		mode  string
 		ok    bool
 		value float64
 	}{
-		{"direct", true, float64(1)},
-		{"copy", true, float64(1)},
-		{"transcode", true, float64(1)},
-		{"snafu", false, float64(-1)},
+		{"direct", true, 1.0},
+		{"copy", true, 1.0},
+		{"transcode", true, 2.0},
+		{"snafu", false, -1.0},
 	} {
-		modeCount, ok := metrics.LoadValue("plex_transcoder_type_count", testCase.user)
-		assert.Equal(t, testCase.ok, ok, testCase.user)
+		modeCount, ok := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
+		assert.Equal(t, testCase.ok, ok, testCase.mode)
 		if ok {
-			assert.Equal(t, testCase.value, modeCount, testCase.user)
+			assert.Equal(t, testCase.value, modeCount, testCase.mode)
 		}
 	}
 
 	// Active transcoders
 	encodingCount, ok := metrics.LoadValue("plex_transcoder_encoding_count", "plex")
 	assert.True(t, ok)
-	assert.Equal(t, float64(2), encodingCount)
+	assert.Equal(t, 2.0, encodingCount)
 
 	// Total encoding speed
 	encodingSpeed, ok := metrics.LoadValue("plex_transcoder_speed_total", "plex")
 	assert.True(t, ok)
-	assert.Equal(t, float64(3.1), encodingSpeed)
+	assert.Equal(t, 3.1, encodingSpeed)
 }
 
 // Stubbing the API Call
@@ -143,6 +143,18 @@ const (
           "throttled": false,
           "speed": "3.1",
           "videoDecision": "copy"
+        }
+      },
+      {
+        "User":
+        {
+          "title": "snafu"
+        },
+        "TranscodeSession":
+        {
+          "throttled": true,
+          "speed": "3.1",
+          "videoDecision": "transcode"
         }
       },
       {
