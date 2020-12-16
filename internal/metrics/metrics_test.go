@@ -23,16 +23,26 @@ func TestInit(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
-	ok := metrics.Publish("plex_session_count", 5, "user")
+	// Unlabeled Gauge
+	ok := metrics.Publish("upload_speed", 50)
 	assert.True(t, ok)
 
-	value, ok := metrics.LoadValue("plex_session_count", "user")
+	value, ok := metrics.LoadValue("upload_speed")
+	assert.True(t, ok)
+	assert.Equal(t, 50.0, value)
+
+	// Labeled Gauge
+	ok = metrics.Publish("plex_session_count", 5, "user")
+	assert.True(t, ok)
+
+	value, ok = metrics.LoadValue("plex_session_count", "user")
 	assert.True(t, ok)
 	assert.Equal(t, 5.0, value)
 
-	ok = metrics.Publish("not_a_metric", 5, "user")
+	// Invalid metric
+	ok = metrics.Publish("not_a_metric", 5)
 	assert.False(t, ok)
 
-	_, ok = metrics.LoadValue("not_a_metric", "user")
+	_, ok = metrics.LoadValue("not_a_metric")
 	assert.False(t, ok)
 }

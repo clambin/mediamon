@@ -31,10 +31,10 @@ func (probe *Probe) Run() {
 	if activeTorrents, pausedTorrents, downloadSpeed, uploadSpeed, err := probe.getStats(); err != nil {
 		log.Warningf("Could not get Transmission Statistics: %s", err)
 	} else {
-		metrics.Publish("active_torrent_count", float64(activeTorrents), "transmission")
-		metrics.Publish("paused_torrent_count", float64(pausedTorrents), "transmission")
-		metrics.Publish("download_speed", float64(downloadSpeed), "transmission")
-		metrics.Publish("upload_speed", float64(uploadSpeed), "transmission")
+		metrics.Publish("active_torrent_count", float64(activeTorrents))
+		metrics.Publish("paused_torrent_count", float64(pausedTorrents))
+		metrics.Publish("download_speed", float64(downloadSpeed))
+		metrics.Publish("upload_speed", float64(uploadSpeed))
 	}
 }
 

@@ -12,6 +12,8 @@ import (
 
 type Probe struct {
 	apiClient *APIClient
+	users     map[string]int
+	modes     map[string]int
 }
 
 func NewProbe(url, username, password string) *Probe {
@@ -19,7 +21,11 @@ func NewProbe(url, username, password string) *Probe {
 }
 
 func NewProbeWithHTTPClient(client *http.Client, url, username, password string) *Probe {
-	return &Probe{apiClient: NewAPIClient(client, url, username, password)}
+	return &Probe{
+		apiClient: NewAPIClient(client, url, username, password),
+		users:     make(map[string]int),
+		modes:     make(map[string]int),
+	}
 }
 
 func (probe *Probe) Run() {
@@ -30,19 +36,43 @@ func (probe *Probe) Run() {
 		metrics.Publish("version", 1, "plex", version)
 	}
 
+	// Reset current statistics
+	for user := range probe.users {
+		probe.users[user] = 0
+	}
+	for mode := range probe.modes {
+		probe.modes[mode] = 0
+	}
+
 	// Get sessions
-	// FIXME: need to maintain a list of all users reported and report 0 if they're not in the current measurement
 	users, modes, transcoding, speed, err := probe.getSessions()
 
 	if err == nil {
-		for user, value := range users {
+		// Update statistics
+		for user, count := range users {
+			if oldCount, ok := probe.users[user]; ok {
+				probe.users[user] = oldCount + count
+			} else {
+				probe.users[user] = count
+			}
+		}
+		for mode, count := range modes {
+			if oldCount, ok := probe.modes[mode]; ok {
+				probe.modes[mode] = oldCount + count
+			} else {
+				probe.modes[mode] = count
+			}
+		}
+
+		// Report
+		for user, value := range probe.users {
 			metrics.Publish("plex_session_count", float64(value), user)
 		}
-		for mode, value := range modes {
+		for mode, value := range probe.modes {
 			metrics.Publish("plex_transcoder_type_count", float64(value), mode)
 		}
-		metrics.Publish("plex_transcoder_encoding_count", float64(transcoding), "plex")
-		metrics.Publish("plex_transcoder_speed_total", speed, "plex")
+		metrics.Publish("plex_transcoder_encoding_count", float64(transcoding))
+		metrics.Publish("plex_transcoder_speed_total", speed)
 	}
 
 }

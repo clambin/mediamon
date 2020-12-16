@@ -1,27 +1,21 @@
-package plex
+package plex_test
 
 import (
 	"bytes"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"mediamon/internal/metrics"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"mediamon/internal/metrics"
+	"mediamon/internal/plex"
 )
 
-func TestPlexAuthentication(t *testing.T) {
-	apiClient := NewAPIClient(makeClient(), "", "user@example.com", "somepassword")
-	assert.True(t, apiClient.authenticate())
-
-	apiClient = NewAPIClient(makeClient(), "", "user@example.com", "badpassword")
-	assert.False(t, apiClient.authenticate())
-}
-
 func TestProbe_Run(t *testing.T) {
-	probe := NewProbeWithHTTPClient(makeClient(), "", "user@example.com", "somepassword")
+	probe := plex.NewProbeWithHTTPClient(makeClient(), "", "user@example.com", "somepassword")
 
-	log.SetLevel(log.DebugLevel)
+	// log.SetLevel(log.DebugLevel)
 	probe.Run()
 
 	// Test version
@@ -68,14 +62,95 @@ func TestProbe_Run(t *testing.T) {
 	}
 
 	// Active transcoders
-	encodingCount, ok := metrics.LoadValue("plex_transcoder_encoding_count", "plex")
+	encodingCount, ok := metrics.LoadValue("plex_transcoder_encoding_count")
 	assert.True(t, ok)
 	assert.Equal(t, 2.0, encodingCount)
 
 	// Total encoding speed
-	encodingSpeed, ok := metrics.LoadValue("plex_transcoder_speed_total", "plex")
+	encodingSpeed, ok := metrics.LoadValue("plex_transcoder_speed_total")
 	assert.True(t, ok)
 	assert.Equal(t, 3.1, encodingSpeed)
+}
+
+func TestCachedUsers(t *testing.T) {
+	probe := plex.NewProbeWithHTTPClient(makeClient(), "", "user@example.com", "somepassword")
+
+	// log.SetLevel(log.DebugLevel)
+	probe.Run()
+
+	// Test user count
+	for _, testCase := range []struct {
+		user  string
+		ok    bool
+		value float64
+	}{
+		{"foo", true, 1.0},
+		{"bar", true, 1.0},
+		{"snafu", true, 2.0},
+	} {
+		userCount, ok := metrics.LoadValue("plex_session_count", testCase.user)
+		assert.Equal(t, testCase.ok, ok, testCase.user)
+		if ok {
+			assert.Equal(t, testCase.value, userCount, testCase.user)
+		}
+	}
+
+	// Test transcoder
+	for _, testCase := range []struct {
+		mode  string
+		ok    bool
+		value float64
+	}{
+		{"direct", true, 1.0},
+		{"copy", true, 1.0},
+		{"transcode", true, 2.0},
+	} {
+		modeCount, ok := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
+		assert.Equal(t, testCase.ok, ok, testCase.mode)
+		if ok {
+			assert.Equal(t, testCase.value, modeCount, testCase.mode)
+		}
+	}
+
+	// Switch to response w/out Snafu user & related transcoders
+	sessionsResponse = sessionsResponse2
+
+	// Run again
+	probe.Run()
+
+	// Snafu should still be reported but with zero sessions
+	for _, testCase := range []struct {
+		user  string
+		ok    bool
+		value float64
+	}{
+		{"foo", true, 1.0},
+		{"bar", true, 1.0},
+		{"snafu", true, 0.0},
+	} {
+		userCount, ok := metrics.LoadValue("plex_session_count", testCase.user)
+		assert.Equal(t, testCase.ok, ok, testCase.user)
+		if ok {
+			assert.Equal(t, testCase.value, userCount, testCase.user)
+		}
+	}
+
+	// Same for transcode mode
+	for _, testCase := range []struct {
+		mode  string
+		ok    bool
+		value float64
+	}{
+		{"direct", true, 1.0},
+		{"copy", true, 1.0},
+		{"transcode", true, 0.0},
+	} {
+		modeCount, ok := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
+		assert.Equal(t, testCase.ok, ok, testCase.mode)
+		if ok {
+			assert.Equal(t, testCase.value, modeCount, testCase.mode)
+		}
+	}
 }
 
 // Stubbing the API Call
@@ -120,7 +195,7 @@ const (
   }
 }`
 
-	sessionsResponse = `
+	sessionsResponse1 = `
 {
   "MediaContainer": 
   {
@@ -172,6 +247,39 @@ const (
     ]
   }
 }`
+
+	sessionsResponse2 = `
+{
+  "MediaContainer": 
+  {
+    "size": 2,
+    "Metadata": 
+    [
+      {
+        "User": 
+        {
+          "title": "foo"
+        }
+      },
+      {
+        "User":
+        {
+          "title": "bar"
+        },
+        "TranscodeSession":
+        {
+          "throttled": false,
+          "speed": "3.1",
+          "videoDecision": "copy"
+        }
+      }
+    ]
+  }
+}`
+)
+
+var (
+	sessionsResponse = sessionsResponse1
 )
 
 // makeClient returns a stubbed covid.APIClient
