@@ -5,9 +5,8 @@ on:
     branches:
     - master
     - develop
-    - golang
     tags:
-    - '*'
+    - 'v*'
 
 jobs:
   test:
