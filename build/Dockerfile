@@ -5,7 +5,7 @@ WORKDIR /build
 COPY . ./
 
 ARG BUILD_VERSION=development
-RUN CGO_ENABLED=0 go build -ldflags "-X covid19/internal/version.BuildVersion=$BUILD_VERSION" cmd/mediamon/mediamon.go
+RUN CGO_ENABLED=0 go build -ldflags "-X mediamon/internal/version.BuildVersion=$BUILD_VERSION" cmd/mediamon/mediamon.go
 
 FROM alpine
 
