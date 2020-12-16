@@ -55,6 +55,9 @@ func main() {
 
 	// Transmission Probe
 	if cfg.services.Transmission.URL != "" {
+
+		log.Debugf("Starting Transmission probe (%s)", cfg.services.Transmission.URL)
+
 		interval := cfg.services.Transmission.Interval
 		duration, err := time.ParseDuration(interval)
 		if err != nil {
@@ -74,6 +77,9 @@ func main() {
 
 	// Sonarr Probe
 	if cfg.services.Sonarr.URL != "" {
+
+		log.Debugf("Starting Sonarr probe (%s)", cfg.services.Sonarr.URL)
+
 		interval := cfg.services.Sonarr.Interval
 		duration, err := time.ParseDuration(interval)
 		if err != nil {
@@ -93,6 +99,9 @@ func main() {
 
 	// Radarr Probe
 	if cfg.services.Radarr.URL != "" {
+
+		log.Debugf("Starting Radarr probe (%s)", cfg.services.Radarr.URL)
+
 		interval := cfg.services.Sonarr.Interval
 		duration, err := time.ParseDuration(interval)
 		if err != nil {
@@ -112,6 +121,9 @@ func main() {
 
 	// Plex Probe
 	if cfg.services.Plex.URL != "" {
+
+		log.Debugf("Starting Plex probe (%s)", cfg.services.Plex.URL)
+
 		username := cfg.services.Plex.UserName
 		password := cfg.services.Plex.Password
 		interval := cfg.services.Plex.Interval
