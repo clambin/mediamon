@@ -19,9 +19,10 @@ func NewAPIWithHTTPClient(client *http.Client, url string) *Client {
 
 func (client *Client) Call(method string) ([]byte, error) {
 	if client.sessionID == "" {
-		client.sessionID = client.getSessionID()
-		if client.sessionID == "" {
-			return nil, errors.New("unable to get session ID from Transmission")
+		if sessionID, err := client.getSessionID(); err == nil {
+			client.sessionID = sessionID
+		} else {
+			return nil, err
 		}
 	}
 
@@ -42,7 +43,7 @@ func (client *Client) Call(method string) ([]byte, error) {
 	return nil, err
 }
 
-func (client *Client) getSessionID() string {
+func (client *Client) getSessionID() (string, error) {
 	req, _ := http.NewRequest("POST", client.url, bytes.NewBufferString("{ \"method\": \"session-get\" }"))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("X-Transmission-Session-Id", client.sessionID)
@@ -53,9 +54,9 @@ func (client *Client) getSessionID() string {
 		defer resp.Body.Close()
 
 		if resp.StatusCode == 409 || resp.StatusCode == 200 {
-			return resp.Header.Get("X-Transmission-Session-Id")
+			return resp.Header.Get("X-Transmission-Session-Id"), nil
 		}
 	}
 
-	return ""
+	return "", err
 }
