@@ -40,13 +40,17 @@ func main() {
 		os.Exit(2)
 	}
 
-	if cfg.servicesFilename != "" {
-		err = services.ParseConfigFile(cfg.servicesFilename, &cfg.services)
-	}
-
 	if cfg.debug {
 		log.SetLevel(log.DebugLevel)
 	}
+
+	if err := services.ParseConfigFile(cfg.servicesFilename, &cfg.services); err != nil {
+		log.Warningf("unable to parse services file '%s': %v", cfg.servicesFilename, err)
+		os.Exit(3)
+	}
+
+	// TODO: remove this as it contains secure information
+	log.Debugf("services: %v", cfg.services)
 
 	log.Info("media monitor v" + version.BuildVersion)
 
