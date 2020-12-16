@@ -2,7 +2,9 @@ package services_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"mediamon/internal/services"
+	"os"
 	"testing"
 )
 
@@ -17,9 +19,18 @@ plex:
   interval: 1m
 `)
 
+	f, err := ioutil.TempFile("", "tmp")
+	if err != nil {
+		panic(err)
+	}
+
+	defer os.Remove(f.Name())
+	_, _ = f.Write(content)
+	_ = f.Close()
+
 	var cfg = services.Config{}
 
-	err := services.ParseConfig(content, &cfg)
+	err = services.ParseConfigFile(f.Name(), &cfg)
 
 	assert.Nil(t, err)
 	assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
