@@ -155,6 +155,17 @@ func TestCachedUsers(t *testing.T) {
 	}
 }
 
+func TestFailingServer(t *testing.T) {
+	probe := plex.NewProbeWithHTTPClient(
+		httpstub.NewTestClient(httpstub.Failing),
+		"http://example.com",
+		"user@example.com",
+		"password",
+	)
+
+	assert.NotPanics(t, func() { probe.Run() })
+}
+
 // Server loopback function
 
 func loopback(req *http.Request) *http.Response {

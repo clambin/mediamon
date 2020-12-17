@@ -3,7 +3,6 @@ package transmission
 import (
 	"bytes"
 	"errors"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 )
@@ -40,11 +39,11 @@ func (client *Client) Call(method string) ([]byte, error) {
 	if err == nil {
 		defer resp.Body.Close()
 
-		if resp.StatusCode == 409 {
-			log.Warning("Session ID expired")
-			client.sessionID = resp.Header.Get("X-Transmission-Session-Id")
-		} else if resp.StatusCode == 200 {
-			client.sessionID = resp.Header.Get("X-Transmission-Session-Id")
+		if sessionID := resp.Header.Get("X-Transmission-Session-Id"); sessionID != "" {
+			client.sessionID = sessionID
+		}
+
+		if resp.StatusCode == 200 {
 			return ioutil.ReadAll(resp.Body)
 		}
 		err = errors.New(resp.Status)

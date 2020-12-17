@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"mediamon/internal/metrics"
@@ -19,11 +18,20 @@ func TestProbe_InvalidProbe(t *testing.T) {
 	assert.Panics(t, func() { xxxarr.NewProbeWithHTTPClient(&http.Client{}, "", "", "invalid") })
 }
 
+func TestFailingProbe(t *testing.T) {
+	probe := xxxarr.NewProbeWithHTTPClient(
+		httpstub.NewTestClient(httpstub.Failing),
+		"http://example.com",
+		"1234",
+		"sonarr",
+	)
+	assert.NotNil(t, probe)
+	assert.NotPanics(t, func() { probe.Run() })
+}
+
 func TestProbe_Run(t *testing.T) {
 	for _, application := range []string{"sonarr", "radarr"} {
 		probe := xxxarr.NewProbeWithHTTPClient(httpstub.NewTestClient(loopback), "http://example.com", "1234", application)
-
-		log.SetLevel(log.DebugLevel)
 
 		probe.Run()
 

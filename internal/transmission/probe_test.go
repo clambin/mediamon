@@ -42,6 +42,15 @@ func TestProbe_Run(t *testing.T) {
 	assert.Equal(t, float64(25), value)
 }
 
+func TestFailingServer(t *testing.T) {
+	probe := transmission.NewProbeWithHTTPClient(
+		httpstub.NewTestClient(httpstub.Failing),
+		"http://example.com",
+	)
+
+	assert.NotPanics(t, func() { probe.Run() })
+}
+
 // Server loopback function
 
 func loopback(req *http.Request) *http.Response {

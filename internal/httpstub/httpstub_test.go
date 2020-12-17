@@ -32,6 +32,21 @@ func TestNewTestClient(t *testing.T) {
 	}
 }
 
+func TestFailing(t *testing.T) {
+	client := httpstub.NewTestClient(httpstub.Failing)
+
+	const message = "Hello world"
+
+	reqBody := bytes.NewBufferString(message)
+	req, _ := http.NewRequest("GET", "", reqBody)
+
+	resp, err := client.Do(req)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 500, resp.StatusCode)
+	assert.Equal(t, "internal server error", resp.Status)
+}
+
 func loopback(req *http.Request) *http.Response {
 	defer req.Body.Close()
 

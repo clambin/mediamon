@@ -18,3 +18,11 @@ func NewTestClient(fn RoundTripFunc) *http.Client {
 		Transport: fn,
 	}
 }
+
+// Failing emulates a failing server. Always returns HTTP 500 error
+func Failing(_ *http.Request) *http.Response {
+	return &http.Response{
+		StatusCode: 500,
+		Status:     "internal server error",
+	}
+}
