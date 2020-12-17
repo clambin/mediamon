@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/clambin/httpstub"
 	"github.com/stretchr/testify/assert"
 
 	"mediamon/internal/metrics"
 	"mediamon/internal/xxxarr"
-
-	"mediamon/internal/httpstub"
 )
 
 func TestProbe_InvalidProbe(t *testing.T) {

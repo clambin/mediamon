@@ -6,13 +6,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/clambin/httpstub"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"mediamon/internal/metrics"
 	"mediamon/internal/transmission"
-
-	"mediamon/internal/httpstub"
 )
 
 func TestProbe_Run(t *testing.T) {
