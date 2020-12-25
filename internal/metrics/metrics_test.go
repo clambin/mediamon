@@ -17,9 +17,9 @@ func TestLoadValue(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestInit(t *testing.T) {
-	assert.NotPanics(t, func() { metrics.Init(8080) })
-	assert.Panics(t, func() { metrics.Init(8080) })
+func TestRun(t *testing.T) {
+	assert.NotPanics(t, func() { metrics.Run(8080, true) })
+	assert.Panics(t, func() { metrics.Run(8080, false) })
 }
 
 func TestPublish(t *testing.T) {

@@ -3,13 +3,13 @@ package main
 import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"mediamon/internal/metrics"
 	"mediamon/internal/plex"
 	"mediamon/internal/xxxarr"
 	"os"
 	"path/filepath"
 	"time"
 
-	"mediamon/internal/metrics"
 	"mediamon/internal/services"
 	"mediamon/internal/transmission"
 	"mediamon/internal/version"
@@ -51,8 +51,7 @@ func main() {
 
 	log.Info("media monitor v" + version.BuildVersion)
 
-	// Prometheus Metrics
-	metrics.Init(cfg.port)
+	log.Debug(cfg.services)
 
 	// Transmission Probe
 	if cfg.services.Transmission.URL != "" {
@@ -144,7 +143,6 @@ func main() {
 		}(duration)
 	}
 
-	for {
-		time.Sleep(30 * time.Second)
-	}
+	// Prometheus Metrics
+	metrics.Run(cfg.port, false)
 }

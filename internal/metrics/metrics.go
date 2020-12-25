@@ -73,16 +73,23 @@ var (
 	cachedValues = map[string]map[string]float64{}
 )
 
-// Init initializes the prometheus metrics server
-func Init(port int) {
+// Run initialized & runs the metrics
+func Run(port int, background bool) {
 	http.Handle("/metrics", promhttp.Handler())
 	listenAddress := fmt.Sprintf(":%d", port)
-	go func(listenAddr string) {
+
+	listenFunc := func(listenAddr string) {
 		err := http.ListenAndServe(listenAddress, nil)
 		if err != nil {
 			panic(err)
 		}
-	}(listenAddress)
+	}
+
+	if background {
+		go listenFunc(listenAddress)
+	} else {
+		listenFunc(listenAddress)
+	}
 }
 
 // Publish pushes the specified metric to Prometheus
