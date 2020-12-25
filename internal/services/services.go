@@ -3,6 +3,7 @@ package services
 import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"time"
 )
 
 // Config contains the different possible services for mediamon to monitor
@@ -26,6 +27,17 @@ type Config struct {
 		UserName string
 		Password string
 		Interval string
+	}
+	OpenVPN struct {
+		Bandwidth struct {
+			FileName string
+			Interval time.Duration
+		}
+		Connectivity struct {
+			Proxy    string
+			Token    string
+			Interval time.Duration
+		}
 	}
 }
 

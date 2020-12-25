@@ -68,6 +68,18 @@ var (
 			Name: "mediaserver_upload_speed",
 			Help: "Transmission upload speed in bytes / sec",
 		}),
+		"openvpn_client_status": promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "openvpn_client_status",
+			Help: "OpenVPN Client Status",
+		}),
+		"openvpn_client_tcp_udp_read_bytes_total": promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "openvpn_client_tcp_udp_read_bytes_total",
+			Help: "OpenVPN client bytes read",
+		}),
+		"openvpn_client_tcp_udp_write_bytes_total": promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "openvpn_client_tcp_udp_write_bytes_total",
+			Help: "OpenVPN client bytes written",
+		}),
 	}
 
 	cachedValues = map[string]map[string]float64{}

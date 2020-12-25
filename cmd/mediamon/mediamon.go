@@ -1,18 +1,22 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
-	"mediamon/internal/metrics"
-	"mediamon/internal/plex"
-	"mediamon/internal/xxxarr"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/alecthomas/kingpin.v2"
+
+	"mediamon/internal/bandwidth"
+	"mediamon/internal/connectivity"
+	"mediamon/internal/metrics"
+	"mediamon/internal/plex"
 	"mediamon/internal/services"
 	"mediamon/internal/transmission"
 	"mediamon/internal/version"
+	"mediamon/internal/xxxarr"
 )
 
 func main() {
@@ -141,6 +145,49 @@ func main() {
 				time.Sleep(duration)
 			}
 		}(duration)
+	}
+
+	// Bandwidth Probe
+	if cfg.services.OpenVPN.Bandwidth.FileName != "" {
+		log.Debugf("Starting Bandwidth probe (%s)", cfg.services.OpenVPN.Bandwidth.FileName)
+		if cfg.services.OpenVPN.Bandwidth.Interval == 0 {
+			// TODO: use cfg.interval once converted to time.Duration
+			cfg.services.OpenVPN.Bandwidth.Interval = 30 * time.Second
+		}
+		go func() {
+			probe := bandwidth.NewProbe(cfg.services.OpenVPN.Bandwidth.FileName)
+
+			for {
+				probe.Run()
+				time.Sleep(cfg.services.OpenVPN.Bandwidth.Interval)
+			}
+
+		}()
+	}
+
+	// Connectivity Probe
+	if cfg.services.OpenVPN.Connectivity.Proxy != "" {
+		if proxyURL, err := url.Parse(cfg.services.OpenVPN.Connectivity.Proxy); err == nil {
+			log.Debugf("Starting Connectivity probe (%s)", cfg.services.OpenVPN.Connectivity.Proxy)
+			if cfg.services.OpenVPN.Connectivity.Interval == 0 {
+				// TODO: use cfg.interval once converted to time.Duration
+				cfg.services.OpenVPN.Connectivity.Interval = 5 * time.Minute
+			}
+			go func() {
+				probe := connectivity.NewProbe(proxyURL, cfg.services.OpenVPN.Connectivity.Token)
+
+				for {
+					probe.Run()
+					time.Sleep(cfg.services.OpenVPN.Connectivity.Interval)
+				}
+
+			}()
+		} else {
+			log.Warningf("connectivity: invalid Proxy URL (%s - %s)",
+				cfg.services.OpenVPN.Connectivity.Proxy,
+				err.Error(),
+			)
+		}
 	}
 
 	// Prometheus Metrics

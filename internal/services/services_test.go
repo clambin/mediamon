@@ -6,6 +6,7 @@ import (
 	"mediamon/internal/services"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestParsePartialConfig(t *testing.T) {
@@ -44,7 +45,11 @@ plex:
 	assert.Equal(t, "email@example.com", cfg.Plex.UserName)
 	assert.Equal(t, "some-password", cfg.Plex.Password)
 	assert.Equal(t, "1m", cfg.Plex.Interval)
+	assert.Equal(t, "", cfg.OpenVPN.Bandwidth.FileName)
+	assert.Equal(t, "", cfg.OpenVPN.Connectivity.Proxy)
+	assert.Equal(t, "", cfg.OpenVPN.Connectivity.Token)
 }
+
 func TestParseConfig(t *testing.T) {
 	var content = []byte(`
 transmission:
@@ -63,6 +68,16 @@ plex:
   username: email@example.com
   password: 'some-password'
   interval: 1m
+openvpn:
+  bandwidth:
+    filename: /foo/bar
+    interval: '30s'
+  connectivity:
+    proxy: http://localhost:8888
+    token: 'some-token'
+    interval: '5m'
+futurefeature:
+  foo: 'bar'
 `)
 
 	var cfg = services.Config{}
@@ -82,6 +97,11 @@ plex:
 	assert.Equal(t, "email@example.com", cfg.Plex.UserName)
 	assert.Equal(t, "some-password", cfg.Plex.Password)
 	assert.Equal(t, "1m", cfg.Plex.Interval)
+	assert.Equal(t, "/foo/bar", cfg.OpenVPN.Bandwidth.FileName)
+	assert.Equal(t, time.Duration(30*time.Second), cfg.OpenVPN.Bandwidth.Interval)
+	assert.Equal(t, "http://localhost:8888", cfg.OpenVPN.Connectivity.Proxy)
+	assert.Equal(t, "some-token", cfg.OpenVPN.Connectivity.Token)
+	assert.Equal(t, time.Duration(5*time.Minute), cfg.OpenVPN.Connectivity.Interval)
 }
 
 func TestParseInvalidConfig(t *testing.T) {
