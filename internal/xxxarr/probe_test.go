@@ -34,24 +34,15 @@ func TestProbe_Run(t *testing.T) {
 
 		probe.Run()
 
-		value, ok := metrics.LoadValue("version", application, "1.2.3.4444")
-		assert.True(t, ok)
+		value, _ := metrics.LoadValue("version", application, "1.2.3.4444")
 		assert.Equal(t, float64(1), value)
-
-		count, ok := metrics.LoadValue("xxxarr_calendar", application)
-		assert.True(t, ok)
+		count, _ := metrics.LoadValue("xxxarr_calendar", application)
 		assert.Equal(t, float64(1), count)
-
-		count, ok = metrics.LoadValue("xxxarr_queued", application)
-		assert.True(t, ok)
+		count, _ = metrics.LoadValue("xxxarr_queued", application)
 		assert.Equal(t, float64(2), count)
-
-		count, ok = metrics.LoadValue("xxxarr_monitored", application)
-		assert.True(t, ok)
+		count, _ = metrics.LoadValue("xxxarr_monitored", application)
 		assert.Equal(t, float64(2), count)
-
-		count, ok = metrics.LoadValue("xxxarr_unmonitored", application)
-		assert.True(t, ok)
+		count, _ = metrics.LoadValue("xxxarr_unmonitored", application)
 		assert.Equal(t, float64(1), count)
 	}
 }

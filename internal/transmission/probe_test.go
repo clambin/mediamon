@@ -21,23 +21,15 @@ func TestProbe_Run(t *testing.T) {
 
 	probe.Run()
 
-	_, ok := metrics.LoadValue("version", "transmission", "2.94 (d8e60ee44f)")
-	assert.True(t, ok)
-
-	value, ok := metrics.LoadValue("active_torrent_count")
-	assert.True(t, ok)
+	value, _ := metrics.LoadValue("version", "transmission", "2.94 (d8e60ee44f)")
 	assert.Equal(t, float64(1), value)
-
-	value, ok = metrics.LoadValue("paused_torrent_count")
-	assert.True(t, ok)
+	value, _ = metrics.LoadValue("active_torrent_count")
+	assert.Equal(t, float64(1), value)
+	value, _ = metrics.LoadValue("paused_torrent_count")
 	assert.Equal(t, float64(2), value)
-
-	value, ok = metrics.LoadValue("download_speed")
-	assert.True(t, ok)
+	value, _ = metrics.LoadValue("download_speed")
 	assert.Equal(t, float64(100), value)
-
-	value, ok = metrics.LoadValue("upload_speed")
-	assert.True(t, ok)
+	value, _ = metrics.LoadValue("upload_speed")
 	assert.Equal(t, float64(25), value)
 }
 

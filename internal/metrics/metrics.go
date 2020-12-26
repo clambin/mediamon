@@ -1,14 +1,15 @@
 package metrics
 
 import (
+	"errors"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"net/http"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	dto "github.com/prometheus/client_model/go"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"strings"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -81,14 +82,12 @@ var (
 			Help: "OpenVPN client bytes written",
 		}),
 	}
-
-	cachedValues = map[string]map[string]float64{}
 )
 
 // Run initialized & runs the metrics
 func Run(port int, background bool) {
-	http.Handle("/metrics", promhttp.Handler())
 	listenAddress := fmt.Sprintf(":%d", port)
+	http.Handle("/metrics", promhttp.Handler())
 
 	listenFunc := func(listenAddr string) {
 		err := http.ListenAndServe(listenAddress, nil)
@@ -109,32 +108,30 @@ func Publish(metric string, value float64, labels ...string) bool {
 	log.Debugf("%s(%s): %f", metric, labels, value)
 	if gauge, ok := unlabeledGauges[metric]; ok {
 		gauge.Set(value)
-		SaveValue(metric, value, labels...)
 		return true
 	} else if gauge, ok := labeledGauges[metric]; ok {
 		gauge.WithLabelValues(labels...).Set(value)
-		SaveValue(metric, value, labels...)
 		return true
 	}
 	log.Warningf("metric '%s' not found", metric)
 	return false
 }
 
-// SaveValue stores the last value reported so unit tests can verify the correct value was reported
-func SaveValue(metric string, value float64, labels ...string) {
-	subMap, ok := cachedValues[metric]
-	if ok == false {
-		subMap = make(map[string]float64)
-		cachedValues[metric] = subMap
-	}
-	key := strings.Join(labels, "|")
-	subMap[key] = value
-}
-
 // LoadValue gets the last value reported so unit tests can verify the correct value was reported
-func LoadValue(metric string, labels ...string) (float64, bool) {
-	if value, ok := cachedValues[metric][strings.Join(labels, "|")]; ok {
-		return value, true
+func LoadValue(metric string, labels ...string) (float64, error) {
+	log.Debugf("%s(%s)", metric, labels)
+	if gauge, ok := unlabeledGauges[metric]; ok {
+		var m = &dto.Metric{}
+		if err := gauge.Write(m); err != nil {
+			return 0, err
+		}
+		return m.Gauge.GetValue(), nil
+	} else if gauge, ok := labeledGauges[metric]; ok {
+		var m = &dto.Metric{}
+		if err := gauge.WithLabelValues(labels...).Write(m); err != nil {
+			return 0, err
+		}
+		return m.Gauge.GetValue(), nil
 	}
-	return 0, false
+	return 0, errors.New("could not find " + metric)
 }

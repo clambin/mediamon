@@ -43,36 +43,24 @@ END`), 0.0, 0.0},
 	// valid/invalid file content
 
 	for _, testCase := range testCases {
-
-		filename, err := tempFile(testCase.content)
-
-		if assert.Nil(t, err, testCase.name) {
-			probe := bandwidth.NewProbe(filename)
-			assert.NotNil(t, probe, testCase.name)
-
-			probe.Run()
-
-			read, ok := metrics.LoadValue("openvpn_client_tcp_udp_read_bytes_total")
-			assert.True(t, ok, testCase.name)
-			assert.Equal(t, testCase.read, read, testCase.name)
-
-			write, ok := metrics.LoadValue("openvpn_client_tcp_udp_write_bytes_total")
-			assert.True(t, ok, testCase.name)
-			assert.Equal(t, testCase.write, write, testCase.name)
-
-			_ = os.Remove(filename)
+		if filename, err := tempFile(testCase.content); assert.Nil(t, err, testCase.name) {
+			if probe := bandwidth.NewProbe(filename); assert.NotNil(t, probe, testCase.name) {
+				probe.Run()
+				read, _ := metrics.LoadValue("openvpn_client_tcp_udp_read_bytes_total")
+				assert.Equal(t, testCase.read, read, testCase.name)
+				write, _ := metrics.LoadValue("openvpn_client_tcp_udp_write_bytes_total")
+				assert.Equal(t, testCase.write, write, testCase.name)
+				os.Remove(filename)
+			}
 		}
-
 	}
 
 	// missing file
 
 	bandwidth.NewProbe("invalidfile.txt").Run()
 
-	read, ok := metrics.LoadValue("openvpn_client_tcp_udp_read_bytes_total")
-	assert.True(t, ok)
+	read, _ := metrics.LoadValue("openvpn_client_tcp_udp_read_bytes_total")
 	assert.Equal(t, 0.0, read)
-	write, ok := metrics.LoadValue("openvpn_client_tcp_udp_write_bytes_total")
-	assert.True(t, ok)
+	write, _ := metrics.LoadValue("openvpn_client_tcp_udp_write_bytes_total")
 	assert.Equal(t, 0.0, write)
 }
