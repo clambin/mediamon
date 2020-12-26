@@ -122,15 +122,11 @@ func LoadValue(metric string, labels ...string) (float64, error) {
 	log.Debugf("%s(%s)", metric, labels)
 	if gauge, ok := unlabeledGauges[metric]; ok {
 		var m = &dto.Metric{}
-		if err := gauge.Write(m); err != nil {
-			return 0, err
-		}
+		_ = gauge.Write(m)
 		return m.Gauge.GetValue(), nil
 	} else if gauge, ok := labeledGauges[metric]; ok {
 		var m = &dto.Metric{}
-		if err := gauge.WithLabelValues(labels...).Write(m); err != nil {
-			return 0, err
-		}
+		_ = gauge.WithLabelValues(labels...).Write(m)
 		return m.Gauge.GetValue(), nil
 	}
 	return 0, errors.New("could not find " + metric)
