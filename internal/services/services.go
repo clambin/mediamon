@@ -10,23 +10,23 @@ import (
 type Config struct {
 	Transmission struct {
 		URL      string
-		Interval string
+		Interval time.Duration
 	}
 	Sonarr struct {
 		URL      string
 		APIKey   string
-		Interval string
+		Interval time.Duration
 	}
 	Radarr struct {
 		URL      string
 		APIKey   string
-		Interval string
+		Interval time.Duration
 	}
 	Plex struct {
 		URL      string
 		UserName string
 		Password string
-		Interval string
+		Interval time.Duration
 	}
 	OpenVPN struct {
 		Bandwidth struct {
@@ -42,15 +42,27 @@ type Config struct {
 }
 
 // ParseConfigFile reads the configuration from the specified yaml file
-func ParseConfigFile(fileName string, config *Config) error {
+func ParseConfigFile(fileName string) (*Config, error) {
 	content, err := ioutil.ReadFile(fileName)
 	if err == nil {
-		err = ParseConfig(content, config)
+		return ParseConfig(content)
 	}
-	return err
+	return nil, err
 }
 
 // ParseConfig reads the configuration from an in-memory buffer
-func ParseConfig(content []byte, config *Config) error {
-	return yaml.Unmarshal(content, config)
+func ParseConfig(content []byte) (*Config, error) {
+	config := Config{}
+	config.Transmission.Interval = 30 * time.Second
+	config.Sonarr.Interval = 30 * time.Second
+	config.Radarr.Interval = 30 * time.Second
+	config.Plex.Interval = 30 * time.Second
+	config.OpenVPN.Bandwidth.Interval = 30 * time.Second
+	config.OpenVPN.Connectivity.Interval = 5 * time.Minute
+
+	if err := yaml.Unmarshal(content, &config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
 }

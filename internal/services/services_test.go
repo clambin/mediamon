@@ -13,11 +13,11 @@ func TestParsePartialConfig(t *testing.T) {
 	var content = []byte(`
 transmission:
   url: http://192.168.0.10:9091
-  interval: 10s
+  interval: '10s'
 plex:
   username: email@example.com
   password: 'some-password'
-  interval: 1m
+  interval: '1m'
 `)
 
 	f, err := ioutil.TempFile("", "tmp")
@@ -29,45 +29,45 @@ plex:
 	_, _ = f.Write(content)
 	_ = f.Close()
 
-	var cfg = services.Config{}
-
-	err = services.ParseConfigFile(f.Name(), &cfg)
+	cfg, err := services.ParseConfigFile(f.Name())
 
 	assert.Nil(t, err)
 	assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
-	assert.Equal(t, "10s", cfg.Transmission.Interval)
+	assert.Equal(t, 10*time.Second, cfg.Transmission.Interval)
 	assert.Equal(t, "", cfg.Sonarr.URL)
 	assert.Equal(t, "", cfg.Sonarr.APIKey)
-	assert.Equal(t, "", cfg.Sonarr.Interval)
+	assert.Equal(t, 30*time.Second, cfg.Sonarr.Interval)
 	assert.Equal(t, "", cfg.Radarr.URL)
 	assert.Equal(t, "", cfg.Radarr.APIKey)
-	assert.Equal(t, "", cfg.Radarr.Interval)
+	assert.Equal(t, 30*time.Second, cfg.Radarr.Interval)
 	assert.Equal(t, "email@example.com", cfg.Plex.UserName)
 	assert.Equal(t, "some-password", cfg.Plex.Password)
-	assert.Equal(t, "1m", cfg.Plex.Interval)
+	assert.Equal(t, 1*time.Minute, cfg.Plex.Interval)
 	assert.Equal(t, "", cfg.OpenVPN.Bandwidth.FileName)
+	assert.Equal(t, 30*time.Second, cfg.OpenVPN.Bandwidth.Interval)
 	assert.Equal(t, "", cfg.OpenVPN.Connectivity.Proxy)
 	assert.Equal(t, "", cfg.OpenVPN.Connectivity.Token)
+	assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
 }
 
 func TestParseConfig(t *testing.T) {
 	var content = []byte(`
 transmission:
   url: http://192.168.0.10:9091
-  interval: 10s
+  interval: '10s'
 sonarr:
   url: http://192.168.0.10:8989
   apikey: 'sonarr-api-key'
-  interval: 5m
+  interval: '5m'
 radarr:
   url: http://192.168.0.10:7878
   apikey: 'radarr-api-key'
-  interval: 5m
+  interval: '5m'
 plex:
   url: http://192.168.0.10:32400
   username: email@example.com
   password: 'some-password'
-  interval: 1m
+  interval: '1m'
 openvpn:
   bandwidth:
     filename: /foo/bar
@@ -80,35 +80,31 @@ futurefeature:
   foo: 'bar'
 `)
 
-	var cfg = services.Config{}
-
-	err := services.ParseConfig(content, &cfg)
+	cfg, err := services.ParseConfig(content)
 
 	assert.Nil(t, err)
 	assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
-	assert.Equal(t, "10s", cfg.Transmission.Interval)
+	assert.Equal(t, 10*time.Second, cfg.Transmission.Interval)
 	assert.Equal(t, "http://192.168.0.10:8989", cfg.Sonarr.URL)
 	assert.Equal(t, "sonarr-api-key", cfg.Sonarr.APIKey)
-	assert.Equal(t, "5m", cfg.Sonarr.Interval)
+	assert.Equal(t, 5*time.Minute, cfg.Sonarr.Interval)
 	assert.Equal(t, "http://192.168.0.10:7878", cfg.Radarr.URL)
 	assert.Equal(t, "radarr-api-key", cfg.Radarr.APIKey)
-	assert.Equal(t, "5m", cfg.Radarr.Interval)
+	assert.Equal(t, 5*time.Minute, cfg.Radarr.Interval)
 	assert.Equal(t, "http://192.168.0.10:32400", cfg.Plex.URL)
 	assert.Equal(t, "email@example.com", cfg.Plex.UserName)
 	assert.Equal(t, "some-password", cfg.Plex.Password)
-	assert.Equal(t, "1m", cfg.Plex.Interval)
+	assert.Equal(t, 1*time.Minute, cfg.Plex.Interval)
 	assert.Equal(t, "/foo/bar", cfg.OpenVPN.Bandwidth.FileName)
-	assert.Equal(t, time.Duration(30*time.Second), cfg.OpenVPN.Bandwidth.Interval)
+	assert.Equal(t, 30*time.Second, cfg.OpenVPN.Bandwidth.Interval)
 	assert.Equal(t, "http://localhost:8888", cfg.OpenVPN.Connectivity.Proxy)
 	assert.Equal(t, "some-token", cfg.OpenVPN.Connectivity.Token)
-	assert.Equal(t, time.Duration(5*time.Minute), cfg.OpenVPN.Connectivity.Interval)
+	assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
 }
 
 func TestParseInvalidConfig(t *testing.T) {
 	var content = []byte(`not a valid yaml file`)
-	var cfg = services.Config{}
-
-	err := services.ParseConfig(content, &cfg)
+	_, err := services.ParseConfig(content)
 
 	assert.NotNil(t, err)
 }
