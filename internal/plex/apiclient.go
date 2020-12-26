@@ -40,15 +40,18 @@ func (apiClient *Client) Call(endpoint string) ([]byte, error) {
 
 	resp, err := apiClient.httpClient.Do(req)
 
+	var body []byte
+
 	if err == nil {
 		defer resp.Body.Close()
 
 		if resp.StatusCode == 200 {
-			return ioutil.ReadAll(resp.Body)
+			body, err = ioutil.ReadAll(resp.Body)
+		} else {
+			err = errors.New(resp.Status)
 		}
-		err = errors.New(resp.Status)
 	}
-	return nil, err
+	return body, err
 }
 
 // authenticate logs in to plex.tv and gets an authentication token

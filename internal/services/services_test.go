@@ -105,6 +105,10 @@ futurefeature:
 func TestParseInvalidConfig(t *testing.T) {
 	var content = []byte(`not a valid yaml file`)
 	_, err := services.ParseConfig(content)
+	assert.NotNil(t, err)
+}
 
+func TestParseMissingConfig(t *testing.T) {
+	_, err := services.ParseConfigFile("not_a_file")
 	assert.NotNil(t, err)
 }
