@@ -13,7 +13,7 @@ func TestLoadValue(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, float64(12), loaded)
 
-	loaded, ok = metrics.LoadValue("metric", "label1", "label3")
+	_, ok = metrics.LoadValue("metric", "label1", "label3")
 	assert.False(t, ok)
 }
 
