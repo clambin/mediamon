@@ -60,92 +60,56 @@ func main() {
 	// Transmission Probe
 	if cfg.services.Transmission.URL != "" {
 		log.Debugf("Starting Transmission probe (%s)", cfg.services.Transmission.URL)
-
-		go func() {
-			probe := transmission.NewProbe(cfg.services.Transmission.URL)
-
-			for {
-				probe.Run()
-				time.Sleep(cfg.services.Transmission.Interval)
-			}
-		}()
+		runProbe(
+			transmission.NewProbe(cfg.services.Transmission.URL),
+			cfg.services.Transmission.Interval,
+		)
 	}
 
 	// Sonarr Probe
 	if cfg.services.Sonarr.URL != "" {
 		log.Debugf("Starting Sonarr probe (%s)", cfg.services.Sonarr.URL)
-
-		go func() {
-			probe := xxxarr.NewProbe(cfg.services.Sonarr.URL, cfg.services.Sonarr.APIKey, "sonarr")
-
-			for {
-				probe.Run()
-				time.Sleep(cfg.services.Sonarr.Interval)
-			}
-		}()
+		runProbe(
+			xxxarr.NewProbe(cfg.services.Sonarr.URL, cfg.services.Sonarr.APIKey, "sonarr"),
+			cfg.services.Sonarr.Interval,
+		)
 	}
 
 	// Radarr Probe
 	if cfg.services.Radarr.URL != "" {
 		log.Debugf("Starting Radarr probe (%s)", cfg.services.Radarr.URL)
-
-		go func() {
-			probe := xxxarr.NewProbe(cfg.services.Radarr.URL, cfg.services.Radarr.APIKey, "radarr")
-
-			for {
-				probe.Run()
-				time.Sleep(cfg.services.Radarr.Interval)
-			}
-		}()
+		runProbe(
+			xxxarr.NewProbe(cfg.services.Radarr.URL, cfg.services.Radarr.APIKey, "radarr"),
+			cfg.services.Radarr.Interval,
+		)
 	}
 
 	// Plex Probe
 	if cfg.services.Plex.URL != "" {
 		log.Debugf("Starting Plex probe (%s)", cfg.services.Plex.URL)
-
-		go func() {
-			probe := plex.NewProbe(
-				cfg.services.Plex.URL,
-				cfg.services.Plex.UserName,
-				cfg.services.Plex.Password,
-			)
-
-			for {
-				probe.Run()
-				time.Sleep(cfg.services.Plex.Interval)
-			}
-		}()
+		runProbe(
+			plex.NewProbe(cfg.services.Plex.URL, cfg.services.Plex.UserName, cfg.services.Plex.Password),
+			cfg.services.Plex.Interval,
+		)
 	}
 
 	// Bandwidth Probe
 	if cfg.services.OpenVPN.Bandwidth.FileName != "" {
 		log.Debugf("Starting Bandwidth probe (%s)", cfg.services.OpenVPN.Bandwidth.FileName)
-
-		go func() {
-			probe := bandwidth.NewProbe(cfg.services.OpenVPN.Bandwidth.FileName)
-
-			for {
-				probe.Run()
-				time.Sleep(cfg.services.OpenVPN.Bandwidth.Interval)
-			}
-
-		}()
+		runProbe(
+			bandwidth.NewProbe(cfg.services.OpenVPN.Bandwidth.FileName),
+			cfg.services.OpenVPN.Bandwidth.Interval,
+		)
 	}
 
 	// Connectivity Probe
 	if cfg.services.OpenVPN.Connectivity.Proxy != "" {
 		if proxyURL, err := url.Parse(cfg.services.OpenVPN.Connectivity.Proxy); err == nil {
 			log.Debugf("Starting Connectivity probe (%s)", cfg.services.OpenVPN.Connectivity.Proxy)
-
-			go func() {
-				probe := connectivity.NewProbe(proxyURL, cfg.services.OpenVPN.Connectivity.Token)
-
-				for {
-					probe.Run()
-					time.Sleep(cfg.services.OpenVPN.Connectivity.Interval)
-				}
-
-			}()
+			runProbe(
+				connectivity.NewProbe(proxyURL, cfg.services.OpenVPN.Connectivity.Token),
+				cfg.services.OpenVPN.Connectivity.Interval,
+			)
 		} else {
 			log.Warningf("connectivity: invalid Proxy URL (%s - %s)",
 				cfg.services.OpenVPN.Connectivity.Proxy,
@@ -156,4 +120,19 @@ func main() {
 
 	// Prometheus Metrics
 	metrics.Run(cfg.port, false)
+}
+
+// Helper to start individual probes
+
+type runnable interface {
+	Run()
+}
+
+func runProbe(probe runnable, interval time.Duration) {
+	go func() {
+		for {
+			probe.Run()
+			time.Sleep(interval)
+		}
+	}()
 }
