@@ -82,24 +82,37 @@ futurefeature:
 
 	cfg, err := services.ParseConfig(content)
 
-	assert.Nil(t, err)
-	assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
-	assert.Equal(t, 10*time.Second, cfg.Transmission.Interval)
-	assert.Equal(t, "http://192.168.0.10:8989", cfg.Sonarr.URL)
-	assert.Equal(t, "sonarr-api-key", cfg.Sonarr.APIKey)
-	assert.Equal(t, 5*time.Minute, cfg.Sonarr.Interval)
-	assert.Equal(t, "http://192.168.0.10:7878", cfg.Radarr.URL)
-	assert.Equal(t, "radarr-api-key", cfg.Radarr.APIKey)
-	assert.Equal(t, 5*time.Minute, cfg.Radarr.Interval)
-	assert.Equal(t, "http://192.168.0.10:32400", cfg.Plex.URL)
-	assert.Equal(t, "email@example.com", cfg.Plex.UserName)
-	assert.Equal(t, "some-password", cfg.Plex.Password)
-	assert.Equal(t, 1*time.Minute, cfg.Plex.Interval)
-	assert.Equal(t, "/foo/bar", cfg.OpenVPN.Bandwidth.FileName)
-	assert.Equal(t, 30*time.Second, cfg.OpenVPN.Bandwidth.Interval)
-	assert.Equal(t, "http://localhost:8888", cfg.OpenVPN.Connectivity.Proxy)
-	assert.Equal(t, "some-token", cfg.OpenVPN.Connectivity.Token)
-	assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
+	if assert.Nil(t, err) {
+		assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
+		assert.Equal(t, 10*time.Second, cfg.Transmission.Interval)
+		assert.Equal(t, "http://192.168.0.10:8989", cfg.Sonarr.URL)
+		assert.Equal(t, "sonarr-api-key", cfg.Sonarr.APIKey)
+		assert.Equal(t, 5*time.Minute, cfg.Sonarr.Interval)
+		assert.Equal(t, "http://192.168.0.10:7878", cfg.Radarr.URL)
+		assert.Equal(t, "radarr-api-key", cfg.Radarr.APIKey)
+		assert.Equal(t, 5*time.Minute, cfg.Radarr.Interval)
+		assert.Equal(t, "http://192.168.0.10:32400", cfg.Plex.URL)
+		assert.Equal(t, "email@example.com", cfg.Plex.UserName)
+		assert.Equal(t, "some-password", cfg.Plex.Password)
+		assert.Equal(t, 1*time.Minute, cfg.Plex.Interval)
+		assert.Equal(t, "/foo/bar", cfg.OpenVPN.Bandwidth.FileName)
+		assert.Equal(t, 30*time.Second, cfg.OpenVPN.Bandwidth.Interval)
+		assert.Equal(t, "http://localhost:8888", cfg.OpenVPN.Connectivity.Proxy)
+		assert.Equal(t, "some-token", cfg.OpenVPN.Connectivity.Token)
+		assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
+	}
+}
+
+func TestParseInvalidProxy(t *testing.T) {
+	const invalidConfig = `openvpn:
+  connectivity:
+    proxy: invalidproxy
+    token: notatoken
+    interval: 1h
+`
+	_, err := services.ParseConfig([]byte(invalidConfig))
+
+	assert.NotNil(t, err)
 }
 
 func TestParseInvalidConfig(t *testing.T) {
