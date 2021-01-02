@@ -8,8 +8,8 @@ import (
 
 // Client to call the Plex APIs
 type Client struct {
-	client *http.Client
-	token  string
+	Client *http.Client
+	Token  string
 }
 
 // Call ipinfo.io
@@ -20,10 +20,10 @@ func (apiClient *Client) call() ([]byte, error) {
 	req.Header.Add("Accept", "application/json")
 
 	q := req.URL.Query()
-	q.Add("token", apiClient.token)
+	q.Add("token", apiClient.Token)
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := apiClient.client.Do(req)
+	resp, err := apiClient.Client.Do(req)
 
 	if err == nil {
 		defer resp.Body.Close()

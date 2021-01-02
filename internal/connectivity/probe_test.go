@@ -14,14 +14,20 @@ import (
 )
 
 func TestProbe_Run(t *testing.T) {
-	connectivity.NewProbeWithHTTPClient(httpstub.NewTestClient(loopback), "").Run()
+	probe := &connectivity.Probe{
+		Client: connectivity.Client{Client: httpstub.NewTestClient(loopback), Token: ""},
+	}
+	probe.Run()
 
 	value, _ := metrics.LoadValue("openvpn_client_status")
 	assert.Equal(t, 1.0, value)
 }
 
 func TestProbe_Run_Fail(t *testing.T) {
-	connectivity.NewProbeWithHTTPClient(httpstub.NewTestClient(httpstub.Failing), "").Run()
+	probe := &connectivity.Probe{
+		Client: connectivity.Client{Client: httpstub.NewTestClient(httpstub.Failing), Token: ""},
+	}
+	probe.Run()
 
 	value, _ := metrics.LoadValue("openvpn_client_status")
 	assert.Equal(t, 0.0, value)

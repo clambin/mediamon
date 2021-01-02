@@ -14,20 +14,14 @@ import (
 // Probe to measure Plex metrics
 type Probe struct {
 	Client
-	users map[string]int
-	modes map[string]int
+	Users map[string]int
+	Modes map[string]int
 }
 
 // NewProbe creates a new Probe
 func NewProbe(url, username, password string) *Probe {
-	return NewProbeWithHTTPClient(&http.Client{}, url, username, password)
-}
-
-// NewProbeWithHTTPClient creates a probe with a specified http.Client
-// Used to stub API calls during unit testing
-func NewProbeWithHTTPClient(client *http.Client, url, username, password string) *Probe {
 	return &Probe{
-		Client{client: client, url: url, username: username, password: password},
+		Client{Client: &http.Client{}, URL: url, UserName: username, Password: password},
 		make(map[string]int),
 		make(map[string]int),
 	}
@@ -43,11 +37,11 @@ func (probe *Probe) Run() {
 	}
 
 	// Reset current statistics
-	for user := range probe.users {
-		probe.users[user] = 0
+	for user := range probe.Users {
+		probe.Users[user] = 0
 	}
-	for mode := range probe.modes {
-		probe.modes[mode] = 0
+	for mode := range probe.Modes {
+		probe.Modes[mode] = 0
 	}
 
 	// Get sessions
@@ -56,25 +50,25 @@ func (probe *Probe) Run() {
 	if err == nil {
 		// Update statistics
 		for user, count := range users {
-			if oldCount, ok := probe.users[user]; ok {
-				probe.users[user] = oldCount + count
+			if oldCount, ok := probe.Users[user]; ok {
+				probe.Users[user] = oldCount + count
 			} else {
-				probe.users[user] = count
+				probe.Users[user] = count
 			}
 		}
 		for mode, count := range modes {
-			if oldCount, ok := probe.modes[mode]; ok {
-				probe.modes[mode] = oldCount + count
+			if oldCount, ok := probe.Modes[mode]; ok {
+				probe.Modes[mode] = oldCount + count
 			} else {
-				probe.modes[mode] = count
+				probe.Modes[mode] = count
 			}
 		}
 
 		// Report
-		for user, value := range probe.users {
+		for user, value := range probe.Users {
 			metrics.PlexSessionCount.WithLabelValues(user).Set(float64(value))
 		}
-		for mode, value := range probe.modes {
+		for mode, value := range probe.Modes {
 			metrics.PlexTranscoderTypeCount.WithLabelValues(mode).Set(float64(value))
 		}
 		metrics.PlexTranscoderEncodingCount.Set(float64(transcoding))

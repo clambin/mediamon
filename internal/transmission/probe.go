@@ -17,13 +17,7 @@ type Probe struct {
 
 // NewProbe creates a new Probe
 func NewProbe(url string) *Probe {
-	return NewProbeWithHTTPClient(&http.Client{}, url)
-}
-
-// NewProbeWithHTTPClient creates a probe with a specified http.Client
-// Used to stub API calls during unit testing
-func NewProbeWithHTTPClient(client *http.Client, url string) *Probe {
-	return &Probe{Client{client: client, url: url}}
+	return &Probe{Client{Client: &http.Client{}, URL: url}}
 }
 
 // Run the probe. Collect all requires metrics

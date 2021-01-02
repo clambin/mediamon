@@ -8,18 +8,18 @@ import (
 
 // Client to call the Sonarr/Radarr APIs
 type Client struct {
-	client *http.Client
-	url    string
-	apiKey string
+	Client *http.Client
+	URL    string
+	APIKey string
 }
 
 // call the specified Sonarr/Radarr API endpoint
 // Business processing is done in the calling Probe function
 func (client *Client) call(endpoint string) ([]byte, error) {
-	req, _ := http.NewRequest("GET", client.url+endpoint, nil)
-	req.Header.Add("X-Api-Key", client.apiKey)
+	req, _ := http.NewRequest("GET", client.URL+endpoint, nil)
+	req.Header.Add("X-Api-Key", client.APIKey)
 
-	resp, err := client.client.Do(req)
+	resp, err := client.Client.Do(req)
 
 	if err == nil {
 		defer resp.Body.Close()

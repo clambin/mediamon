@@ -18,14 +18,13 @@ type Probe struct {
 
 // NewProbe creates a new Probe
 func NewProbe(proxy *url.URL, token string) *Probe {
-	client := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxy)}}
-	return NewProbeWithHTTPClient(client, token)
-}
-
-// NewProbeWithHTTPClient creates a probe with a specified http.Client
-// Used to stub API calls during unit testing
-func NewProbeWithHTTPClient(client *http.Client, token string) *Probe {
-	return &Probe{Client{client: client, token: token}}
+	return &Probe{
+		Client{
+			Client: &http.Client{
+				Transport: &http.Transport{Proxy: http.ProxyURL(proxy)}},
+			Token: token,
+		},
+	}
 }
 
 // Run the probe. Collect all requires metrics

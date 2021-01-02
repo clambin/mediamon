@@ -13,10 +13,10 @@ import (
 
 // Client to call the Plex APIs
 type Client struct {
-	client    *http.Client
-	url       string
-	username  string
-	password  string
+	Client    *http.Client
+	URL       string
+	UserName  string
+	Password  string
 	authToken string
 }
 
@@ -29,11 +29,11 @@ func (apiClient *Client) call(endpoint string) ([]byte, error) {
 		}
 	}
 
-	req, _ := http.NewRequest("GET", apiClient.url+endpoint, nil)
+	req, _ := http.NewRequest("GET", apiClient.URL+endpoint, nil)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-Plex-Token", apiClient.authToken)
 
-	resp, err := apiClient.client.Do(req)
+	resp, err := apiClient.Client.Do(req)
 
 	var body []byte
 
@@ -59,7 +59,7 @@ func (apiClient *Client) authenticate() bool {
 		AuthenticationToken string   `xml:"authenticationToken,attr"`
 	}{}
 
-	authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s", apiClient.username, apiClient.password)
+	authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s", apiClient.UserName, apiClient.Password)
 	req, _ := http.NewRequest("POST", "https://plex.tv/users/sign_in.xml", bytes.NewBufferString(authBody))
 	// req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("X-Plex-Product", "mediamon")
@@ -67,7 +67,7 @@ func (apiClient *Client) authenticate() bool {
 	// TODO: generate UUID?
 	req.Header.Add("X-Plex-Client-Identifier", "mediamon-v"+version.BuildVersion)
 
-	resp, err := apiClient.client.Do(req)
+	resp, err := apiClient.Client.Do(req)
 
 	if err == nil {
 		defer resp.Body.Close()

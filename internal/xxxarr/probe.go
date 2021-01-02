@@ -3,7 +3,6 @@ package xxxarr
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -14,12 +13,15 @@ import (
 // Probe to measure sonarr/radarr metrics
 type Probe struct {
 	Client
-	application string
+	Application string
 }
 
 // NewProbe creates a new Probe
 func NewProbe(url string, apiKey string, application string) *Probe {
-	return NewProbeWithHTTPClient(&http.Client{}, url, apiKey, application)
+	if isValid(application) == false {
+		panic(application)
+	}
+	return &Probe{Client{Client: &http.Client{}, URL: url, APIKey: apiKey}, application}
 }
 
 func isValid(application string) bool {
@@ -31,45 +33,35 @@ func isValid(application string) bool {
 	return false
 }
 
-// NewProbeWithHTTPClient creates a probe with a specified http.Client
-// Used to stub API calls during unit testing
-func NewProbeWithHTTPClient(client *http.Client, url string, apiKey string, application string) *Probe {
-	if !isValid(application) {
-		panic(errors.New("invalid application: " + application))
-	}
-
-	return &Probe{Client{client: client, url: url, apiKey: apiKey}, application}
-}
-
 // Run the probe. Collect all requires metrics
 func (probe *Probe) Run() {
 	// Get the version
 	if version, err := probe.getVersion(); err != nil {
-		log.Warningf("could not get %s version: %s", probe.application, err)
+		log.Warningf("could not get %s version: %s", probe.Application, err)
 	} else {
-		metrics.MediaServerVersion.WithLabelValues(probe.application, version).Set(1)
+		metrics.MediaServerVersion.WithLabelValues(probe.Application, version).Set(1)
 	}
 
 	// Get the calendar
 	if count, err := probe.getCalendar(); err != nil {
-		log.Warningf("could not get %s calendar: %s", probe.application, err)
+		log.Warningf("could not get %s calendar: %s", probe.Application, err)
 	} else {
-		metrics.XXXArrCalendarCount.WithLabelValues(probe.application).Set(float64(count))
+		metrics.XXXArrCalendarCount.WithLabelValues(probe.Application).Set(float64(count))
 	}
 
 	// Get queued series / movies
 	if count, err := probe.getQueue(); err != nil {
-		log.Warningf("could not get %s queue: %s", probe.application, err)
+		log.Warningf("could not get %s queue: %s", probe.Application, err)
 	} else {
-		metrics.XXXarrQueuedCount.WithLabelValues(probe.application).Set(float64(count))
+		metrics.XXXarrQueuedCount.WithLabelValues(probe.Application).Set(float64(count))
 	}
 
 	// Get monitored/unmonitored series / movies
 	if monitored, unmonitored, err := probe.getMonitored(); err != nil {
-		log.Warningf("could not get %s monitored series/movies: %s", probe.application, err)
+		log.Warningf("could not get %s monitored series/movies: %s", probe.Application, err)
 	} else {
-		metrics.XXXarrMonitoredCount.WithLabelValues(probe.application).Set(float64(monitored))
-		metrics.XXXarrUnmonitoredCount.WithLabelValues(probe.application).Set(float64(unmonitored))
+		metrics.XXXarrMonitoredCount.WithLabelValues(probe.Application).Set(float64(monitored))
+		metrics.XXXarrUnmonitoredCount.WithLabelValues(probe.Application).Set(float64(unmonitored))
 	}
 }
 
@@ -133,7 +125,7 @@ func (probe *Probe) getMonitored() (int, int, error) {
 	}
 
 	endpoint := "/api/movie"
-	if probe.application == "sonarr" {
+	if probe.Application == "sonarr" {
 		endpoint = "/api/series"
 	}
 

@@ -14,23 +14,24 @@ import (
 )
 
 func TestProbe_InvalidProbe(t *testing.T) {
-	assert.Panics(t, func() { xxxarr.NewProbeWithHTTPClient(&http.Client{}, "", "", "invalid") })
+	assert.Panics(t, func() { xxxarr.NewProbe("", "", "invalid") })
 }
 
 func TestFailingProbe(t *testing.T) {
-	probe := xxxarr.NewProbeWithHTTPClient(
-		httpstub.NewTestClient(httpstub.Failing),
-		"http://example.com",
-		"1234",
-		"sonarr",
-	)
+	probe := xxxarr.Probe{
+		Client:      xxxarr.Client{Client: httpstub.NewTestClient(httpstub.Failing), APIKey: "1234"},
+		Application: "sonarr",
+	}
 	assert.NotNil(t, probe)
 	assert.NotPanics(t, func() { probe.Run() })
 }
 
 func TestProbe_Run(t *testing.T) {
 	for _, application := range []string{"sonarr", "radarr"} {
-		probe := xxxarr.NewProbeWithHTTPClient(httpstub.NewTestClient(loopback), "http://example.com", "1234", application)
+		probe := xxxarr.Probe{
+			Client:      xxxarr.Client{Client: httpstub.NewTestClient(loopback), URL: "http://example.com", APIKey: "1234"},
+			Application: application,
+		}
 
 		probe.Run()
 
