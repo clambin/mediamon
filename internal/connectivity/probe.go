@@ -13,7 +13,7 @@ import (
 
 // Probe to measure Plex metrics
 type Probe struct {
-	client *Client
+	Client
 }
 
 // NewProbe creates a new Probe
@@ -25,9 +25,7 @@ func NewProbe(proxy *url.URL, token string) *Probe {
 // NewProbeWithHTTPClient creates a probe with a specified http.Client
 // Used to stub API calls during unit testing
 func NewProbeWithHTTPClient(client *http.Client, token string) *Probe {
-	return &Probe{
-		client: NewAPIWithHTTPClient(client, token),
-	}
+	return &Probe{Client{client: client, token: token}}
 }
 
 // Run the probe. Collect all requires metrics
@@ -55,7 +53,7 @@ func (probe *Probe) getResponse() error {
 		Timezone string
 	}{}
 
-	resp, err := probe.client.Call()
+	resp, err := probe.call()
 	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&response)

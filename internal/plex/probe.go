@@ -13,9 +13,9 @@ import (
 
 // Probe to measure Plex metrics
 type Probe struct {
-	apiClient *Client
-	users     map[string]int
-	modes     map[string]int
+	Client
+	users map[string]int
+	modes map[string]int
 }
 
 // NewProbe creates a new Probe
@@ -27,9 +27,9 @@ func NewProbe(url, username, password string) *Probe {
 // Used to stub API calls during unit testing
 func NewProbeWithHTTPClient(client *http.Client, url, username, password string) *Probe {
 	return &Probe{
-		apiClient: NewAPIWithHTTPClient(client, url, username, password),
-		users:     make(map[string]int),
-		modes:     make(map[string]int),
+		Client{client: client, url: url, username: username, password: password},
+		make(map[string]int),
+		make(map[string]int),
 	}
 }
 
@@ -90,7 +90,7 @@ func (probe *Probe) getVersion() (string, error) {
 		}
 	}{}
 
-	resp, err := probe.apiClient.Call("/identity")
+	resp, err := probe.call("/identity")
 	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
@@ -117,7 +117,7 @@ func (probe *Probe) getSessions() (map[string]int, map[string]int, int, float64,
 		}
 	}{}
 
-	resp, err := probe.apiClient.Call("/status/sessions")
+	resp, err := probe.call("/status/sessions")
 	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)

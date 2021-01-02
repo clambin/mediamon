@@ -13,21 +13,16 @@ import (
 
 // Client to call the Plex APIs
 type Client struct {
-	httpClient *http.Client
-	url        string
-	username   string
-	password   string
-	authToken  string
+	client    *http.Client
+	url       string
+	username  string
+	password  string
+	authToken string
 }
 
-// NewAPIWithHTTPClient creates a new API Client
-func NewAPIWithHTTPClient(httpClient *http.Client, url, username, password string) *Client {
-	return &Client{httpClient: httpClient, url: url, username: username, password: password}
-}
-
-// Call calls a specific Transmission API endpoint
+// call the specified Plex API endpoint
 // Business processing is done in the calling Probe function
-func (apiClient *Client) Call(endpoint string) ([]byte, error) {
+func (apiClient *Client) call(endpoint string) ([]byte, error) {
 	if apiClient.authToken == "" {
 		if !apiClient.authenticate() {
 			return nil, errors.New("unable to sign in to plex.tv")
@@ -38,7 +33,7 @@ func (apiClient *Client) Call(endpoint string) ([]byte, error) {
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-Plex-Token", apiClient.authToken)
 
-	resp, err := apiClient.httpClient.Do(req)
+	resp, err := apiClient.client.Do(req)
 
 	var body []byte
 
@@ -72,7 +67,7 @@ func (apiClient *Client) authenticate() bool {
 	// TODO: generate UUID?
 	req.Header.Add("X-Plex-Client-Identifier", "mediamon-v"+version.BuildVersion)
 
-	resp, err := apiClient.httpClient.Do(req)
+	resp, err := apiClient.client.Do(req)
 
 	if err == nil {
 		defer resp.Body.Close()

@@ -13,7 +13,7 @@ import (
 
 // Probe to measure sonarr/radarr metrics
 type Probe struct {
-	client      *Client
+	Client
 	application string
 }
 
@@ -38,7 +38,7 @@ func NewProbeWithHTTPClient(client *http.Client, url string, apiKey string, appl
 		panic(errors.New("invalid application: " + application))
 	}
 
-	return &Probe{client: NewAPIWithHTTPClient(client, url, apiKey), application: application}
+	return &Probe{Client{client: client, url: url, apiKey: apiKey}, application}
 }
 
 // Run the probe. Collect all requires metrics
@@ -78,7 +78,7 @@ func (probe *Probe) getVersion() (string, error) {
 		Version string
 	}{}
 
-	resp, err := probe.client.Call("/api/system/status")
+	resp, err := probe.call("/api/system/status")
 	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
@@ -94,7 +94,7 @@ func (probe *Probe) getCalendar() (int, error) {
 		HasFile bool
 	}
 
-	resp, err := probe.client.Call("/api/calendar")
+	resp, err := probe.call("/api/calendar")
 	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
@@ -116,7 +116,7 @@ func (probe *Probe) getQueue() (int, error) {
 		Status string
 	}
 
-	resp, err := probe.client.Call("/api/queue")
+	resp, err := probe.call("/api/queue")
 	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
@@ -137,7 +137,7 @@ func (probe *Probe) getMonitored() (int, int, error) {
 		endpoint = "/api/series"
 	}
 
-	resp, err := probe.client.Call(endpoint)
+	resp, err := probe.call(endpoint)
 	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)

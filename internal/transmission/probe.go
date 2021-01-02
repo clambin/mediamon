@@ -12,7 +12,7 @@ import (
 
 // Probe to measure Transmission metrics
 type Probe struct {
-	client *Client
+	Client
 }
 
 // NewProbe creates a new Probe
@@ -23,7 +23,7 @@ func NewProbe(url string) *Probe {
 // NewProbeWithHTTPClient creates a probe with a specified http.Client
 // Used to stub API calls during unit testing
 func NewProbeWithHTTPClient(client *http.Client, url string) *Probe {
-	return &Probe{client: NewAPIWithHTTPClient(client, url)}
+	return &Probe{Client{client: client, url: url}}
 }
 
 // Run the probe. Collect all requires metrics
@@ -53,7 +53,7 @@ func (probe *Probe) getVersion() (string, error) {
 		Result string
 	}{}
 
-	resp, err := probe.client.Call("session-get")
+	resp, err := probe.call("session-get")
 	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
@@ -75,7 +75,7 @@ func (probe *Probe) getStats() (int, int, int, int, error) {
 		Result string
 	}{}
 
-	resp, err := probe.client.Call("session-stats")
+	resp, err := probe.call("session-stats")
 	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)

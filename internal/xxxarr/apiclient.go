@@ -13,14 +13,9 @@ type Client struct {
 	apiKey string
 }
 
-// NewAPIWithHTTPClient creates a new API Client
-func NewAPIWithHTTPClient(client *http.Client, url string, apiKey string) *Client {
-	return &Client{client: client, url: url, apiKey: apiKey}
-}
-
-// Call calls a specific Sonarr/Radarr API endpoint
+// call the specified Sonarr/Radarr API endpoint
 // Business processing is done in the calling Probe function
-func (client *Client) Call(endpoint string) ([]byte, error) {
+func (client *Client) call(endpoint string) ([]byte, error) {
 	req, _ := http.NewRequest("GET", client.url+endpoint, nil)
 	req.Header.Add("X-Api-Key", client.apiKey)
 
