@@ -14,11 +14,8 @@ import (
 )
 
 func TestProbe_Run(t *testing.T) {
-	probe := &plex.Probe{
-		Client: plex.Client{Client: httpstub.NewTestClient(loopback), UserName: "user@example.com", Password: "somepassword"},
-		Users:  make(map[string]int),
-		Modes:  make(map[string]int),
-	}
+	probe := plex.NewProbe("", "user@example.com", "somepassword")
+	probe.Client.Client = httpstub.NewTestClient(loopback)
 
 	// log.SetLevel(log.DebugLevel)
 	probe.Run()
@@ -84,11 +81,8 @@ func TestProbe_Run(t *testing.T) {
 }
 
 func TestCachedUsers(t *testing.T) {
-	probe := &plex.Probe{
-		Client: plex.Client{Client: httpstub.NewTestClient(loopback), UserName: "user@example.com", Password: "somepassword"},
-		Users:  make(map[string]int),
-		Modes:  make(map[string]int),
-	}
+	probe := plex.NewProbe("", "user@example.com", "somepassword")
+	probe.Client.Client = httpstub.NewTestClient(loopback)
 
 	// log.SetLevel(log.DebugLevel)
 	probe.Run()
@@ -177,11 +171,8 @@ func TestCachedUsers(t *testing.T) {
 }
 
 func TestFailingServer(t *testing.T) {
-	probe := &plex.Probe{
-		Client: plex.Client{Client: httpstub.NewTestClient(httpstub.Failing), UserName: "user@example.com", Password: "somepassword"},
-		Users:  make(map[string]int),
-		Modes:  make(map[string]int),
-	}
+	probe := plex.NewProbe("", "user@example.com", "somepassword")
+	probe.Client.Client = httpstub.NewTestClient(httpstub.Failing)
 
 	assert.NotPanics(t, func() { probe.Run() })
 }

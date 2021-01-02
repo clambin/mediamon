@@ -18,20 +18,17 @@ func TestProbe_InvalidProbe(t *testing.T) {
 }
 
 func TestFailingProbe(t *testing.T) {
-	probe := xxxarr.Probe{
-		Client:      xxxarr.Client{Client: httpstub.NewTestClient(httpstub.Failing), APIKey: "1234"},
-		Application: "sonarr",
-	}
+	probe := xxxarr.NewProbe("", "1234", "sonarr")
+	probe.Client.Client = httpstub.NewTestClient(loopback)
+
 	assert.NotNil(t, probe)
 	assert.NotPanics(t, func() { probe.Run() })
 }
 
 func TestProbe_Run(t *testing.T) {
 	for _, application := range []string{"sonarr", "radarr"} {
-		probe := xxxarr.Probe{
-			Client:      xxxarr.Client{Client: httpstub.NewTestClient(loopback), URL: "http://example.com", APIKey: "1234"},
-			Application: application,
-		}
+		probe := xxxarr.NewProbe("", "1234", application)
+		probe.Client.Client = httpstub.NewTestClient(loopback)
 
 		probe.Run()
 

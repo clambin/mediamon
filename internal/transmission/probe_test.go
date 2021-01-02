@@ -15,9 +15,8 @@ import (
 )
 
 func TestProbe_Run(t *testing.T) {
-	probe := transmission.Probe{
-		Client: transmission.Client{Client: httpstub.NewTestClient(loopback), URL: "http://example.com"},
-	}
+	probe := transmission.NewProbe("")
+	probe.Client.Client = httpstub.NewTestClient(loopback)
 
 	log.SetLevel(log.DebugLevel)
 
@@ -36,9 +35,8 @@ func TestProbe_Run(t *testing.T) {
 }
 
 func TestFailingServer(t *testing.T) {
-	probe := transmission.Probe{
-		Client: transmission.Client{Client: httpstub.NewTestClient(httpstub.Failing), URL: "http://example.com"},
-	}
+	probe := transmission.NewProbe("")
+	probe.Client.Client = httpstub.NewTestClient(httpstub.Failing)
 
 	assert.NotPanics(t, func() { probe.Run() })
 }
