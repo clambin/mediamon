@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/clambin/httpstub"
+	"github.com/clambin/gotools/httpstub"
+	"github.com/clambin/gotools/metrics"
 	"github.com/stretchr/testify/assert"
 
 	"mediamon/internal/plex"
-	"mediamon/pkg/metrics"
 )
 
 func TestProbe_Run(t *testing.T) {

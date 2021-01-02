@@ -1,13 +1,14 @@
 package bandwidth_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"testing"
 
+	"github.com/clambin/gotools/metrics"
+	"github.com/stretchr/testify/assert"
+
 	"mediamon/internal/bandwidth"
-	"mediamon/pkg/metrics"
 )
 
 func tempFile(content []byte) (string, error) {

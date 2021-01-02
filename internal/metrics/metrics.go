@@ -1,8 +1,8 @@
 package metrics
 
 import (
+	"github.com/clambin/gotools/metrics"
 	"github.com/prometheus/client_golang/prometheus"
-	"mediamon/pkg/metrics"
 )
 
 var (
