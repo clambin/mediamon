@@ -19,7 +19,7 @@ func TestProbe_InvalidProbe(t *testing.T) {
 
 func TestFailingProbe(t *testing.T) {
 	probe := xxxarr.NewProbe("", "1234", "sonarr")
-	probe.Client.Client = httpstub.NewTestClient(loopback)
+	probe.Client.Client = httpstub.NewTestClient(httpstub.Failing)
 
 	assert.NotNil(t, probe)
 	assert.NotPanics(t, func() { probe.Run() })
