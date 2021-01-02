@@ -3,11 +3,12 @@ package plex
 import (
 	"bytes"
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
+	"net/http"
 	"strconv"
 
+	log "github.com/sirupsen/logrus"
+
 	"mediamon/internal/metrics"
-	"net/http"
 )
 
 // Probe to measure Plex metrics
@@ -38,7 +39,7 @@ func (probe *Probe) Run() {
 	if version, err := probe.getVersion(); err != nil {
 		log.Warningf("Could not get Plex version: %s", err)
 	} else {
-		metrics.Publish("version", 1, "plex", version)
+		metrics.MediaServerVersion.WithLabelValues("plex", version).Set(1)
 	}
 
 	// Reset current statistics
@@ -71,13 +72,13 @@ func (probe *Probe) Run() {
 
 		// Report
 		for user, value := range probe.users {
-			metrics.Publish("plex_session_count", float64(value), user)
+			metrics.PlexSessionCount.WithLabelValues(user).Set(float64(value))
 		}
 		for mode, value := range probe.modes {
-			metrics.Publish("plex_transcoder_type_count", float64(value), mode)
+			metrics.PlexTranscoderTypeCount.WithLabelValues(mode).Set(float64(value))
 		}
-		metrics.Publish("plex_transcoder_encoding_count", float64(transcoding))
-		metrics.Publish("plex_transcoder_speed_total", speed)
+		metrics.PlexTranscoderEncodingCount.Set(float64(transcoding))
+		metrics.PlexTranscoderSpeedTotal.Set(speed)
 	}
 
 }

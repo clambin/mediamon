@@ -24,11 +24,11 @@ func NewProbe(filename string) *Probe {
 // Run the probe. Collect all requires metrics
 func (probe *Probe) Run() {
 	if stats, err := probe.getStats(); err == nil {
-		metrics.Publish("openvpn_client_tcp_udp_read_bytes_total", float64(stats.clientTcpUdpRead))
-		metrics.Publish("openvpn_client_tcp_udp_write_bytes_total", float64(stats.clientTcpUdpWrite))
+		metrics.OpenVPNClientReadTotal.Set(float64(stats.clientTcpUdpRead))
+		metrics.OpenVPNClientWriteTotal.Set(float64(stats.clientTcpUdpWrite))
 	} else {
-		metrics.Publish("openvpn_client_tcp_udp_read_bytes_total", 0.0)
-		metrics.Publish("openvpn_client_tcp_udp_write_bytes_total", 0.0)
+		metrics.OpenVPNClientReadTotal.Set(0.0)
+		metrics.OpenVPNClientWriteTotal.Set(0.0)
 		log.Warningf("%s", err.Error())
 	}
 }

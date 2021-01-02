@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"mediamon/internal/connectivity"
-	"mediamon/internal/metrics"
+	"mediamon/pkg/metrics"
 )
 
 func TestProbe_Run(t *testing.T) {

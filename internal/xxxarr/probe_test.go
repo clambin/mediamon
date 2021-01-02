@@ -9,8 +9,8 @@ import (
 	"github.com/clambin/httpstub"
 	"github.com/stretchr/testify/assert"
 
-	"mediamon/internal/metrics"
 	"mediamon/internal/xxxarr"
+	"mediamon/pkg/metrics"
 )
 
 func TestProbe_InvalidProbe(t *testing.T) {
@@ -34,15 +34,15 @@ func TestProbe_Run(t *testing.T) {
 
 		probe.Run()
 
-		value, _ := metrics.LoadValue("version", application, "1.2.3.4444")
+		value, _ := metrics.LoadValue("mediaserver_server_info", application, "1.2.3.4444")
 		assert.Equal(t, float64(1), value)
-		count, _ := metrics.LoadValue("xxxarr_calendar", application)
+		count, _ := metrics.LoadValue("mediaserver_calendar_count", application)
 		assert.Equal(t, float64(1), count)
-		count, _ = metrics.LoadValue("xxxarr_queued", application)
+		count, _ = metrics.LoadValue("mediaserver_queued_count", application)
 		assert.Equal(t, float64(2), count)
-		count, _ = metrics.LoadValue("xxxarr_monitored", application)
+		count, _ = metrics.LoadValue("mediaserver_monitored_count", application)
 		assert.Equal(t, float64(2), count)
-		count, _ = metrics.LoadValue("xxxarr_unmonitored", application)
+		count, _ = metrics.LoadValue("mediaserver_unmonitored_count", application)
 		assert.Equal(t, float64(1), count)
 	}
 }

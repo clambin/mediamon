@@ -47,29 +47,29 @@ func (probe *Probe) Run() {
 	if version, err := probe.getVersion(); err != nil {
 		log.Warningf("could not get %s version: %s", probe.application, err)
 	} else {
-		metrics.Publish("version", 1, probe.application, version)
+		metrics.MediaServerVersion.WithLabelValues(probe.application, version).Set(1)
 	}
 
 	// Get the calendar
 	if count, err := probe.getCalendar(); err != nil {
 		log.Warningf("could not get %s calendar: %s", probe.application, err)
 	} else {
-		metrics.Publish("xxxarr_calendar", float64(count), probe.application)
+		metrics.XXXArrCalendarCount.WithLabelValues(probe.application).Set(float64(count))
 	}
 
 	// Get queued series / movies
 	if count, err := probe.getQueue(); err != nil {
 		log.Warningf("could not get %s queue: %s", probe.application, err)
 	} else {
-		metrics.Publish("xxxarr_queued", float64(count), probe.application)
+		metrics.XXXarrQueuedCount.WithLabelValues(probe.application).Set(float64(count))
 	}
 
 	// Get monitored/unmonitored series / movies
 	if monitored, unmonitored, err := probe.getMonitored(); err != nil {
 		log.Warningf("could not get %s monitored series/movies: %s", probe.application, err)
 	} else {
-		metrics.Publish("xxxarr_monitored", float64(monitored), probe.application)
-		metrics.Publish("xxxarr_unmonitored", float64(unmonitored), probe.application)
+		metrics.XXXarrMonitoredCount.WithLabelValues(probe.application).Set(float64(monitored))
+		metrics.XXXarrUnmonitoredCount.WithLabelValues(probe.application).Set(float64(unmonitored))
 	}
 }
 

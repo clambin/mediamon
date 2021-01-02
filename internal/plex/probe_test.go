@@ -9,8 +9,8 @@ import (
 	"github.com/clambin/httpstub"
 	"github.com/stretchr/testify/assert"
 
-	"mediamon/internal/metrics"
 	"mediamon/internal/plex"
+	"mediamon/pkg/metrics"
 )
 
 func TestProbe_Run(t *testing.T) {
@@ -20,10 +20,10 @@ func TestProbe_Run(t *testing.T) {
 	probe.Run()
 
 	// Test version
-	_, err := metrics.LoadValue("version", "plex", "SomeVersion")
+	_, err := metrics.LoadValue("mediaserver_server_info", "plex", "SomeVersion")
 	assert.Nil(t, err)
 
-	_, err = metrics.LoadValue("version", "plex", "NotSomeVersion")
+	_, err = metrics.LoadValue("mediaserver_server_info", "plex", "NotSomeVersion")
 	assert.Nil(t, err)
 
 	// Test user count
@@ -38,7 +38,7 @@ func TestProbe_Run(t *testing.T) {
 		// Current implementation of LoadValue can't detect missing labels. Will return 0
 		{"ufans", true, 0.0},
 	} {
-		userCount, err := metrics.LoadValue("plex_session_count", testCase.user)
+		userCount, err := metrics.LoadValue("mediaserver_plex_session_count", testCase.user)
 		if testCase.ok {
 			assert.Nil(t, err, testCase.user)
 			assert.Equal(t, testCase.value, userCount, testCase.user)
@@ -59,7 +59,7 @@ func TestProbe_Run(t *testing.T) {
 		// Current implementation of LoadValue can't detect missing labels. Will return 0
 		{"snafu", true, 0.0},
 	} {
-		modeCount, err := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
+		modeCount, err := metrics.LoadValue("mediaserver_plex_transcoder_type_count", testCase.mode)
 		if testCase.ok {
 			assert.Nil(t, err, testCase.mode)
 			assert.Equal(t, testCase.value, modeCount, testCase.mode)
@@ -69,12 +69,12 @@ func TestProbe_Run(t *testing.T) {
 	}
 
 	// Active transcoders
-	encodingCount, err := metrics.LoadValue("plex_transcoder_encoding_count")
+	encodingCount, err := metrics.LoadValue("mediaserver_plex_transcoder_encoding_count")
 	assert.Nil(t, err)
 	assert.Equal(t, 2.0, encodingCount)
 
 	// Total encoding speed
-	encodingSpeed, err := metrics.LoadValue("plex_transcoder_speed_total")
+	encodingSpeed, err := metrics.LoadValue("mediaserver_plex_transcoder_speed_total")
 	assert.Nil(t, err)
 	assert.Equal(t, 3.1, encodingSpeed)
 }
@@ -95,7 +95,7 @@ func TestCachedUsers(t *testing.T) {
 		{"bar", true, 1.0},
 		{"snafu", true, 2.0},
 	} {
-		userCount, err := metrics.LoadValue("plex_session_count", testCase.user)
+		userCount, err := metrics.LoadValue("mediaserver_plex_session_count", testCase.user)
 		if testCase.ok {
 			assert.Nil(t, err, testCase.user)
 			assert.Equal(t, testCase.value, userCount, testCase.user)
@@ -114,7 +114,7 @@ func TestCachedUsers(t *testing.T) {
 		{"copy", true, 1.0},
 		{"transcode", true, 2.0},
 	} {
-		modeCount, err := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
+		modeCount, err := metrics.LoadValue("mediaserver_plex_transcoder_type_count", testCase.mode)
 		if testCase.ok {
 			assert.Nil(t, err, testCase.mode)
 			assert.Equal(t, testCase.value, modeCount, testCase.mode)
@@ -139,7 +139,7 @@ func TestCachedUsers(t *testing.T) {
 		{"bar", true, 1.0},
 		{"snafu", true, 0.0},
 	} {
-		userCount, err := metrics.LoadValue("plex_session_count", testCase.user)
+		userCount, err := metrics.LoadValue("mediaserver_plex_session_count", testCase.user)
 		if testCase.ok {
 			assert.Nil(t, err, testCase.user)
 			assert.Equal(t, testCase.value, userCount, testCase.user)
@@ -158,7 +158,7 @@ func TestCachedUsers(t *testing.T) {
 		{"copy", true, 1.0},
 		{"transcode", true, 0.0},
 	} {
-		modeCount, err := metrics.LoadValue("plex_transcoder_type_count", testCase.mode)
+		modeCount, err := metrics.LoadValue("mediaserver_plex_transcoder_type_count", testCase.mode)
 		if testCase.ok {
 			assert.Nil(t, err, testCase.mode)
 			assert.Equal(t, testCase.value, modeCount, testCase.mode)

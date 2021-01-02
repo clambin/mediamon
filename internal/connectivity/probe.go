@@ -39,7 +39,7 @@ func (probe *Probe) Run() {
 		connected = float64(0)
 	}
 
-	metrics.Publish("openvpn_client_status", connected)
+	metrics.OpenVPNClientStatus.Set(connected)
 }
 
 func (probe *Probe) getResponse() error {

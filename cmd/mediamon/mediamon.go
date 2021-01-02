@@ -1,13 +1,16 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
-	"mediamon/internal/mediamon"
-	"mediamon/internal/metrics"
+	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/alecthomas/kingpin.v2"
+
+	"mediamon/internal/mediamon"
 	"mediamon/internal/services"
 	"mediamon/internal/version"
 )
@@ -49,5 +52,9 @@ func main() {
 	log.Debug(cfg.Services)
 
 	mediamon.StartProbes(&cfg)
-	metrics.Run(cfg.Port, false)
+
+	// Run initialized & runs the metrics
+	listenAddress := fmt.Sprintf(":%d", cfg.Port)
+	http.Handle("/metrics", promhttp.Handler())
+	_ = http.ListenAndServe(listenAddress, nil)
 }

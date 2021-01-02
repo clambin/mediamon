@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"mediamon/internal/bandwidth"
-	"mediamon/internal/metrics"
+	"mediamon/pkg/metrics"
 )
 
 func tempFile(content []byte) (string, error) {

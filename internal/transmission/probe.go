@@ -3,9 +3,11 @@ package transmission
 import (
 	"bytes"
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
-	"mediamon/internal/metrics"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
+
+	"mediamon/internal/metrics"
 )
 
 // Probe to measure Transmission metrics
@@ -30,16 +32,16 @@ func (probe *Probe) Run() {
 	if version, err := probe.getVersion(); err != nil {
 		log.Warningf("Could not get Transmission version: %s", err)
 	} else {
-		metrics.Publish("version", 1, "transmission", version)
+		metrics.MediaServerVersion.WithLabelValues("transmission", version).Set(1)
 	}
 
 	if activeTorrents, pausedTorrents, downloadSpeed, uploadSpeed, err := probe.getStats(); err != nil {
 		log.Warningf("Could not get Transmission Statistics: %s", err)
 	} else {
-		metrics.Publish("active_torrent_count", float64(activeTorrents))
-		metrics.Publish("paused_torrent_count", float64(pausedTorrents))
-		metrics.Publish("download_speed", float64(downloadSpeed))
-		metrics.Publish("upload_speed", float64(uploadSpeed))
+		metrics.TransmissionActiveTorrentCount.Set(float64(activeTorrents))
+		metrics.TransmissionPausedTorrentCount.Set(float64(pausedTorrents))
+		metrics.TransmissionDownloadSpeed.Set(float64(downloadSpeed))
+		metrics.TransmissionUploadSpeed.Set(float64(uploadSpeed))
 	}
 }
 

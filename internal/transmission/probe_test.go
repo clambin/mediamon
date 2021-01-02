@@ -10,8 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"mediamon/internal/metrics"
 	"mediamon/internal/transmission"
+	"mediamon/pkg/metrics"
 )
 
 func TestProbe_Run(t *testing.T) {
@@ -21,15 +21,15 @@ func TestProbe_Run(t *testing.T) {
 
 	probe.Run()
 
-	value, _ := metrics.LoadValue("version", "transmission", "2.94 (d8e60ee44f)")
+	value, _ := metrics.LoadValue("mediaserver_server_info", "transmission", "2.94 (d8e60ee44f)")
 	assert.Equal(t, float64(1), value)
-	value, _ = metrics.LoadValue("active_torrent_count")
+	value, _ = metrics.LoadValue("mediaserver_active_torrent_count")
 	assert.Equal(t, float64(1), value)
-	value, _ = metrics.LoadValue("paused_torrent_count")
+	value, _ = metrics.LoadValue("mediaserver_paused_torrent_count")
 	assert.Equal(t, float64(2), value)
-	value, _ = metrics.LoadValue("download_speed")
+	value, _ = metrics.LoadValue("mediaserver_download_speed")
 	assert.Equal(t, float64(100), value)
-	value, _ = metrics.LoadValue("upload_speed")
+	value, _ = metrics.LoadValue("mediaserver_upload_speed")
 	assert.Equal(t, float64(25), value)
 }
 
