@@ -20,7 +20,8 @@ func TestProbe_Run(t *testing.T) {
 
 	log.SetLevel(log.DebugLevel)
 
-	probe.Run()
+	err := probe.Run()
+	assert.Nil(t, err)
 
 	value, _ := metrics.LoadValue("mediaserver_server_info", "transmission", "2.94 (d8e60ee44f)")
 	assert.Equal(t, float64(1), value)
@@ -38,7 +39,7 @@ func TestFailingServer(t *testing.T) {
 	probe := transmission.NewProbe("")
 	probe.Client.Client = httpstub.NewTestClient(httpstub.Failing)
 
-	assert.NotPanics(t, func() { probe.Run() })
+	assert.NotPanics(t, func() { _ = probe.Run() })
 }
 
 func TestAuthentication(t *testing.T) {
@@ -58,7 +59,6 @@ func TestAuthentication(t *testing.T) {
 }
 
 // Server loopback function
-
 func loopback(req *http.Request) *http.Response {
 	const sessionID = "1234"
 	header := make(http.Header)
