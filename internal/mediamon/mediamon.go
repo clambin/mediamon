@@ -24,7 +24,7 @@ func StartProbes(cfg *Configuration) []string {
 
 	// Transmission Probe
 	if cfg.Services.Transmission.URL != "" {
-		log.Debugf("Starting Transmission probe (%s)", cfg.Services.Transmission.URL)
+		log.WithField("url", cfg.Services.Transmission.URL).Info("Starting Transmission probe")
 		runProbe(
 			transmission.NewProbe(cfg.Services.Transmission.URL),
 			cfg.Services.Transmission.Interval,
@@ -34,7 +34,7 @@ func StartProbes(cfg *Configuration) []string {
 
 	// Sonarr Probe
 	if cfg.Services.Sonarr.URL != "" {
-		log.Debugf("Starting Sonarr probe (%s)", cfg.Services.Sonarr.URL)
+		log.WithField("url", cfg.Services.Sonarr.URL).Info("Starting Sonarr probe")
 		runProbe(
 			xxxarr.NewProbe(cfg.Services.Sonarr.URL, cfg.Services.Sonarr.APIKey, "sonarr"),
 			cfg.Services.Sonarr.Interval,
@@ -44,7 +44,7 @@ func StartProbes(cfg *Configuration) []string {
 
 	// Radarr Probe
 	if cfg.Services.Radarr.URL != "" {
-		log.Debugf("Starting Radarr probe (%s)", cfg.Services.Radarr.URL)
+		log.WithField("url", cfg.Services.Radarr.URL).Info("Starting Radarr probe")
 		runProbe(
 			xxxarr.NewProbe(cfg.Services.Radarr.URL, cfg.Services.Radarr.APIKey, "radarr"),
 			cfg.Services.Radarr.Interval,
@@ -54,7 +54,7 @@ func StartProbes(cfg *Configuration) []string {
 
 	// Plex Probe
 	if cfg.Services.Plex.URL != "" {
-		log.Debugf("Starting Plex probe (%s)", cfg.Services.Plex.URL)
+		log.WithField("url", cfg.Services.Plex.URL).Info("Starting Plex probe")
 		runProbe(
 			plex.NewProbe(cfg.Services.Plex.URL, cfg.Services.Plex.UserName, cfg.Services.Plex.Password),
 			cfg.Services.Plex.Interval,
@@ -64,7 +64,7 @@ func StartProbes(cfg *Configuration) []string {
 
 	// Bandwidth Probe
 	if cfg.Services.OpenVPN.Bandwidth.FileName != "" {
-		log.Debugf("Starting Bandwidth probe (%s)", cfg.Services.OpenVPN.Bandwidth.FileName)
+		log.WithField("filename", cfg.Services.OpenVPN.Bandwidth.FileName).Info("Starting Bandwidth probe")
 		runProbe(
 			bandwidth.NewProbe(cfg.Services.OpenVPN.Bandwidth.FileName),
 			cfg.Services.OpenVPN.Bandwidth.Interval,
@@ -75,7 +75,7 @@ func StartProbes(cfg *Configuration) []string {
 
 	// Connectivity Probe
 	if cfg.Services.OpenVPN.Connectivity.ProxyURL != nil {
-		log.Debugf("Starting Connectivity probe (%s)", cfg.Services.OpenVPN.Connectivity.ProxyURL)
+		log.WithField("proxyURL", cfg.Services.OpenVPN.Connectivity.ProxyURL).Info("Starting Connectivity")
 		runProbe(
 			connectivity.NewProbe(cfg.Services.OpenVPN.Connectivity.ProxyURL, cfg.Services.OpenVPN.Connectivity.Token),
 			cfg.Services.OpenVPN.Connectivity.Interval,

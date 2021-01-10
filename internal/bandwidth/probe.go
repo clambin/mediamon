@@ -2,6 +2,7 @@ package bandwidth
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"regexp"
 	"strconv"
@@ -29,13 +30,17 @@ func (probe *Probe) Run() {
 	} else {
 		metrics.OpenVPNClientReadTotal.Set(0.0)
 		metrics.OpenVPNClientWriteTotal.Set(0.0)
-		log.Warningf("%s", err.Error())
+		log.WithField("err", err).Warning("Failed to get Bandwidth statistics")
 	}
 }
 
 type openVPNStats struct {
 	clientTcpUdpRead  int64
 	clientTcpUdpWrite int64
+}
+
+func (stats *openVPNStats) String() string {
+	return fmt.Sprintf("read=%d write=%d", stats.clientTcpUdpRead, stats.clientTcpUdpWrite)
 }
 
 func (probe *Probe) getStats() (openVPNStats, error) {
@@ -53,15 +58,15 @@ func (probe *Probe) getStats() (openVPNStats, error) {
 				value, _ := strconv.ParseInt(match[2], 10, 64)
 				switch match[1] {
 				case "TCP/UDP read bytes":
-					// log.Debugf("clientTcpUdpRead: %s -> %s -> %d", scanner.Text(), match[2], value)
 					stats.clientTcpUdpRead = value
 				case "TCP/UDP write bytes":
-					// log.Debugf("clientTcpUdpWrite: %s -> %s -> %d", scanner.Text(), match[2], value)
 					stats.clientTcpUdpWrite = value
 				}
 			}
 		}
 	}
+
+	log.WithFields(log.Fields{"err": err, "stats": stats.String()}).Debug("bandwidth getStats")
 
 	return stats, err
 }

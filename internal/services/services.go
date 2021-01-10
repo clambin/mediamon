@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/url"
@@ -46,11 +47,15 @@ type Config struct {
 
 // ParseConfigFile reads the configuration from the specified yaml file
 func ParseConfigFile(fileName string) (*Config, error) {
-	content, err := ioutil.ReadFile(fileName)
-	if err == nil {
-		return ParseConfig(content)
+	var (
+		err     error
+		content []byte
+		config  *Config
+	)
+	if content, err = ioutil.ReadFile(fileName); err == nil {
+		config, err = ParseConfig(content)
 	}
-	return nil, err
+	return config, err
 }
 
 // ParseConfig reads the configuration from an in-memory buffer
@@ -65,15 +70,17 @@ func ParseConfig(content []byte) (*Config, error) {
 	config.OpenVPN.Bandwidth.Interval = 30 * time.Second
 	config.OpenVPN.Connectivity.Interval = 5 * time.Minute
 
-	if err = yaml.Unmarshal(content, &config); err != nil {
-		return nil, err
-	}
-
-	if config.OpenVPN.Connectivity.Proxy != "" {
-		config.OpenVPN.Connectivity.ProxyURL, _ = url.Parse(config.OpenVPN.Connectivity.Proxy)
-		if config.OpenVPN.Connectivity.ProxyURL.Scheme == "" || config.OpenVPN.Connectivity.ProxyURL.Host == "" {
-			return nil, errors.New("proxy URL is invalid")
+	if err = yaml.Unmarshal(content, &config); err == nil {
+		if config.OpenVPN.Connectivity.Proxy != "" {
+			if config.OpenVPN.Connectivity.ProxyURL, err = url.Parse(config.OpenVPN.Connectivity.Proxy); err == nil {
+				if config.OpenVPN.Connectivity.ProxyURL.Scheme == "" ||
+					config.OpenVPN.Connectivity.ProxyURL.Host == "" {
+					err = errors.New("proxy URL is invalid")
+				}
+			}
 		}
 	}
-	return &config, nil
+	log.WithField("err", err).Debug("ParseConfig")
+
+	return &config, err
 }

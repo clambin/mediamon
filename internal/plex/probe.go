@@ -30,10 +30,10 @@ func NewProbe(url, username, password string) *Probe {
 // Run the probe. Collect all requires metrics
 func (probe *Probe) Run() {
 	// Get the version
-	if version, err := probe.getVersion(); err != nil {
-		log.Warningf("Could not get Plex version: %s", err)
-	} else {
+	if version, err := probe.getVersion(); err == nil {
 		metrics.MediaServerVersion.WithLabelValues("plex", version).Set(1)
+	} else {
+		log.WithField("err", err).Warning("Could not get Plex version")
 	}
 
 	// Reset current statistics
@@ -45,9 +45,7 @@ func (probe *Probe) Run() {
 	}
 
 	// Get sessions
-	users, modes, transcoding, speed, err := probe.getSessions()
-
-	if err == nil {
+	if users, modes, transcoding, speed, err := probe.getSessions(); err == nil {
 		// Update statistics
 		for user, count := range users {
 			if oldCount, ok := probe.Users[user]; ok {
@@ -73,90 +71,109 @@ func (probe *Probe) Run() {
 		}
 		metrics.PlexTranscoderEncodingCount.Set(float64(transcoding))
 		metrics.PlexTranscoderSpeedTotal.Set(speed)
+	} else {
+		log.WithField("err", err).Warning("could not get Plex sessions")
 	}
-
 }
 
 func (probe *Probe) getVersion() (string, error) {
-	var stats = struct {
-		MediaContainer struct {
-			Version string
+	var (
+		err   error
+		resp  []byte
+		stats struct {
+			MediaContainer struct {
+				Version string
+			}
 		}
-	}{}
+	)
 
-	resp, err := probe.call("/identity")
-	if err == nil {
+	if resp, err = probe.call("/identity"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
-		if err == nil {
-			return stats.MediaContainer.Version, nil
-		}
 	}
-	return "", err
+
+	log.WithFields(log.Fields{
+		"err":     err,
+		"version": stats.MediaContainer.Version,
+	}).Debug("plex getVersion")
+
+	return stats.MediaContainer.Version, err
 }
 
 func (probe *Probe) getSessions() (map[string]int, map[string]int, int, float64, error) {
-	var stats = struct {
-		MediaContainer struct {
-			Metadata []struct {
-				User struct {
-					Title string
-				}
-				TranscodeSession struct {
-					Throttled     bool
-					Speed         string
-					VideoDecision string
+	var (
+		err         error
+		resp        []byte
+		users       = make(map[string]int, 0)
+		modes       = make(map[string]int, 0)
+		transcoding int
+		speed       float64
+		ok          bool
+		count       int
+		stats       struct {
+			MediaContainer struct {
+				Metadata []struct {
+					User struct {
+						Title string
+					}
+					TranscodeSession struct {
+						Throttled     bool
+						Speed         string
+						VideoDecision string
+					}
 				}
 			}
 		}
-	}{}
+	)
 
-	resp, err := probe.call("/status/sessions")
-	if err == nil {
+	if resp, err = probe.call("/status/sessions"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
-		err = decoder.Decode(&stats)
-		if err == nil {
-			users := make(map[string]int, 0)
-			modes := make(map[string]int, 0)
-			transcoding := 0
-			speed := float64(0)
-
+		if err = decoder.Decode(&stats); err == nil {
 			for _, entry := range stats.MediaContainer.Metadata {
 				// User sessions
-				userCount, ok := users[entry.User.Title]
-				if ok == false {
-					users[entry.User.Title] = 1
+				count, ok = users[entry.User.Title]
+				if ok {
+					users[entry.User.Title] = count + 1
 				} else {
-					users[entry.User.Title] = userCount + 1
+					users[entry.User.Title] = 1
 				}
 				// Transcoders
 				videoDecision := entry.TranscodeSession.VideoDecision
 				if videoDecision == "" {
 					videoDecision = "direct"
 				}
-				modeCount, ok := modes[videoDecision]
-				if ok == false {
-					modes[videoDecision] = 1
+				count, ok = modes[videoDecision]
+				if ok {
+					modes[videoDecision] = count + 1
 				} else {
-					modes[videoDecision] = modeCount + 1
+					modes[videoDecision] = 1
 				}
-
 				// Active transcoders
-
 				if !entry.TranscodeSession.Throttled {
 					transcoding++
 					if entry.TranscodeSession.Speed != "" {
-						if parsedSpeed, err := strconv.ParseFloat(entry.TranscodeSession.Speed, 64); err != nil {
-							log.Warningf("cannot parse Plex encoding speed: '%s'", entry.TranscodeSession.Speed)
-						} else {
+						var parsedSpeed float64
+						if parsedSpeed, err = strconv.ParseFloat(entry.TranscodeSession.Speed, 64); err == nil {
 							speed += parsedSpeed
+						} else {
+							log.WithFields(log.Fields{
+								"err":   err,
+								"Speed": entry.TranscodeSession.Speed,
+							}).Warning("cannot parse Plex encoding speed")
 						}
 					}
 				}
 			}
-
-			return users, modes, transcoding, speed, nil
 		}
 	}
-	return nil, nil, -1, float64(-1), err
+
+	log.WithFields(log.Fields{
+		"err":         err,
+		"users":       users,
+		"modes":       modes,
+		"transcoding": transcoding,
+		"speed":       speed,
+	}).Debug("plex getSessions")
+
+	return users, modes, transcoding, speed, err
 }

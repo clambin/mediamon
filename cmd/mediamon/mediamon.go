@@ -41,20 +41,18 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	cfg.Services, err = services.ParseConfigFile(servicesFilename)
-
-	if err != nil {
-		log.Warningf("unable to parse Services file '%s': %v", servicesFilename, err)
+	if cfg.Services, err = services.ParseConfigFile(servicesFilename); err != nil {
+		log.WithFields(log.Fields{"err": err, "filename": servicesFilename}).Warning("unable to parse Services file")
 		os.Exit(3)
 	}
 
 	log.Info("media monitor v" + version.BuildVersion)
-	log.Debug(cfg.Services)
 
 	mediamon.StartProbes(&cfg)
 
 	// Run initialized & runs the metrics
 	listenAddress := fmt.Sprintf(":%d", cfg.Port)
 	http.Handle("/metrics", promhttp.Handler())
-	_ = http.ListenAndServe(listenAddress, nil)
+	err = http.ListenAndServe(listenAddress, nil)
+	log.WithField("err", err).Error("Failed to start Prometheus http handler")
 }

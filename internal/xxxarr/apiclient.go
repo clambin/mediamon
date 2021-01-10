@@ -16,18 +16,24 @@ type Client struct {
 // call the specified Sonarr/Radarr API endpoint
 // Business processing is done in the calling Probe function
 func (client *Client) call(endpoint string) ([]byte, error) {
+	var (
+		err  error
+		body []byte
+		resp *http.Response
+	)
+
 	req, _ := http.NewRequest("GET", client.URL+endpoint, nil)
 	req.Header.Add("X-Api-Key", client.APIKey)
 
-	resp, err := client.Client.Do(req)
-
-	if err == nil {
+	if resp, err = client.Client.Do(req); err == nil {
 		defer resp.Body.Close()
 
 		if resp.StatusCode == 200 {
-			return ioutil.ReadAll(resp.Body)
+			body, err = ioutil.ReadAll(resp.Body)
+		} else {
+			err = errors.New(resp.Status)
 		}
-		err = errors.New(resp.Status)
 	}
-	return nil, err
+
+	return body, err
 }

@@ -24,13 +24,13 @@ func NewProbe(url string) *Probe {
 func (probe *Probe) Run() {
 	// Get the version
 	if version, err := probe.getVersion(); err != nil {
-		log.Warningf("Could not get Transmission version: %s", err)
+		log.WithField("err", err).Warning("Could not get Transmission version")
 	} else {
 		metrics.MediaServerVersion.WithLabelValues("transmission", version).Set(1)
 	}
 
 	if activeTorrents, pausedTorrents, downloadSpeed, uploadSpeed, err := probe.getStats(); err != nil {
-		log.Warningf("Could not get Transmission Statistics: %s", err)
+		log.WithField("err", err).Warning("Could not get Transmission Statistics")
 	} else {
 		metrics.TransmissionActiveTorrentCount.Set(float64(activeTorrents))
 		metrics.TransmissionPausedTorrentCount.Set(float64(pausedTorrents))
@@ -40,46 +40,51 @@ func (probe *Probe) Run() {
 }
 
 func (probe *Probe) getVersion() (string, error) {
-	var stats = struct {
-		Arguments struct {
-			Version string
-		}
-		Result string
-	}{}
+	var (
+		err   error
+		resp  []byte
+		stats = struct {
+			Arguments struct {
+				Version string
+			}
+		}{}
+	)
 
-	resp, err := probe.call("session-get")
-	if err == nil {
+	if resp, err = probe.call("session-get"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
-		if err == nil {
-			return stats.Arguments.Version, nil
-		}
 	}
-	return "", err
+
+	log.WithFields(log.Fields{"err": err, "version": stats.Arguments.Version}).Debug("transmission getVersion")
+
+	return stats.Arguments.Version, err
 }
 
 func (probe *Probe) getStats() (int, int, int, int, error) {
-	var stats = struct {
-		Arguments struct {
-			ActiveTorrentCount int
-			PausedTorrentCount int
-			UploadSpeed        int
-			DownloadSpeed      int
-		}
-		Result string
-	}{}
+	var (
+		err   error
+		resp  []byte
+		stats = struct {
+			Arguments struct {
+				ActiveTorrentCount int
+				PausedTorrentCount int
+				UploadSpeed        int
+				DownloadSpeed      int
+			}
+			Result string
+		}{}
+	)
 
-	resp, err := probe.call("session-stats")
-	if err == nil {
+	if resp, err = probe.call("session-stats"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
-		if err == nil {
-			return stats.Arguments.ActiveTorrentCount,
-				stats.Arguments.PausedTorrentCount,
-				stats.Arguments.DownloadSpeed,
-				stats.Arguments.UploadSpeed,
-				nil
-		}
 	}
-	return 0, 0, 0, 0, err
+
+	log.WithFields(log.Fields{"err": err, "stats": stats.Arguments}).Debug("transmission getStats")
+
+	return stats.Arguments.ActiveTorrentCount,
+		stats.Arguments.PausedTorrentCount,
+		stats.Arguments.DownloadSpeed,
+		stats.Arguments.UploadSpeed,
+		err
 }

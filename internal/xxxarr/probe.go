@@ -35,30 +35,38 @@ func isValid(application string) bool {
 
 // Run the probe. Collect all requires metrics
 func (probe *Probe) Run() {
+	var (
+		err     error
+		version string
+		count   int
+	)
+
+	probeLogger := log.WithFields(log.Fields{"err": err, "application": probe.Application})
+
 	// Get the version
-	if version, err := probe.getVersion(); err != nil {
-		log.Warningf("could not get %s version: %s", probe.Application, err)
+	if version, err = probe.getVersion(); err != nil {
+		probeLogger.Warning("could not get version")
 	} else {
 		metrics.MediaServerVersion.WithLabelValues(probe.Application, version).Set(1)
 	}
 
 	// Get the calendar
-	if count, err := probe.getCalendar(); err != nil {
-		log.Warningf("could not get %s calendar: %s", probe.Application, err)
+	if count, err = probe.getCalendar(); err != nil {
+		probeLogger.Warning("could not get calendar")
 	} else {
 		metrics.XXXArrCalendarCount.WithLabelValues(probe.Application).Set(float64(count))
 	}
 
 	// Get queued series / movies
-	if count, err := probe.getQueue(); err != nil {
-		log.Warningf("could not get %s queue: %s", probe.Application, err)
+	if count, err = probe.getQueue(); err != nil {
+		probeLogger.Warning("could not get queue")
 	} else {
 		metrics.XXXarrQueuedCount.WithLabelValues(probe.Application).Set(float64(count))
 	}
 
 	// Get monitored/unmonitored series / movies
 	if monitored, unmonitored, err := probe.getMonitored(); err != nil {
-		log.Warningf("could not get %s monitored series/movies: %s", probe.Application, err)
+		probeLogger.Warning("could not get monitored series/movies")
 	} else {
 		metrics.XXXarrMonitoredCount.WithLabelValues(probe.Application).Set(float64(monitored))
 		metrics.XXXarrUnmonitoredCount.WithLabelValues(probe.Application).Set(float64(unmonitored))
@@ -66,76 +74,98 @@ func (probe *Probe) Run() {
 }
 
 func (probe *Probe) getVersion() (string, error) {
-	var stats = struct {
-		Version string
-	}{}
+	var (
+		err   error
+		resp  []byte
+		stats struct {
+			Version string
+		}
+	)
 
-	resp, err := probe.call("/api/system/status")
-	if err == nil {
+	if resp, err = probe.call("/api/system/status"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
-		if err == nil {
-			return stats.Version, nil
-		}
 	}
-	return "", err
+
+	log.WithFields(log.Fields{
+		"err":         err,
+		"application": probe.Application,
+		"version":     stats.Version,
+	}).Debug("xxxarr Version")
+
+	return stats.Version, err
 }
 
 func (probe *Probe) getCalendar() (int, error) {
-	var stats []struct {
-		HasFile bool
-	}
-
-	resp, err := probe.call("/api/calendar")
-	if err == nil {
+	var (
+		err      error
+		resp     []byte
+		calendar int
+	)
+	if resp, err = probe.call("/api/calendar"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
-		err = decoder.Decode(&stats)
-		if err == nil {
-			calendar := 0
+		var stats []struct{ HasFile bool }
+		if err = decoder.Decode(&stats); err == nil {
+			calendar = 0
 			for _, stat := range stats {
 				if stat.HasFile == false {
 					calendar++
 				}
 			}
-			return calendar, nil
 		}
 	}
-	return 0, err
+
+	log.WithFields(log.Fields{
+		"err":         err,
+		"application": probe.Application,
+		"calendar":    calendar,
+	}).Debug("xxxarr getCalendar")
+
+	return calendar, err
 }
 
 func (probe *Probe) getQueue() (int, error) {
-	var stats []struct {
-		Status string
-	}
-
-	resp, err := probe.call("/api/queue")
-	if err == nil {
+	var (
+		err   error
+		resp  []byte
+		queue int
+	)
+	if resp, err = probe.call("/api/queue"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
-		err = decoder.Decode(&stats)
-		if err == nil {
-			return len(stats), nil
+		var stats []struct{ Status string }
+		if err = decoder.Decode(&stats); err == nil {
+			queue = len(stats)
 		}
 	}
-	return 0, err
+
+	log.WithFields(log.Fields{
+		"err":         err,
+		"application": probe.Application,
+		"queue":       queue,
+	}).Debug("xxxarr getQueue")
+
+	return queue, err
 }
 
 func (probe *Probe) getMonitored() (int, int, error) {
-	var stats []struct {
-		Monitored bool
-	}
+	var (
+		err         error
+		resp        []byte
+		monitored   int
+		unmonitored int
+	)
 
 	endpoint := "/api/movie"
 	if probe.Application == "sonarr" {
 		endpoint = "/api/series"
 	}
 
-	resp, err := probe.call(endpoint)
-	if err == nil {
+	if resp, err = probe.call(endpoint); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
-		err = decoder.Decode(&stats)
-		if err == nil {
-			monitored := 0
-			unmonitored := 0
+		var stats []struct{ Monitored bool }
+		if err = decoder.Decode(&stats); err == nil {
+			monitored = 0
+			unmonitored = 0
 			for _, stat := range stats {
 				if stat.Monitored {
 					monitored++
@@ -144,8 +174,15 @@ func (probe *Probe) getMonitored() (int, int, error) {
 				}
 
 			}
-			return monitored, unmonitored, nil
 		}
 	}
-	return 0, 0, err
+
+	log.WithFields(log.Fields{
+		"err":         err,
+		"application": probe.Application,
+		"monitored":   monitored,
+		"unmonitored": unmonitored,
+	}).Debug("xxxarr getMonitored")
+
+	return monitored, unmonitored, err
 }

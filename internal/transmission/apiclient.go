@@ -3,6 +3,7 @@ package transmission
 import (
 	"bytes"
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 )
@@ -17,49 +18,58 @@ type Client struct {
 // call the specified Transmission API endpoint
 // Business processing is done in the calling Probe function
 func (client *Client) call(method string) ([]byte, error) {
-	if client.SessionID == "" {
-		if sessionID, err := client.getSessionID(); err == nil {
-			client.SessionID = sessionID
-		} else {
-			return nil, err
+	var (
+		err  error
+		body []byte
+		resp *http.Response
+	)
+
+	if client.SessionID, err = client.getSessionID(); err == nil {
+		req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
+
+		if resp, err = client.Client.Do(req); err == nil {
+			defer resp.Body.Close()
+
+			if resp.StatusCode == 200 {
+				body, err = ioutil.ReadAll(resp.Body)
+			} else {
+				if resp.StatusCode == 409 {
+					client.SessionID = ""
+				}
+				err = errors.New(resp.Status)
+			}
 		}
 	}
 
-	req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Transmission-Session-Id", client.SessionID)
-
-	resp, err := client.Client.Do(req)
-
-	if err == nil {
-		defer resp.Body.Close()
-
-		if sessionID := resp.Header.Get("X-Transmission-Session-Id"); sessionID != "" {
-			client.SessionID = sessionID
-		}
-
-		if resp.StatusCode == 200 {
-			return ioutil.ReadAll(resp.Body)
-		}
-		err = errors.New(resp.Status)
-	}
-	return nil, err
+	return body, err
 }
 
 func (client *Client) getSessionID() (string, error) {
-	req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \"session-get\" }"))
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Transmission-Session-Id", client.SessionID)
+	var (
+		err       error
+		resp      *http.Response
+		sessionID = client.SessionID
+	)
 
-	resp, err := client.Client.Do(req)
+	if sessionID == "" {
+		req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \"session-get\" }"))
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
-	if err == nil {
-		defer resp.Body.Close()
+		if resp, err = client.Client.Do(req); err == nil {
+			defer resp.Body.Close()
 
-		if resp.StatusCode == 409 || resp.StatusCode == 200 {
-			return resp.Header.Get("X-Transmission-Session-Id"), nil
+			if resp.StatusCode == 409 || resp.StatusCode == 200 {
+				sessionID = resp.Header.Get("X-Transmission-Session-Id")
+			}
 		}
+		log.WithFields(log.Fields{
+			"err":       err,
+			"sessionID": sessionID,
+		}).Debug("transmission getSessionID")
 	}
 
-	return "", err
+	return sessionID, err
 }
