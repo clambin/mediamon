@@ -23,8 +23,12 @@ func NewProbe(filename string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run() {
-	if stats, err := probe.getStats(); err == nil {
+func (probe *Probe) Run() error {
+	var (
+		err   error
+		stats *openVPNStats
+	)
+	if stats, err = probe.getStats(); err == nil {
 		metrics.OpenVPNClientReadTotal.Set(float64(stats.clientTcpUdpRead))
 		metrics.OpenVPNClientWriteTotal.Set(float64(stats.clientTcpUdpWrite))
 	} else {
@@ -32,6 +36,8 @@ func (probe *Probe) Run() {
 		metrics.OpenVPNClientWriteTotal.Set(0.0)
 		log.WithField("err", err).Warning("Failed to get Bandwidth statistics")
 	}
+
+	return err
 }
 
 type openVPNStats struct {
@@ -43,7 +49,7 @@ func (stats *openVPNStats) String() string {
 	return fmt.Sprintf("read=%d write=%d", stats.clientTcpUdpRead, stats.clientTcpUdpWrite)
 }
 
-func (probe *Probe) getStats() (openVPNStats, error) {
+func (probe *Probe) getStats() (*openVPNStats, error) {
 	var stats = openVPNStats{}
 
 	r := regexp.MustCompile(`^(.+),(\d+)$`)
@@ -68,5 +74,5 @@ func (probe *Probe) getStats() (openVPNStats, error) {
 
 	log.WithFields(log.Fields{"err": err, "stats": stats.String()}).Debug("bandwidth getStats")
 
-	return stats, err
+	return &stats, err
 }

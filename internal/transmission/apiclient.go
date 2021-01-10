@@ -36,7 +36,7 @@ func (client *Client) call(method string) ([]byte, error) {
 				body, err = ioutil.ReadAll(resp.Body)
 			} else {
 				if resp.StatusCode == 409 {
-					client.SessionID = ""
+					client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
 				}
 				err = errors.New(resp.Status)
 			}

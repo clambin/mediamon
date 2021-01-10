@@ -21,15 +21,23 @@ func NewProbe(url string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run() {
+func (probe *Probe) Run() error {
+	var (
+		err            error
+		version        string
+		activeTorrents int
+		pausedTorrents int
+		downloadSpeed  int
+		uploadSpeed    int
+	)
 	// Get the version
-	if version, err := probe.getVersion(); err != nil {
+	if version, err = probe.getVersion(); err != nil {
 		log.WithField("err", err).Warning("Could not get Transmission version")
 	} else {
 		metrics.MediaServerVersion.WithLabelValues("transmission", version).Set(1)
 	}
 
-	if activeTorrents, pausedTorrents, downloadSpeed, uploadSpeed, err := probe.getStats(); err != nil {
+	if activeTorrents, pausedTorrents, downloadSpeed, uploadSpeed, err = probe.getStats(); err != nil {
 		log.WithField("err", err).Warning("Could not get Transmission Statistics")
 	} else {
 		metrics.TransmissionActiveTorrentCount.Set(float64(activeTorrents))
@@ -37,6 +45,8 @@ func (probe *Probe) Run() {
 		metrics.TransmissionDownloadSpeed.Set(float64(downloadSpeed))
 		metrics.TransmissionUploadSpeed.Set(float64(uploadSpeed))
 	}
+
+	return err
 }
 
 func (probe *Probe) getVersion() (string, error) {

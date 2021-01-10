@@ -28,14 +28,19 @@ func NewProbe(proxy *url.URL, token string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run() {
-	err := probe.getResponse()
-	connected := float64(0)
-	if err == nil {
+func (probe *Probe) Run() error {
+	var (
+		err       error
+		connected = float64(0)
+	)
+
+	if err = probe.getResponse(); err == nil {
 		connected = float64(1)
 	}
 
 	metrics.OpenVPNClientStatus.Set(connected)
+
+	return err
 }
 
 func (probe *Probe) getResponse() error {

@@ -89,13 +89,13 @@ func StartProbes(cfg *Configuration) []string {
 // Helper to start individual probes
 
 type runnable interface {
-	Run()
+	Run() error
 }
 
 func runProbe(probe runnable, interval time.Duration) {
 	go func() {
 		for {
-			probe.Run()
+			_ = probe.Run()
 			time.Sleep(interval)
 		}
 	}()

@@ -41,13 +41,30 @@ func TestFailingServer(t *testing.T) {
 	assert.NotPanics(t, func() { probe.Run() })
 }
 
+func TestAuthentication(t *testing.T) {
+	probe := transmission.NewProbe("")
+	probe.Client.Client = httpstub.NewTestClient(loopback)
+
+	log.SetLevel(log.DebugLevel)
+
+	err := probe.Run()
+	assert.Nil(t, err)
+
+	// simulate the session key expiring
+	probe.SessionID = "4321"
+	err = probe.Run()
+	assert.Nil(t, err)
+	assert.Equal(t, "1234", probe.SessionID)
+}
+
 // Server loopback function
 
 func loopback(req *http.Request) *http.Response {
+	const sessionID = "1234"
 	header := make(http.Header)
-	header.Set("X-Transmission-Session-Id", "1234")
+	header.Set("X-Transmission-Session-Id", sessionID)
 
-	if req.Header.Get("X-Transmission-Session-Id") != "1234" {
+	if req.Header.Get("X-Transmission-Session-Id") != sessionID {
 		return &http.Response{
 			StatusCode: 409,
 			Status:     "No Session ID",
@@ -78,15 +95,12 @@ func loopback(req *http.Request) *http.Response {
 	} else if string(body) == `{ "method": "session-stats" }` {
 		return &http.Response{
 			StatusCode: 200,
-			Header:     make(http.Header),
 			Body:       ioutil.NopCloser(bytes.NewBufferString(sessionStats)),
 		}
 	} else {
 		return &http.Response{
 			StatusCode: 404,
 			Status:     "Invalid method",
-			Header:     make(http.Header),
-			Body:       nil,
 		}
 	}
 }

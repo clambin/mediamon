@@ -34,7 +34,7 @@ func isValid(application string) bool {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run() {
+func (probe *Probe) Run() error {
 	var (
 		err     error
 		version string
@@ -71,6 +71,8 @@ func (probe *Probe) Run() {
 		metrics.XXXarrMonitoredCount.WithLabelValues(probe.Application).Set(float64(monitored))
 		metrics.XXXarrUnmonitoredCount.WithLabelValues(probe.Application).Set(float64(unmonitored))
 	}
+
+	return err
 }
 
 func (probe *Probe) getVersion() (string, error) {
