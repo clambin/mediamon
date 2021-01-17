@@ -19,7 +19,7 @@ type PlexAPI interface {
 	GetSessions() (map[string]int, map[string]int, int, float64, error)
 }
 
-// Client to call the Plex APIs
+// PlexClient calls the Plex APIs
 type PlexClient struct {
 	Client    *http.Client
 	URL       string
@@ -28,6 +28,7 @@ type PlexClient struct {
 	authToken string
 }
 
+// GetVersion retrieves the version of the Plex server
 func (client *PlexClient) GetVersion() (string, error) {
 	var (
 		err   error
@@ -52,6 +53,15 @@ func (client *PlexClient) GetVersion() (string, error) {
 	return stats.MediaContainer.Version, err
 }
 
+// GetSessions retrieves session information from the server.
+//
+// Returns:
+//
+//   - number of sessions per user
+//   - number of sessions per type of decoder (direct/copy/transcode)
+//   - number of active transcoders
+//   - total transcoding speed
+//   - any encounters errors
 func (client *PlexClient) GetSessions() (map[string]int, map[string]int, int, float64, error) {
 	var (
 		err         error
@@ -131,7 +141,6 @@ func (client *PlexClient) GetSessions() (map[string]int, map[string]int, int, fl
 }
 
 // call the specified Plex API endpoint
-// Business processing is done in the calling Probe function
 func (client *PlexClient) call(endpoint string) ([]byte, error) {
 	var (
 		err  error

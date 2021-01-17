@@ -29,8 +29,8 @@ func (probe *Probe) Run() error {
 		stats *openVPNStats
 	)
 	if stats, err = probe.getStats(); err == nil {
-		metrics.OpenVPNClientReadTotal.Set(float64(stats.clientTcpUdpRead))
-		metrics.OpenVPNClientWriteTotal.Set(float64(stats.clientTcpUdpWrite))
+		metrics.OpenVPNClientReadTotal.Set(float64(stats.clientTCPUDPRead))
+		metrics.OpenVPNClientWriteTotal.Set(float64(stats.clientTCPUDPWrite))
 	} else {
 		metrics.OpenVPNClientReadTotal.Set(0.0)
 		metrics.OpenVPNClientWriteTotal.Set(0.0)
@@ -41,12 +41,12 @@ func (probe *Probe) Run() error {
 }
 
 type openVPNStats struct {
-	clientTcpUdpRead  int64
-	clientTcpUdpWrite int64
+	clientTCPUDPRead  int64
+	clientTCPUDPWrite int64
 }
 
 func (stats *openVPNStats) String() string {
-	return fmt.Sprintf("read=%d write=%d", stats.clientTcpUdpRead, stats.clientTcpUdpWrite)
+	return fmt.Sprintf("read=%d write=%d", stats.clientTCPUDPRead, stats.clientTCPUDPWrite)
 }
 
 func (probe *Probe) getStats() (*openVPNStats, error) {
@@ -64,9 +64,9 @@ func (probe *Probe) getStats() (*openVPNStats, error) {
 				value, _ := strconv.ParseInt(match[2], 10, 64)
 				switch match[1] {
 				case "TCP/UDP read bytes":
-					stats.clientTcpUdpRead = value
+					stats.clientTCPUDPRead = value
 				case "TCP/UDP write bytes":
-					stats.clientTcpUdpWrite = value
+					stats.clientTCPUDPWrite = value
 				}
 			}
 		}

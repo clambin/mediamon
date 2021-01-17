@@ -45,15 +45,15 @@ func (probe *Probe) Run() error {
 	if count, err = probe.GetQueue(); err != nil {
 		probeLogger.Warning("could not get queue")
 	} else {
-		metrics.XXXarrQueuedCount.WithLabelValues(probe.GetApplication()).Set(float64(count))
+		metrics.XXXArrQueuedCount.WithLabelValues(probe.GetApplication()).Set(float64(count))
 	}
 
 	// Get monitored/unmonitored series / movies
 	if monitored, unmonitored, err := probe.GetMonitored(); err != nil {
 		probeLogger.Warning("could not get monitored series/movies")
 	} else {
-		metrics.XXXarrMonitoredCount.WithLabelValues(probe.GetApplication()).Set(float64(monitored))
-		metrics.XXXarrUnmonitoredCount.WithLabelValues(probe.GetApplication()).Set(float64(unmonitored))
+		metrics.XXXArrMonitoredCount.WithLabelValues(probe.GetApplication()).Set(float64(monitored))
+		metrics.XXXArrUnmonitoredCount.WithLabelValues(probe.GetApplication()).Set(float64(unmonitored))
 	}
 
 	return err

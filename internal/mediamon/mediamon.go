@@ -13,12 +13,14 @@ import (
 	"mediamon/internal/xxxarr"
 )
 
+// Configuration options for mediamon
 type Configuration struct {
 	Port     int
 	Debug    bool
 	Services *services.Config
 }
 
+// StartProbes creates & runs probes for each configured service
 func StartProbes(cfg *Configuration) []string {
 	probes := make([]string, 0)
 

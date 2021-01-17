@@ -15,7 +15,7 @@ type TransmissionAPI interface {
 	GetStats() (int, int, int, int, error)
 }
 
-// TransmissionClient to call the Transmission APIs
+// TransmissionClient calls the Transmission APIs
 type TransmissionClient struct {
 	Client    *http.Client
 	URL       string
@@ -47,7 +47,14 @@ func (client *TransmissionClient) GetVersion() (string, error) {
 	return stats.Arguments.Version, err
 }
 
-// GetStat gets torrent & up/download stats from Transmission
+// GetStats gets torrent & up/download stats from Transmission.
+//
+// Returns:
+//   - active torrents
+//   - paused torrents
+//   - total download speed
+//   - total upload speed
+//   - encountered error
 func (client *TransmissionClient) GetStats() (int, int, int, int, error) {
 	var (
 		err   error
@@ -81,7 +88,6 @@ func (client *TransmissionClient) GetStats() (int, int, int, int, error) {
 }
 
 // call the specified Transmission API endpoint
-// Business processing is done in the calling Probe function
 func (client *TransmissionClient) call(method string) ([]byte, error) {
 	var (
 		err  error

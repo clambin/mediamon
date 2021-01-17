@@ -18,7 +18,9 @@ type XXXArrAPI interface {
 	GetApplication() string
 }
 
-// XXXArrClient to call the Sonarr/Radarr APIs
+// XXXArrClient calls the Sonarr/Radarr APIs.  Application specifies whether this is a
+// Sonarr ("sonarr") or Radarr ("radarr") server.  XXXArrClient will panic if Application
+// contains any other values.
 type XXXArrClient struct {
 	Client      *http.Client
 	URL         string
@@ -31,6 +33,7 @@ func (client *XXXArrClient) GetApplication() string {
 	return client.Application
 }
 
+// GetVersion retrieves the version of the Sonarr/Radarr server
 func (client *XXXArrClient) GetVersion() (string, error) {
 	var (
 		err   error
@@ -54,12 +57,14 @@ func (client *XXXArrClient) GetVersion() (string, error) {
 	return stats.Version, err
 }
 
+// GetCalendar retrieves the number of upcoming movies/series airing today and tomorrow
 func (client *XXXArrClient) GetCalendar() (int, error) {
 	var (
 		err      error
 		resp     []byte
 		calendar int
 	)
+	// TODO: add start/end date optional parameters?
 	if resp, err = client.call("/api/calendar"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		var stats []struct{ HasFile bool }
@@ -82,6 +87,7 @@ func (client *XXXArrClient) GetCalendar() (int, error) {
 	return calendar, err
 }
 
+// GetQueue retrieves how many movies/series are currently downloading
 func (client *XXXArrClient) GetQueue() (int, error) {
 	var (
 		err   error
@@ -105,6 +111,7 @@ func (client *XXXArrClient) GetQueue() (int, error) {
 	return queue, err
 }
 
+// GetMonitored retrieves how many moves/series are being monitored & unmonitored
 func (client *XXXArrClient) GetMonitored() (int, int, error) {
 	var (
 		err         error
