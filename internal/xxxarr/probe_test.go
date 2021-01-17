@@ -1,38 +1,60 @@
 package xxxarr_test
 
 import (
-	"bytes"
-	"io/ioutil"
-	"net/http"
+	"errors"
 	"testing"
 
-	"github.com/clambin/gotools/httpstub"
 	"github.com/clambin/gotools/metrics"
 	"github.com/stretchr/testify/assert"
 
 	"mediamon/internal/xxxarr"
 )
 
-func TestProbe_InvalidProbe(t *testing.T) {
-	assert.Panics(t, func() { xxxarr.NewProbe("", "", "invalid") })
+type client struct {
+	application string
+	fail        bool
 }
 
-func TestFailingProbe(t *testing.T) {
-	probe := xxxarr.NewProbe("", "1234", "sonarr")
-	probe.Client.Client = httpstub.NewTestClient(httpstub.Failing)
+func (client *client) GetApplication() string {
+	return client.application
+}
 
-	assert.NotNil(t, probe)
-	assert.NotPanics(t, func() { probe.Run() })
+func (client *client) GetVersion() (string, error) {
+	if client.fail {
+		return "", errors.New("failing")
+	}
+	return "foo", nil
+}
+
+func (client *client) GetCalendar() (int, error) {
+	if client.fail {
+		return 0, errors.New("failing")
+	}
+	return 1, nil
+}
+
+func (client *client) GetQueue() (int, error) {
+	if client.fail {
+		return 0, errors.New("failing")
+	}
+	return 2, nil
+}
+
+func (client *client) GetMonitored() (int, int, error) {
+	if client.fail {
+		return 0, 0, errors.New("failing")
+	}
+	return 2, 1, nil
 }
 
 func TestProbe_Run(t *testing.T) {
 	for _, application := range []string{"sonarr", "radarr"} {
-		probe := xxxarr.NewProbe("", "1234", application)
-		probe.Client.Client = httpstub.NewTestClient(loopback)
+		probe := xxxarr.Probe{XXXArrAPI: &client{application: application}}
 
-		probe.Run()
+		err := probe.Run()
+		assert.Nil(t, err)
 
-		value, _ := metrics.LoadValue("mediaserver_server_info", application, "1.2.3.4444")
+		value, _ := metrics.LoadValue("mediaserver_server_info", application, "foo")
 		assert.Equal(t, float64(1), value)
 		count, _ := metrics.LoadValue("mediaserver_calendar_count", application)
 		assert.Equal(t, float64(1), count)
@@ -45,73 +67,9 @@ func TestProbe_Run(t *testing.T) {
 	}
 }
 
-// Server loopback function
+func TestProbe_Fail(t *testing.T) {
+	probe := xxxarr.Probe{&client{fail: true}}
 
-func loopback(req *http.Request) *http.Response {
-	if req.Header.Get("X-Api-Key") != "1234" {
-		return &http.Response{
-			StatusCode: 409,
-			Status:     "No/invalid Application Key",
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-		}
-	}
-	switch req.URL.Path {
-	case "/api/system/status":
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(systemStatus)),
-		}
-	case "/api/calendar":
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(calendar)),
-		}
-	case "/api/queue":
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(queued)),
-		}
-	case "/api/series":
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(monitored)),
-		}
-	case "/api/movie":
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(monitored)),
-		}
-	default:
-		return &http.Response{
-			StatusCode: 404,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(``)),
-		}
-	}
+	err := probe.Run()
+	assert.NotNil(t, err)
 }
-
-// Responses
-
-const (
-	systemStatus = `{
-  "version": "1.2.3.4444"
-}`
-
-	calendar = `[
-  {
-    "hasFile": false
-  },
-  {
-    "hasFile": true
-  }
-]`
-	queued = `[ {}, {} ]`
-
-	monitored = `[ { "monitored": true }, { "monitored": false }, { "monitored": true } ]`
-)

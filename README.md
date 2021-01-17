@@ -9,9 +9,9 @@ Prometheus exporter for various media applications.  Currently supports Transmis
 
 ## Installation
 
-A Docker image is available on [docker](https://hub.docker.com/clambin/mediamon).  Images are available for amd64 & arm32v7.
+A Docker image is available on [docker](https://hub.docker.com/r/clambin/mediamon).  Images are available for amd64 & arm32v7.
 
-Alternatively, you can clone the repository from [github](https://github.com/r/clambin/mediamon) and build from source:
+Alternatively, you can clone the repository from [github](https://github.com/clambin/mediamon) and build from source:
 
 ```
 git clone https://github.com/clambin/mediamon.git
@@ -128,7 +128,7 @@ Mediamon exposes the following metrics:
 
 ### Grafana
 
-[Github](https://github.com/clambin/mediamon/assets/grafana/dashboards) contains a sample Grafana dashboard to visualize the scraped metrics.
+[Github](https://github.com/clambin/mediamon/tree/master/assets/grafana/dashboards) contains a sample Grafana dashboard to visualize the scraped metrics.
 Feel free to customize as you see fit.
 
 ## Authors
