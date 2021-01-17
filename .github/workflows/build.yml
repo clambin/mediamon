@@ -34,11 +34,11 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: metadata for github.com/clambin/mediamon
+    - name: metadata
       id: docker_meta
       uses: crazy-max/ghaction-docker-meta@v1
       with:
-        images: clambin/github.com/clambin/mediamon
+        images: clambin/mediamon
         tag-sha: True
         tag-semver: |
           {{version}}
