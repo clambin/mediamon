@@ -9,7 +9,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"mediamon/internal/metrics"
+	"github.com/clambin/mediamon/internal/metrics"
 )
 
 // Probe to measure Plex metrics

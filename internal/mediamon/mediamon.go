@@ -1,19 +1,17 @@
 package mediamon
 
 import (
-	"time"
-
+	"github.com/clambin/mediamon/internal/bandwidth"
+	"github.com/clambin/mediamon/internal/connectivity"
+	"github.com/clambin/mediamon/internal/plex"
+	"github.com/clambin/mediamon/internal/services"
+	"github.com/clambin/mediamon/internal/transmission"
+	"github.com/clambin/mediamon/internal/xxxarr"
 	log "github.com/sirupsen/logrus"
-
-	"mediamon/internal/bandwidth"
-	"mediamon/internal/connectivity"
-	"mediamon/internal/plex"
-	"mediamon/internal/services"
-	"mediamon/internal/transmission"
-	"mediamon/internal/xxxarr"
+	"time"
 )
 
-// Configuration options for mediamon
+// Configuration options for github.com/clambin/mediamon
 type Configuration struct {
 	Port     int
 	Debug    bool

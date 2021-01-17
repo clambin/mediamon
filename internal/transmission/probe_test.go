@@ -2,12 +2,10 @@ package transmission_test
 
 import (
 	"errors"
-	"testing"
-
 	"github.com/clambin/gotools/metrics"
+	"github.com/clambin/mediamon/internal/transmission"
 	"github.com/stretchr/testify/assert"
-
-	"mediamon/internal/transmission"
+	"testing"
 )
 
 type client struct {

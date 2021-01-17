@@ -3,9 +3,9 @@ package mediaclient_test
 import (
 	"bytes"
 	"github.com/clambin/gotools/httpstub"
+	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"mediamon/pkg/mediaclient"
 	"net/http"
 	"testing"
 )

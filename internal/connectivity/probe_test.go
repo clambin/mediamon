@@ -10,13 +10,13 @@ import (
 	"github.com/clambin/gotools/metrics"
 	"github.com/stretchr/testify/assert"
 
-	"mediamon/internal/connectivity"
+	"github.com/clambin/mediamon/internal/connectivity"
 )
 
 func TestProbe_Run(t *testing.T) {
 	probe := connectivity.NewProbe(nil, "")
 	probe.Client.Client = httpstub.NewTestClient(loopback)
-	probe.Run()
+	_ = probe.Run()
 
 	value, _ := metrics.LoadValue("openvpn_client_status")
 	assert.Equal(t, 1.0, value)
@@ -25,7 +25,7 @@ func TestProbe_Run(t *testing.T) {
 func TestProbe_Run_Fail(t *testing.T) {
 	probe := connectivity.NewProbe(nil, "")
 	probe.Client.Client = httpstub.NewTestClient(httpstub.Failing)
-	probe.Run()
+	_ = probe.Run()
 
 	value, _ := metrics.LoadValue("openvpn_client_status")
 	assert.Equal(t, 0.0, value)

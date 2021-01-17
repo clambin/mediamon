@@ -1,34 +1,34 @@
-# mediamon
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/clambin/mediamon?color=green&label=Release&style=plastic)
-![Codecov](https://img.shields.io/codecov/c/gh/clambin/mediamon?style=plastic)
-![Build](https://github.com/clambin/mediamon/workflows/Build/badge.svg)
-![Go Report Card](https://goreportcard.com/badge/github.com/clambin/mediamon)
-![GitHub](https://img.shields.io/github/license/clambin/mediamon?style=plastic)
+# github.com/clambin/mediamon
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/clambin/github.com/clambin/mediamon?color=green&label=Release&style=plastic)
+![Codecov](https://img.shields.io/codecov/c/gh/clambin/github.com/clambin/mediamon?style=plastic)
+![Build](https://github.com/clambin/github.com/clambin/mediamon/workflows/Build/badge.svg)
+![Go Report Card](https://goreportcard.com/badge/github.com/clambin/github.com/clambin/mediamon)
+![GitHub](https://img.shields.io/github/license/clambin/github.com/clambin/mediamon?style=plastic)
 
 Prometheus exporter for various media applications.  Currently supports Transmission, OpenVPN Client, Sonarr, Radarr and Plex.
 
 ## Installation
 
-A Docker image is available on [docker](https://hub.docker.com/r/clambin/mediamon).  Images are available for amd64 & arm32v7.
+A Docker image is available on [docker](https://hub.docker.com/r/clambin/github.com/clambin/mediamon).  Images are available for amd64 & arm32v7.
 
-Alternatively, you can clone the repository from [github](https://github.com/clambin/mediamon) and build from source:
+Alternatively, you can clone the repository from [github](https://github.com/clambin/github.com/clambin/mediamon) and build from source:
 
 ```
-git clone https://github.com/clambin/mediamon.git
-cd mediamon
+git clone https://github.com/clambin/github.com/clambin/mediamon.git
+cd github.com/clambin/mediamon
 go build
 ```
 
 You will need to have go 1.15 installed on your system.
 
-## Running mediamon
+## Running github.com/clambin/mediamon
 ### Command-line options
 
 The following command-line arguments can be passed:
 
 ```
-$ ./mediamon
-usage: mediamon --file=FILE [<flags>]
+$ ./github.com/clambin/mediamon
+usage: github.com/clambin/mediamon --file=FILE [<flags>]
 
 media monitor
 
@@ -42,7 +42,7 @@ Flags:
 
 ### Configuration
 
-The mandatory service configuration file configures which services mediamon should monitor:
+The mandatory service configuration file configures which services github.com/clambin/mediamon should monitor:
 
 ```
 transmission:
@@ -77,14 +77,14 @@ plex:
 openvpn:
   # OpenVPN monitoring. Includes connectivity monitoring (up/down) and bandwidth consumption
   connectivity:
-    # Mediamon will connect to https://ipinfo.io through a proxy running inside the OpenVPN container
+    # github.com/clambin/mediamon will connect to https://ipinfo.io through a proxy running inside the OpenVPN container
     # URL of the Proxy. If not set, connectivity won't be monitored
     proxy: <url>
     # Token supplied by ipinfo.io. You will need to register to obtain this
     token: <token>
     interval: <duration>
   bandwidth:
-    # Mediamon uses the OpenVPN status will to measure up/download bandwidth
+    # github.com/clambin/mediamon uses the OpenVPN status will to measure up/download bandwidth
     # filename contains the full path name of the client.status file. If not set, bandwidth won't be monitored
     filename: <file path>
     interval: <duration>>
@@ -92,20 +92,20 @@ openvpn:
 
 ### Prometheus
 
-Add mediamon as a target to let Prometheus scrape the metrics into its database.
+Add github.com/clambin/mediamon as a target to let Prometheus scrape the metrics into its database.
 This highly depends on your particular Prometheus configuration. In it simplest form, add a new scrape target to `prometheus.yml`:
 
 ```
 scrape_configs:
-- job_name: mediamon
+- job_name: github.com/clambin/mediamon
   static_configs:
-  - targets: [ '<mediamon_host>:8080' ]
+  - targets: [ '<github.com/clambin/mediamon_host>:8080' ]
 ```
 
 
 ### Metrics
 
-Mediamon exposes the following metrics:
+github.com/clambin/mediamon exposes the following metrics:
 
 ```
 * mediaserver_active_torrent_count: Number of active torrents
@@ -128,7 +128,7 @@ Mediamon exposes the following metrics:
 
 ### Grafana
 
-[Github](https://github.com/clambin/mediamon/tree/master/assets/grafana/dashboards) contains a sample Grafana dashboard to visualize the scraped metrics.
+[Github](https://github.com/clambin/github.com/clambin/mediamon/tree/master/assets/grafana/dashboards) contains a sample Grafana dashboard to visualize the scraped metrics.
 Feel free to customize as you see fit.
 
 ## Authors

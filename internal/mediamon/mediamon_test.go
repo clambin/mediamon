@@ -1,9 +1,9 @@
 package mediamon_test
 
 import (
+	"github.com/clambin/mediamon/internal/mediamon"
+	"github.com/clambin/mediamon/internal/services"
 	"github.com/stretchr/testify/assert"
-	"mediamon/internal/mediamon"
-	"mediamon/internal/services"
 	"testing"
 )
 

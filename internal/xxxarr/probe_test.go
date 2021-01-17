@@ -2,12 +2,10 @@ package xxxarr_test
 
 import (
 	"errors"
-	"testing"
-
 	"github.com/clambin/gotools/metrics"
+	"github.com/clambin/mediamon/internal/xxxarr"
 	"github.com/stretchr/testify/assert"
-
-	"mediamon/internal/xxxarr"
+	"testing"
 )
 
 type client struct {
@@ -68,7 +66,7 @@ func TestProbe_Run(t *testing.T) {
 }
 
 func TestProbe_Fail(t *testing.T) {
-	probe := xxxarr.Probe{&client{fail: true}}
+	probe := xxxarr.Probe{XXXArrAPI: &client{fail: true}}
 
 	err := probe.Run()
 	assert.NotNil(t, err)

@@ -1,9 +1,9 @@
 package plex
 
 import (
+	"github.com/clambin/mediamon/internal/metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient"
 	log "github.com/sirupsen/logrus"
-	"mediamon/internal/metrics"
-	"mediamon/pkg/mediaclient"
 	"net/http"
 )
 

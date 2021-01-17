@@ -10,9 +10,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"mediamon/internal/mediamon"
-	"mediamon/internal/services"
-	"mediamon/internal/version"
+	"github.com/clambin/mediamon/internal/mediamon"
+	"github.com/clambin/mediamon/internal/services"
+	"github.com/clambin/mediamon/internal/version"
 )
 
 func main() {

@@ -6,9 +6,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/clambin/mediamon/internal/version"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"mediamon/internal/version"
 	"net/http"
 	"strconv"
 )
@@ -184,9 +184,9 @@ func (client *PlexClient) authenticate() (string, error) {
 		)
 
 		req, _ := http.NewRequest("POST", "https://plex.tv/users/sign_in.xml", bytes.NewBufferString(authBody))
-		req.Header.Add("X-Plex-Product", "mediamon")
+		req.Header.Add("X-Plex-Product", "github.com/clambin/mediamon")
 		req.Header.Add("X-Plex-Version", version.BuildVersion)
-		req.Header.Add("X-Plex-Client-Identifier", "mediamon-v"+version.BuildVersion)
+		req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
 
 		if resp, err = client.Client.Do(req); err == nil {
 			defer resp.Body.Close()

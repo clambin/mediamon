@@ -3,9 +3,9 @@ package mediaclient_test
 import (
 	"bytes"
 	"github.com/clambin/gotools/httpstub"
+	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"mediamon/pkg/mediaclient"
 	"net/http"
 	"testing"
 )
@@ -211,35 +211,6 @@ const (
           "throttled": true,
           "speed": "3.1",
           "videoDecision": "transcode"
-        }
-      }
-    ]
-  }
-}`
-
-	sessionsResponse2 = `
-{
-  "MediaContainer": 
-  {
-    "size": 2,
-    "Metadata": 
-    [
-      {
-        "User": 
-        {
-          "title": "foo"
-        }
-      },
-      {
-        "User":
-        {
-          "title": "bar"
-        },
-        "TranscodeSession":
-        {
-          "throttled": false,
-          "speed": "3.1",
-          "videoDecision": "copy"
         }
       }
     ]

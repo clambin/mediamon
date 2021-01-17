@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Config contains the different possible services for mediamon to monitor
+// Config contains the different possible services for github.com/clambin/mediamon to monitor
 type Config struct {
 	Transmission struct {
 		URL      string

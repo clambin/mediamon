@@ -8,7 +8,7 @@ import (
 	"github.com/clambin/gotools/metrics"
 	"github.com/stretchr/testify/assert"
 
-	"mediamon/internal/bandwidth"
+	"github.com/clambin/mediamon/internal/bandwidth"
 )
 
 func tempFile(content []byte) (string, error) {
@@ -46,7 +46,7 @@ END`), 0.0, 0.0},
 	for _, testCase := range testCases {
 		if filename, err := tempFile(testCase.content); assert.Nil(t, err, testCase.name) {
 			if probe := bandwidth.NewProbe(filename); assert.NotNil(t, probe, testCase.name) {
-				probe.Run()
+				_ = probe.Run()
 				read, _ := metrics.LoadValue("openvpn_client_tcp_udp_read_bytes_total")
 				assert.Equal(t, testCase.read, read, testCase.name)
 				write, _ := metrics.LoadValue("openvpn_client_tcp_udp_write_bytes_total")
@@ -58,7 +58,7 @@ END`), 0.0, 0.0},
 
 	// missing file
 
-	bandwidth.NewProbe("invalidfile.txt").Run()
+	_ = bandwidth.NewProbe("invalidfile.txt").Run()
 
 	read, _ := metrics.LoadValue("openvpn_client_tcp_udp_read_bytes_total")
 	assert.Equal(t, 0.0, read)

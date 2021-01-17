@@ -3,8 +3,8 @@ package plex_test
 import (
 	"errors"
 	"github.com/clambin/gotools/metrics"
+	"github.com/clambin/mediamon/internal/plex"
 	"github.com/stretchr/testify/assert"
-	"mediamon/internal/plex"
 	"testing"
 )
 

@@ -1,9 +1,9 @@
 package services_test
 
 import (
+	"github.com/clambin/mediamon/internal/services"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"mediamon/internal/services"
 	"os"
 	"testing"
 	"time"

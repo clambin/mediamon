@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mediamon
+  name: github.com/clambin/mediamon
   namespace: media
   labels:
-    app: mediamon
+    app: github.com/clambin/mediamon
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "8080"
@@ -12,24 +12,24 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mediamon
+      app: github.com/clambin/mediamon
   template:
     metadata:
       labels:
-        app: mediamon
+        app: github.com/clambin/mediamon
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
     spec:
       containers:
-      - name: mediamon
-        image: clambin/mediamon:develop
+      - name: github.com/clambin/mediamon
+        image: clambin/github.com/clambin/mediamon:develop
         imagePullPolicy: Always
         args:
-        - -f=/etc/mediamon/mediamon.yml
+        - -f=/etc/github.com/clambin/mediamon/github.com/clambin/mediamon.yml
         volumeMounts:
-        - name: mediamon-config
-          mountPath: "/etc/mediamon"
+        - name: github.com/clambin/mediamon-config
+          mountPath: "/etc/github.com/clambin/mediamon"
         resources:
           requests:
             cpu: 10m
@@ -37,6 +37,6 @@ spec:
           limits:
             memory: 40Mi
       volumes:
-        - name: mediamon-config
+        - name: github.com/clambin/mediamon-config
           configMap:
-            name: mediamon-config
+            name: github.com/clambin/mediamon-config

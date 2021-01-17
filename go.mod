@@ -1,4 +1,4 @@
-module mediamon
+module github.com/clambin/mediamon
 
 go 1.15
 
