@@ -39,7 +39,7 @@ func (apiClient *Client) call() ([]byte, error) {
 		}
 	}
 
-	log.WithFields(log.Fields{"err": err, "body": body}).Debug("connectivity apiClient call")
+	log.WithFields(log.Fields{"err": err, "body": string(body)}).Debug("connectivity apiClient call")
 
 	return body, err
 }
