@@ -1,24 +1,52 @@
 package plex_test
 
 import (
-	"bytes"
-	"io/ioutil"
-	"net/http"
-	"testing"
-
-	"github.com/clambin/gotools/httpstub"
+	"errors"
 	"github.com/clambin/gotools/metrics"
 	"github.com/stretchr/testify/assert"
-
 	"mediamon/internal/plex"
+	"testing"
 )
 
+type client struct {
+	failing  bool
+	scenario int
+}
+
+func (client *client) GetVersion() (string, error) {
+	if client.failing {
+		return "", errors.New("failing")
+	}
+	return "foo", nil
+}
+
+func (client *client) GetSessions() (map[string]int, map[string]int, int, float64, error) {
+	if client.failing {
+		return nil, nil, 0, 0.0, errors.New("failing")
+	}
+	users := make(map[string]int)
+	modes := make(map[string]int)
+
+	users["foo"] = 1
+	users["bar"] = 1
+	modes["direct"] = 1
+	modes["copy"] = 1
+	if client.scenario == 0 {
+		users["snafu"] = 2
+		modes["transcode"] = 2
+	}
+	return users, modes, 2, 3.1, nil
+}
+
 func TestProbe_Run(t *testing.T) {
-	probe := plex.NewProbe("", "user@example.com", "somepassword")
-	probe.Client.Client = httpstub.NewTestClient(loopback)
+	probe := plex.Probe{
+		PlexAPI: &client{},
+		Users:   make(map[string]int),
+		Modes:   make(map[string]int),
+	}
 
 	// log.SetLevel(log.DebugLevel)
-	probe.Run()
+	_ = probe.Run()
 
 	// Test version
 	_, err := metrics.LoadValue("mediaserver_server_info", "plex", "SomeVersion")
@@ -81,11 +109,15 @@ func TestProbe_Run(t *testing.T) {
 }
 
 func TestCachedUsers(t *testing.T) {
-	probe := plex.NewProbe("", "user@example.com", "somepassword")
-	probe.Client.Client = httpstub.NewTestClient(loopback)
+	client := client{}
+	probe := plex.Probe{
+		PlexAPI: &client,
+		Users:   make(map[string]int),
+		Modes:   make(map[string]int),
+	}
 
 	// log.SetLevel(log.DebugLevel)
-	probe.Run()
+	_ = probe.Run()
 
 	// Test user count
 	for _, testCase := range []struct {
@@ -126,10 +158,10 @@ func TestCachedUsers(t *testing.T) {
 	}
 
 	// Switch to response w/out Snafu user & related transcoders
-	sessionsResponse = sessionsResponse2
+	client.scenario = 1
 
 	// Run again
-	probe.Run()
+	_ = probe.Run()
 
 	// Snafu should still be reported but with zero sessions
 	for _, testCase := range []struct {
@@ -170,170 +202,14 @@ func TestCachedUsers(t *testing.T) {
 	}
 }
 
-func TestFailingServer(t *testing.T) {
-	probe := plex.NewProbe("", "user@example.com", "somepassword")
-	probe.Client.Client = httpstub.NewTestClient(httpstub.Failing)
-
-	assert.NotPanics(t, func() { probe.Run() })
-}
-
-// Server loopback function
-
-func loopback(req *http.Request) *http.Response {
-	if req.URL.String() == "https://plex.tv/users/sign_in.xml" {
-		body, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			return &http.Response{
-				StatusCode: 500,
-				Status:     err.Error(),
-				Header:     nil,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-			}
-		}
-		if string(body) == `user%5Blogin%5D=user@example.com&user%5Bpassword%5D=somepassword` {
-			return &http.Response{
-				StatusCode: 201,
-				Header:     nil,
-				Body:       ioutil.NopCloser(bytes.NewBufferString(authResponse)),
-			}
-		}
-		return &http.Response{
-			StatusCode: 401,
-			Status:     "Unauthorized",
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-		}
-
-	} else if req.URL.Path == "/identity" {
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(identityResponse)),
-		}
-	} else if req.URL.Path == "/status/sessions" {
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(sessionsResponse)),
-		}
+func TestProbe_Fail(t *testing.T) {
+	client := client{failing: true}
+	probe := plex.Probe{
+		PlexAPI: &client,
+		Users:   make(map[string]int),
+		Modes:   make(map[string]int),
 	}
-	return &http.Response{
-		StatusCode: 500,
-		Status:     "Not implemented",
-		Header:     nil,
-		Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-	}
+
+	err := probe.Run()
+	assert.NotNil(t, err)
 }
-
-// Responses
-
-var (
-	// default session response answer
-	sessionsResponse = sessionsResponse1
-)
-
-const (
-	authResponse = `<?xml version="1.0" encoding="UTF-8"?>
-<user email="user@example.com" id="1" uuid="1" username="user" authenticationToken="some_token" authToken="some_token">
-  <subscription active="0" status="Inactive" plan=""></subscription>
-  <entitlements all="0"></entitlements>
-  <profile_settings/>
-  <providers></providers>
-  <services></services>
-  <username>user</username>
-  <email>user@example.com</email>
-  <joined-at type="datetime">2000-01-01 00:00:00 UTC</joined-at>
-  <authentication-token>some_token</authentication-token>
-</user>`
-
-	identityResponse = `{
-  "MediaContainer": {
-    "size": 0,
-    "claimed": true,
-    "machineIdentifier": "SomeUUID",
-    "version": "SomeVersion"
-  }
-}`
-
-	sessionsResponse1 = `
-{
-  "MediaContainer": 
-  {
-    "size": 2,
-    "Metadata": 
-    [
-      {
-        "User": 
-        {
-          "title": "foo"
-        }
-      },
-      {
-        "User":
-        {
-          "title": "bar"
-        },
-        "TranscodeSession":
-        {
-          "throttled": false,
-          "speed": "3.1",
-          "videoDecision": "copy"
-        }
-      },
-      {
-        "User":
-        {
-          "title": "snafu"
-        },
-        "TranscodeSession":
-        {
-          "throttled": true,
-          "speed": "3.1",
-          "videoDecision": "transcode"
-        }
-      },
-      {
-        "User":
-        {
-          "title": "snafu"
-        },
-        "TranscodeSession":
-        {
-          "throttled": true,
-          "speed": "3.1",
-          "videoDecision": "transcode"
-        }
-      }
-    ]
-  }
-}`
-
-	sessionsResponse2 = `
-{
-  "MediaContainer": 
-  {
-    "size": 2,
-    "Metadata": 
-    [
-      {
-        "User": 
-        {
-          "title": "foo"
-        }
-      },
-      {
-        "User":
-        {
-          "title": "bar"
-        },
-        "TranscodeSession":
-        {
-          "throttled": false,
-          "speed": "3.1",
-          "videoDecision": "copy"
-        }
-      }
-    ]
-  }
-}`
-)
