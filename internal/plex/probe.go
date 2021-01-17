@@ -57,18 +57,10 @@ func (probe *Probe) Run() error {
 	if users, modes, transcoding, speed, err = probe.GetSessions(); err == nil {
 		// Update statistics
 		for user, count := range users {
-			if oldCount, ok := probe.Users[user]; ok {
-				probe.Users[user] = oldCount + count
-			} else {
-				probe.Users[user] = count
-			}
+			probe.Users[user] = count
 		}
 		for mode, count := range modes {
-			if oldCount, ok := probe.Modes[mode]; ok {
-				probe.Modes[mode] = oldCount + count
-			} else {
-				probe.Modes[mode] = count
-			}
+			probe.Modes[mode] = count
 		}
 
 		// Report
