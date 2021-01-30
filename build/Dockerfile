@@ -1,17 +1,11 @@
-FROM golang:1.15 AS builder
-
-WORKDIR /build
-
-COPY . ./
-
-ARG BUILD_VERSION=development
-RUN CGO_ENABLED=0 go build -ldflags "-X github.com/clambin/mediamon/internal/version.BuildVersion=$BUILD_VERSION" cmd/mediamon/mediamon.go
-
 FROM alpine
 
 WORKDIR /app
 
-COPY --from=builder /build/mediamon /app
+ARG TARGETOS
+ARG TARGETARCH
+
+COPY bld/mediamon-$TARGETOS-$TARGETARCH /app/mediamon
 
 EXPOSE 8080
 ENTRYPOINT ["/app/mediamon"]
