@@ -30,25 +30,28 @@ func TestTransmissionClient_GetStats(t *testing.T) {
 }
 
 func TestTransmissionClient_Authentication(t *testing.T) {
+	var (
+		err        error
+		oldVersion string
+		newVersion string
+	)
+
 	client := &mediaclient.TransmissionClient{Client: httpstub.NewTestClient(transmissionLoopback)}
 	//log.SetLevel(log.DebugLevel)
 
-	_, err := client.GetVersion()
+	oldVersion, err = client.GetVersion()
 	assert.Nil(t, err)
 
 	// simulate the session key expiring
 	client.SessionID = "4321"
 
-	// Next call should fail
-	_, err = client.GetVersion()
-	assert.NotNil(t, err)
-
-	// But the next SessionID has been set
-	assert.Equal(t, "1234", client.SessionID)
-
-	// So subsequent call will succeed again
-	_, err = client.GetVersion()
+	newVersion, err = client.GetVersion()
+	// call succeeded
 	assert.Nil(t, err)
+	// and the next SessionID has been set
+	assert.Equal(t, "1234", client.SessionID)
+	// and the call worked
+	assert.Equal(t, oldVersion, newVersion)
 }
 
 // Server loopback function

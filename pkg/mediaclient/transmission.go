@@ -95,21 +95,27 @@ func (client *TransmissionClient) call(method string) ([]byte, error) {
 		resp *http.Response
 	)
 
-	if client.SessionID, err = client.getSessionID(); err == nil {
-		req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
+	for {
+		if client.SessionID, err = client.getSessionID(); err == nil {
+			req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
+			req.Header.Add("Content-Type", "application/json")
+			req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
-		if resp, err = client.Client.Do(req); err == nil {
-			defer resp.Body.Close()
+			if resp, err = client.Client.Do(req); err == nil {
 
-			if resp.StatusCode == 200 {
-				body, err = ioutil.ReadAll(resp.Body)
-			} else {
 				if resp.StatusCode == 409 {
+					// Transmission-Session-Id has expired. Get the new one and retry
 					client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
+					resp.Body.Close()
+				} else {
+					if resp.StatusCode == 200 {
+						body, err = ioutil.ReadAll(resp.Body)
+					} else {
+						err = errors.New(resp.Status)
+					}
+					resp.Body.Close()
+					break
 				}
-				err = errors.New(resp.Status)
 			}
 		}
 	}
