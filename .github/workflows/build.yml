@@ -48,8 +48,12 @@ jobs:
           {{major}}.{{minor}}.{{patch}}
     - name: Build
       run: |
-        GOOS=linux GOARCH=arm   go build -o bld/mediamon-linux-arm
-        GOOS=linux GOARCH=amd64 go build -o bld/mediamon-linux-amd64
+        for ARCH in amd64 arm; do \
+          GOOS=linux GOARCH=$ARCH \
+            go build \
+              -ldflags "X github.com/clambin/mediamon/internal/version.BuildVersion=${{ steps.docker_meta.outputs.version }}" \
+              -o bld/mediamon-linux-$ARCH
+        done
     - name: Build docker image
       uses: docker/build-push-action@v2
       with:
