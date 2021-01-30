@@ -51,7 +51,7 @@ jobs:
         for ARCH in amd64 arm; do \
           GOOS=linux GOARCH=$ARCH \
             go build \
-              -ldflags "X github.com/clambin/mediamon/internal/version.BuildVersion=${{ steps.docker_meta.outputs.version }}" \
+              -ldflags "-X github.com/clambin/mediamon/internal/version.BuildVersion=${{ steps.docker_meta.outputs.version }}" \
               -o bld/mediamon-linux-$ARCH
         done
     - name: Build docker image
