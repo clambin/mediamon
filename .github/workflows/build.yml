@@ -40,14 +40,11 @@ jobs:
       - name: build
         env:
           TARGET: ${{ matrix.target }}
-          PLATFORM: ${{ matrix.platform }}
-          ARCH: ${{ matrix.arch }}
-          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+          GOOS: ${{ matrix.platform }}
+          GOARCH: ${{ matrix.arch }}
+          LDFLAGS: -X github.com/clambin/mediamon/internal/version.BuildVersion=${{ steps.vars.outputs.tag }}
         run: |
-          GOOS=$PLATFORM GOARCH=$ARCH \
-            go build \
-              -ldflags "-X github.com/clambin/mediamon/internal/version.BuildVersion=$RELEASE_VERSION" \
-              -o bld/$TARGET-$PLATFORM-$ARCH
+          go build -ldflags "$LD_FLAGS" -o bld/$TARGET-$PLATFORM-$ARCH
         - uses: actions/upload-artifact@v2
           with:
             name: ${{ matrix.target }}-${{ matrix.platform }}-${{ matrix.arch }}
