@@ -20,37 +20,39 @@ func NewProbe(url string, apiKey string, application string) *Probe {
 // Run the probe. Collect all requires metrics
 func (probe *Probe) Run() error {
 	var (
-		err     error
-		version string
-		count   int
+		err         error
+		version     string
+		count       int
+		monitored   int
+		unmonitored int
 	)
 
-	probeLogger := log.WithFields(log.Fields{"err": err, "application": probe.GetApplication()})
+	probeLogger := log.WithField("application", probe.GetApplication())
 
 	// Get the version
 	if version, err = probe.GetVersion(); err != nil {
-		probeLogger.Warning("could not get version")
+		probeLogger.WithField("err", err).Warning("could not get version")
 	} else {
 		metrics.MediaServerVersion.WithLabelValues(probe.GetApplication(), version).Set(1)
 	}
 
 	// Get the calendar
 	if count, err = probe.GetCalendar(); err != nil {
-		probeLogger.Warning("could not get calendar")
+		probeLogger.WithField("err", err).Warning("could not get calendar")
 	} else {
 		metrics.XXXArrCalendarCount.WithLabelValues(probe.GetApplication()).Set(float64(count))
 	}
 
 	// Get queued series / movies
 	if count, err = probe.GetQueue(); err != nil {
-		probeLogger.Warning("could not get queue")
+		probeLogger.WithField("err", err).Warning("could not get queue")
 	} else {
 		metrics.XXXArrQueuedCount.WithLabelValues(probe.GetApplication()).Set(float64(count))
 	}
 
 	// Get monitored/unmonitored series / movies
-	if monitored, unmonitored, err := probe.GetMonitored(); err != nil {
-		probeLogger.Warning("could not get monitored series/movies")
+	if monitored, unmonitored, err = probe.GetMonitored(); err != nil {
+		probeLogger.WithField("err", err).Warning("could not get monitored series/movies")
 	} else {
 		metrics.XXXArrMonitoredCount.WithLabelValues(probe.GetApplication()).Set(float64(monitored))
 		metrics.XXXArrUnmonitoredCount.WithLabelValues(probe.GetApplication()).Set(float64(unmonitored))
