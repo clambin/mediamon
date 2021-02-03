@@ -45,10 +45,10 @@ jobs:
           LDFLAGS: -X github.com/clambin/mediamon/internal/version.BuildVersion=${{ steps.vars.outputs.tag }}
         run: |
           go build -ldflags "$LD_FLAGS" -o bld/$TARGET-$PLATFORM-$ARCH
-        - uses: actions/upload-artifact@v2
-          with:
-            name: ${{ matrix.target }}-${{ matrix.platform }}-${{ matrix.arch }}
-            path: ./bld/*
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.target }}-${{ matrix.platform }}-${{ matrix.arch }}
+          path: ./bld/*
   docker:
     needs: build
     runs-on: ubuntu-latest
