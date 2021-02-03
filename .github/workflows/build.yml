@@ -46,7 +46,7 @@ jobs:
         run: |
           GOOS=$PLATFORM GOARCH=$ARCH \
             go build \
-              -ldflags "-X covid19/internal/version.BuildVersion=$RELEASE_VERSION" \
+              -ldflags "-X github.com/clambin/mediamon/internal/version.BuildVersion=$RELEASE_VERSION" \
               -o bld/$TARGET-$PLATFORM-$ARCH
         - uses: actions/upload-artifact@v2
           with:
