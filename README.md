@@ -9,9 +9,9 @@ Prometheus exporter for various media applications.  Currently supports Transmis
 
 ## Installation
 
-A Docker image is available on [docker](https://hub.docker.com/r/clambin/github.com/clambin/mediamon).  Images are available for amd64 & arm32v7.
+Binaries are available on the [release](https://github.com/clambin/mediamon/releases) page. Docker images are available on [docker hub](https://hub.docker.com/r/clambin/mediamon).
 
-Alternatively, you can clone the repository from [github](https://github.com/clambin/mediamon) and build from source:
+Alternatively, you can clone the repository and build from source:
 
 ```
 git clone https://github.com/clambin/mediamon.git

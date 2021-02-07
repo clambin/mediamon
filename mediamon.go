@@ -56,7 +56,7 @@ func main() {
 		os.Exit(3)
 	}
 
-	log.Info("media monitor v" + version.BuildVersion)
+	log.WithField("version", version.BuildVersion).Info("media monitor starting")
 
 	go func() {
 		// Run initialized & runs the metrics
