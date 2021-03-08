@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestTransmissionClient_GetVersion(t *testing.T) {
@@ -52,6 +53,21 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 	assert.Equal(t, "1234", client.SessionID)
 	// and the call worked
 	assert.Equal(t, oldVersion, newVersion)
+}
+
+func TestCallFailure(t *testing.T) {
+	client := &mediaclient.TransmissionClient{Client: httpstub.NewTestClient(serverUnavailable)}
+
+	assert.Eventually(t, func() bool {
+		_, err := client.GetVersion()
+		return err != nil
+
+	}, 1*time.Second, 10*time.Millisecond)
+}
+
+// Server loopback function
+func serverUnavailable(_ *http.Request) *http.Response {
+	return nil
 }
 
 // Server loopback function

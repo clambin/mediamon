@@ -23,9 +23,8 @@ type TransmissionClient struct {
 }
 
 // GetVersion determines the version of the Transmission server
-func (client *TransmissionClient) GetVersion() (string, error) {
+func (client *TransmissionClient) GetVersion() (version string, err error) {
 	var (
-		err   error
 		resp  []byte
 		stats = struct {
 			Arguments struct {
@@ -36,7 +35,9 @@ func (client *TransmissionClient) GetVersion() (string, error) {
 
 	if resp, err = client.call("session-get"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
-		err = decoder.Decode(&stats)
+		if err = decoder.Decode(&stats); err == nil {
+			version = stats.Arguments.Version
+		}
 	}
 
 	log.WithFields(log.Fields{
@@ -44,7 +45,7 @@ func (client *TransmissionClient) GetVersion() (string, error) {
 		"version": stats.Arguments.Version,
 	}).Debug("transmission GetVersion")
 
-	return stats.Arguments.Version, err
+	return
 }
 
 // GetStats gets torrent & up/download stats from Transmission.
@@ -55,9 +56,8 @@ func (client *TransmissionClient) GetVersion() (string, error) {
 //   - total download speed
 //   - total upload speed
 //   - encountered error
-func (client *TransmissionClient) GetStats() (int, int, int, int, error) {
+func (client *TransmissionClient) GetStats() (active int, paused int, download int, upload int, err error) {
 	var (
-		err   error
 		resp  []byte
 		stats = struct {
 			Arguments struct {
@@ -72,7 +72,12 @@ func (client *TransmissionClient) GetStats() (int, int, int, int, error) {
 
 	if resp, err = client.call("session-stats"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
-		err = decoder.Decode(&stats)
+		if err = decoder.Decode(&stats); err == nil {
+			active = stats.Arguments.ActiveTorrentCount
+			paused = stats.Arguments.PausedTorrentCount
+			download = stats.Arguments.DownloadSpeed
+			upload = stats.Arguments.UploadSpeed
+		}
 	}
 
 	log.WithFields(log.Fields{
@@ -80,61 +85,51 @@ func (client *TransmissionClient) GetStats() (int, int, int, int, error) {
 		"stats": stats.Arguments,
 	}).Debug("transmission GetStats")
 
-	return stats.Arguments.ActiveTorrentCount,
-		stats.Arguments.PausedTorrentCount,
-		stats.Arguments.DownloadSpeed,
-		stats.Arguments.UploadSpeed,
-		err
+	return
 }
 
 // call the specified Transmission API endpoint
-func (client *TransmissionClient) call(method string) ([]byte, error) {
-	var (
-		err  error
-		body []byte
-		resp *http.Response
-	)
-
+func (client *TransmissionClient) call(method string) (response []byte, err error) {
 	for {
-		if client.SessionID, err = client.getSessionID(); err == nil {
-			req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
-			req.Header.Add("Content-Type", "application/json")
-			req.Header.Add("X-Transmission-Session-Id", client.SessionID)
+		if client.SessionID, err = client.getSessionID(); err != nil {
+			break
+		}
 
-			if resp, err = client.Client.Do(req); err == nil {
+		req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
-				if resp.StatusCode == 409 {
-					// Transmission-Session-Id has expired. Get the new one and retry
-					client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
-					resp.Body.Close()
+		var resp *http.Response
+		if resp, err = client.Client.Do(req); err == nil {
+
+			if resp.StatusCode == 409 {
+				// Transmission-Session-Id has expired. Get the new one and retry
+				client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
+				resp.Body.Close()
+			} else {
+				if resp.StatusCode == 200 {
+					response, err = ioutil.ReadAll(resp.Body)
 				} else {
-					if resp.StatusCode == 200 {
-						body, err = ioutil.ReadAll(resp.Body)
-					} else {
-						err = errors.New(resp.Status)
-					}
-					resp.Body.Close()
-					break
+					err = errors.New(resp.Status)
 				}
+				resp.Body.Close()
+				break
 			}
 		}
 	}
 
-	return body, err
+	return
 }
 
-func (client *TransmissionClient) getSessionID() (string, error) {
-	var (
-		err       error
-		resp      *http.Response
-		sessionID = client.SessionID
-	)
+func (client *TransmissionClient) getSessionID() (sessionID string, err error) {
+	sessionID = client.SessionID
 
 	if sessionID == "" {
 		req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \"session-get\" }"))
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
+		var resp *http.Response
 		if resp, err = client.Client.Do(req); err == nil {
 			defer resp.Body.Close()
 
@@ -148,5 +143,5 @@ func (client *TransmissionClient) getSessionID() (string, error) {
 		}).Debug("transmission getSessionID")
 	}
 
-	return sessionID, err
+	return
 }
