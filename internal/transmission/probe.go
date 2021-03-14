@@ -18,30 +18,30 @@ func NewProbe(url string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run() error {
+func (probe *Probe) Run() (err error) {
 	var (
-		err            error
 		version        string
 		activeTorrents int
 		pausedTorrents int
 		downloadSpeed  int
 		uploadSpeed    int
 	)
+
 	// Get the version
 	if version, err = probe.GetVersion(); err != nil {
 		log.WithField("err", err).Warning("Could not get Transmission version")
 	} else {
 		metrics.MediaServerVersion.WithLabelValues("transmission", version).Set(1)
-	}
 
-	if activeTorrents, pausedTorrents, downloadSpeed, uploadSpeed, err = probe.GetStats(); err != nil {
-		log.WithField("err", err).Warning("Could not get Transmission Statistics")
-	} else {
-		metrics.TransmissionActiveTorrentCount.Set(float64(activeTorrents))
-		metrics.TransmissionPausedTorrentCount.Set(float64(pausedTorrents))
-		metrics.TransmissionDownloadSpeed.Set(float64(downloadSpeed))
-		metrics.TransmissionUploadSpeed.Set(float64(uploadSpeed))
+		// Get statistics
+		if activeTorrents, pausedTorrents, downloadSpeed, uploadSpeed, err = probe.GetStats(); err != nil {
+			log.WithField("err", err).Warning("Could not get Transmission Statistics")
+		} else {
+			metrics.TransmissionActiveTorrentCount.Set(float64(activeTorrents))
+			metrics.TransmissionPausedTorrentCount.Set(float64(pausedTorrents))
+			metrics.TransmissionDownloadSpeed.Set(float64(downloadSpeed))
+			metrics.TransmissionUploadSpeed.Set(float64(uploadSpeed))
+		}
 	}
-
-	return err
+	return
 }

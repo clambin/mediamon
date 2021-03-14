@@ -28,24 +28,22 @@ func NewProbe(proxy *url.URL, token string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run() error {
-	var (
-		err       error
-		connected = float64(0)
-	)
+func (probe *Probe) Run() (err error) {
+	var connected float64
 
 	if err = probe.getResponse(); err == nil {
-		connected = float64(1)
+		connected = 1
+	} else {
+		log.WithField("err", err).Warning("connectivity probe failed")
 	}
 
 	metrics.OpenVPNClientStatus.Set(connected)
 
-	return err
+	return
 }
 
-func (probe *Probe) getResponse() error {
+func (probe *Probe) getResponse() (err error) {
 	var (
-		err      error
 		resp     []byte
 		response struct {
 			IP       string
@@ -67,5 +65,5 @@ func (probe *Probe) getResponse() error {
 
 	log.WithFields(log.Fields{"err": err, "response": response}).Debug("connectivity getResponse")
 
-	return err
+	return
 }
