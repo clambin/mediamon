@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -21,7 +22,9 @@ func NewProbe(proxy *url.URL, token string) *Probe {
 	return &Probe{
 		Client{
 			Client: &http.Client{
-				Transport: &http.Transport{Proxy: http.ProxyURL(proxy)}},
+				Transport: &http.Transport{Proxy: http.ProxyURL(proxy)},
+				Timeout:   time.Second * 10,
+			},
 			Token: token,
 		},
 	}
