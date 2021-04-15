@@ -90,34 +90,31 @@ func (client *TransmissionClient) GetStats() (active int, paused int, download i
 
 // call the specified Transmission API endpoint
 func (client *TransmissionClient) call(method string) (response []byte, err error) {
-	for {
-		if client.SessionID, err = client.getSessionID(); err != nil {
-			break
-		}
+	for err == nil {
+		if client.SessionID, err = client.getSessionID(); err == nil {
+			req, _ := http.NewRequest(http.MethodPost, client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
+			req.Header.Add("Content-Type", "application/json")
+			req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
-		req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
+			var resp *http.Response
+			if resp, err = client.Client.Do(req); err == nil {
 
-		var resp *http.Response
-		if resp, err = client.Client.Do(req); err == nil {
-
-			if resp.StatusCode == 409 {
-				// Transmission-Session-Id has expired. Get the new one and retry
-				client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
-				resp.Body.Close()
-			} else {
-				if resp.StatusCode == 200 {
-					response, err = ioutil.ReadAll(resp.Body)
+				if resp.StatusCode == 409 {
+					// Transmission-Session-Id has expired. Get the new one and retry
+					client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
+					resp.Body.Close()
 				} else {
-					err = errors.New(resp.Status)
+					if resp.StatusCode == 200 {
+						response, err = ioutil.ReadAll(resp.Body)
+						break
+					} else {
+						err = errors.New(resp.Status)
+					}
+					resp.Body.Close()
 				}
-				resp.Body.Close()
-				break
 			}
 		}
 	}
-
 	return
 }
 
@@ -125,7 +122,7 @@ func (client *TransmissionClient) getSessionID() (sessionID string, err error) {
 	sessionID = client.SessionID
 
 	if sessionID == "" {
-		req, _ := http.NewRequest("POST", client.URL, bytes.NewBufferString("{ \"method\": \"session-get\" }"))
+		req, _ := http.NewRequest(http.MethodPost, client.URL, bytes.NewBufferString("{ \"method\": \"session-get\" }"))
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 

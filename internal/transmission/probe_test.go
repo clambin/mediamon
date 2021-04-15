@@ -8,26 +8,26 @@ import (
 	"testing"
 )
 
-type client struct {
+type server struct {
 	fail bool
 }
 
-func (client *client) GetVersion() (string, error) {
-	if client.fail {
+func (server *server) GetVersion() (string, error) {
+	if server.fail {
 		return "", errors.New("failed")
 	}
 	return "foo", nil
 }
 
-func (client *client) GetStats() (int, int, int, int, error) {
-	if client.fail {
+func (server *server) GetStats() (int, int, int, int, error) {
+	if server.fail {
 		return 0, 0, 0, 0, errors.New("failed")
 	}
 	return 1, 2, 100, 25, nil
 }
 
 func TestMockedAPI(t *testing.T) {
-	client := client{}
+	client := server{}
 	probe := transmission.Probe{TransmissionAPI: &client}
 
 	err := probe.Run()
