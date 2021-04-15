@@ -72,13 +72,12 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: metadata
         id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        uses: crazy-max/ghaction-docker-meta@v2.2.0
         with:
           images: clambin/mediamon
-          tag-sha: True
-          tag-semver: |
-            {{version}}
-            {{major}}.{{minor}}.{{patch}}
+          tags: |
+            type=sha
+            type=semver,pattern={{version}}
       - name: Build docker image
         uses: docker/build-push-action@v2
         with:
