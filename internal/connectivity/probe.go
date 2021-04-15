@@ -3,6 +3,8 @@ package connectivity
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
@@ -12,21 +14,20 @@ import (
 	"github.com/clambin/mediamon/internal/metrics"
 )
 
-// Probe to measure Plex metrics
+// Probe to ping ipinfo.io
 type Probe struct {
-	Client
+	Client *http.Client
+	Token  string
 }
 
 // NewProbe creates a new Probe
 func NewProbe(proxy *url.URL, token string) *Probe {
 	return &Probe{
-		Client{
-			Client: &http.Client{
-				Transport: &http.Transport{Proxy: http.ProxyURL(proxy)},
-				Timeout:   time.Second * 10,
-			},
-			Token: token,
+		Client: &http.Client{
+			Transport: &http.Transport{Proxy: http.ProxyURL(proxy)},
+			Timeout:   time.Second * 10,
 		},
+		Token: token,
 	}
 }
 
@@ -47,7 +48,6 @@ func (probe *Probe) Run() (err error) {
 
 func (probe *Probe) getResponse() (err error) {
 	var (
-		resp     []byte
 		response struct {
 			IP       string
 			Hostname string
@@ -61,9 +61,26 @@ func (probe *Probe) getResponse() (err error) {
 		}
 	)
 
-	if resp, err = probe.call(); err == nil {
-		decoder := json.NewDecoder(bytes.NewReader(resp))
-		err = decoder.Decode(&response)
+	req, _ := http.NewRequest(http.MethodGet, "https://ipinfo.io/", nil)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	q := req.URL.Query()
+	q.Add("token", probe.Token)
+	req.URL.RawQuery = q.Encode()
+
+	var resp *http.Response
+	if resp, err = probe.Client.Do(req); err == nil {
+		defer resp.Body.Close()
+
+		var body []byte
+		if resp.StatusCode == 200 {
+			if body, err = ioutil.ReadAll(resp.Body); err == nil {
+				decoder := json.NewDecoder(bytes.NewReader(body))
+				err = decoder.Decode(&response)
+			}
+		} else {
+			err = errors.New(resp.Status)
+		}
 	}
 
 	log.WithFields(log.Fields{"err": err, "response": response}).Debug("connectivity getResponse")

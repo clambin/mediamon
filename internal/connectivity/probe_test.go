@@ -15,7 +15,7 @@ import (
 
 func TestProbe_Run(t *testing.T) {
 	probe := connectivity.NewProbe(nil, "")
-	probe.Client.Client = httpstub.NewTestClient(loopback)
+	probe.Client = httpstub.NewTestClient(loopback)
 	_ = probe.Run()
 
 	value, _ := metrics.LoadValue("openvpn_client_status")
@@ -24,7 +24,7 @@ func TestProbe_Run(t *testing.T) {
 
 func TestProbe_Run_Fail(t *testing.T) {
 	probe := connectivity.NewProbe(nil, "")
-	probe.Client.Client = httpstub.NewTestClient(httpstub.Failing)
+	probe.Client = httpstub.NewTestClient(httpstub.Failing)
 	_ = probe.Run()
 
 	value, _ := metrics.LoadValue("openvpn_client_status")
