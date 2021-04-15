@@ -90,55 +90,26 @@ func (client *TransmissionClient) GetStats() (active int, paused int, download i
 
 // call the specified Transmission API endpoint
 func (client *TransmissionClient) call(method string) (response []byte, err error) {
-	for err == nil {
-		if client.SessionID, err = client.getSessionID(); err == nil {
-			req, _ := http.NewRequest(http.MethodPost, client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
-			req.Header.Add("Content-Type", "application/json")
-			req.Header.Add("X-Transmission-Session-Id", client.SessionID)
+	var answer bool
+	for answer == false && err == nil {
 
-			var resp *http.Response
-			if resp, err = client.Client.Do(req); err == nil {
-
-				if resp.StatusCode == 409 {
-					// Transmission-Session-Id has expired. Get the new one and retry
-					client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
-					resp.Body.Close()
-				} else {
-					if resp.StatusCode == 200 {
-						response, err = ioutil.ReadAll(resp.Body)
-						break
-					} else {
-						err = errors.New(resp.Status)
-					}
-					resp.Body.Close()
-				}
-			}
-		}
-	}
-	return
-}
-
-func (client *TransmissionClient) getSessionID() (sessionID string, err error) {
-	sessionID = client.SessionID
-
-	if sessionID == "" {
-		req, _ := http.NewRequest(http.MethodPost, client.URL, bytes.NewBufferString("{ \"method\": \"session-get\" }"))
+		req, _ := http.NewRequest(http.MethodPost, client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
 		var resp *http.Response
 		if resp, err = client.Client.Do(req); err == nil {
-			defer resp.Body.Close()
-
-			if resp.StatusCode == 409 || resp.StatusCode == 200 {
-				sessionID = resp.Header.Get("X-Transmission-Session-Id")
+			if resp.StatusCode == 409 {
+				// Transmission-Session-Id has expired. Get the new one and retry
+				client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
+			} else if resp.StatusCode == 200 {
+				response, err = ioutil.ReadAll(resp.Body)
+				answer = true
+			} else {
+				err = errors.New(resp.Status)
 			}
+			resp.Body.Close()
 		}
-		log.WithFields(log.Fields{
-			"err":       err,
-			"sessionID": sessionID,
-		}).Debug("transmission getSessionID")
 	}
-
 	return
 }
