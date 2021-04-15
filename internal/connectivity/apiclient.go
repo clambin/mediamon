@@ -2,12 +2,11 @@ package connectivity
 
 import (
 	"errors"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 )
 
-// Client to call the Plex APIs
+// Client to call the ipinfo API
 type Client struct {
 	Client *http.Client
 	Token  string
@@ -38,8 +37,6 @@ func (apiClient *Client) call() ([]byte, error) {
 			err = errors.New(resp.Status)
 		}
 	}
-
-	log.WithFields(log.Fields{"err": err, "body": string(body)}).Debug("connectivity apiClient call")
 
 	return body, err
 }

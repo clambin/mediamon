@@ -5,6 +5,7 @@ import (
 	"github.com/clambin/mediamon/internal/bandwidth"
 	"github.com/clambin/mediamon/internal/connectivity"
 	"github.com/clambin/mediamon/internal/plex"
+	"github.com/clambin/mediamon/internal/scheduler"
 	"github.com/clambin/mediamon/internal/services"
 	"github.com/clambin/mediamon/internal/transmission"
 	"github.com/clambin/mediamon/internal/version"
@@ -16,7 +17,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"time"
 )
 
 type configuration struct {
@@ -66,88 +66,70 @@ func main() {
 		log.WithField("err", err).Error("Failed to start Prometheus http handler")
 	}()
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
+	// Scheduler will run the probes at their configured interval
+	schedulr := scheduler.New()
+	go schedulr.Run()
 
 	// Transmission Probe
-	var transmissionProbe *transmission.Probe
 	if cfg.Services.Transmission.URL != "" {
 		log.WithField("url", cfg.Services.Transmission.URL).Info("monitoring Transmission")
-		transmissionProbe = transmission.NewProbe(cfg.Services.Transmission.URL)
-	}
-	transmissionTicker := time.NewTicker(cfg.Services.Transmission.Interval)
-
-	// Sonarr Probe
-	var sonarrProbe *xxxarr.Probe
-	if cfg.Services.Sonarr.URL != "" {
-		log.WithField("url", cfg.Services.Sonarr.URL).Info("monitoring Sonarr")
-		sonarrProbe = xxxarr.NewProbe(cfg.Services.Sonarr.URL, cfg.Services.Sonarr.APIKey, "sonarr")
-	}
-	sonarrTicker := time.NewTicker(cfg.Services.Sonarr.Interval)
-
-	// Radarr Probe
-	var radarrProbe *xxxarr.Probe
-	if cfg.Services.Radarr.URL != "" {
-		log.WithField("url", cfg.Services.Radarr.URL).Info("monitoring Radarr")
-		radarrProbe = xxxarr.NewProbe(cfg.Services.Radarr.URL, cfg.Services.Radarr.APIKey, "radarr")
-	}
-	radarrTicker := time.NewTicker(cfg.Services.Radarr.Interval)
-
-	// Plex Probe
-	var plexProbe *plex.Probe
-	if cfg.Services.Plex.URL != "" {
-		log.WithField("url", cfg.Services.Plex.URL).Info("monitoring Plex")
-		plexProbe = plex.NewProbe(cfg.Services.Plex.URL, cfg.Services.Plex.UserName, cfg.Services.Plex.Password)
-	}
-	plexTicker := time.NewTicker(cfg.Services.Plex.Interval)
-
-	// Bandwidth Probe
-	var bandwidthProbe *bandwidth.Probe
-	if cfg.Services.OpenVPN.Bandwidth.FileName != "" {
-		log.WithField("filename", cfg.Services.OpenVPN.Bandwidth.FileName).Info("monitoring OpenVPN Bandwidth usage")
-		bandwidthProbe = bandwidth.NewProbe(cfg.Services.OpenVPN.Bandwidth.FileName)
-	}
-	bandwidthTicker := time.NewTicker(cfg.Services.OpenVPN.Bandwidth.Interval)
-
-	// Connectivity Probe
-	var connectivityProbe *connectivity.Probe
-	if cfg.Services.OpenVPN.Connectivity.ProxyURL != nil {
-		log.WithField("proxyURL", cfg.Services.OpenVPN.Connectivity.ProxyURL).Info("monitoring OpenVPN connectivity")
-		connectivityProbe = connectivity.NewProbe(cfg.Services.OpenVPN.Connectivity.ProxyURL, cfg.Services.OpenVPN.Connectivity.Token)
-	}
-	connectivityTicker := time.NewTicker(cfg.Services.OpenVPN.Connectivity.Interval)
-
-loop:
-	for {
-		select {
-		case <-transmissionTicker.C:
-			if transmissionProbe != nil {
-				_ = transmissionProbe.Run()
-			}
-		case <-sonarrTicker.C:
-			if sonarrProbe != nil {
-				_ = sonarrProbe.Run()
-			}
-		case <-radarrTicker.C:
-			if radarrProbe != nil {
-				_ = radarrProbe.Run()
-			}
-		case <-plexTicker.C:
-			if plexProbe != nil {
-				_ = plexProbe.Run()
-			}
-		case <-bandwidthTicker.C:
-			if bandwidthProbe != nil {
-				_ = bandwidthProbe.Run()
-			}
-		case <-connectivityTicker.C:
-			if connectivityProbe != nil {
-				_ = connectivityProbe.Run()
-			}
-		case <-interrupt:
-			break loop
+		schedulr.Schedule <- &scheduler.ScheduledTask{
+			Task:     transmission.NewProbe(cfg.Services.Transmission.URL),
+			Interval: cfg.Services.Transmission.Interval,
 		}
 	}
+
+	// Sonarr Probe
+	if cfg.Services.Sonarr.URL != "" {
+		log.WithField("url", cfg.Services.Sonarr.URL).Info("monitoring Sonarr")
+		schedulr.Schedule <- &scheduler.ScheduledTask{
+			Task:     xxxarr.NewProbe(cfg.Services.Sonarr.URL, cfg.Services.Sonarr.APIKey, "sonarr"),
+			Interval: cfg.Services.Sonarr.Interval,
+		}
+	}
+
+	// Radarr Probe
+	if cfg.Services.Radarr.URL != "" {
+		log.WithField("url", cfg.Services.Radarr.URL).Info("monitoring Radarr")
+		schedulr.Schedule <- &scheduler.ScheduledTask{
+			Task:     xxxarr.NewProbe(cfg.Services.Radarr.URL, cfg.Services.Radarr.APIKey, "radarr"),
+			Interval: cfg.Services.Radarr.Interval,
+		}
+	}
+
+	// Plex Probe
+	if cfg.Services.Plex.URL != "" {
+		log.WithField("url", cfg.Services.Plex.URL).Info("monitoring Plex")
+		schedulr.Schedule <- &scheduler.ScheduledTask{
+			Task:     plex.NewProbe(cfg.Services.Plex.URL, cfg.Services.Plex.UserName, cfg.Services.Plex.Password),
+			Interval: cfg.Services.Plex.Interval,
+		}
+	}
+
+	// Bandwidth Probe
+	if cfg.Services.OpenVPN.Bandwidth.FileName != "" {
+		log.WithField("filename", cfg.Services.OpenVPN.Bandwidth.FileName).Info("monitoring OpenVPN Bandwidth usage")
+		schedulr.Schedule <- &scheduler.ScheduledTask{
+			Task:     bandwidth.NewProbe(cfg.Services.OpenVPN.Bandwidth.FileName),
+			Interval: cfg.Services.OpenVPN.Bandwidth.Interval,
+		}
+	}
+
+	// Connectivity Probe
+	if cfg.Services.OpenVPN.Connectivity.ProxyURL != nil {
+		log.WithField("proxyURL", cfg.Services.OpenVPN.Connectivity.ProxyURL).Info("monitoring OpenVPN connectivity")
+		schedulr.Schedule <- &scheduler.ScheduledTask{
+			Task:     connectivity.NewProbe(cfg.Services.OpenVPN.Connectivity.ProxyURL, cfg.Services.OpenVPN.Connectivity.Token),
+			Interval: cfg.Services.OpenVPN.Connectivity.Interval,
+		}
+	}
+
+	interrupt := make(chan os.Signal)
+	signal.Notify(interrupt, os.Interrupt)
+
+	<-interrupt
+
+	schedulr.Stop <- struct{}{}
 
 	log.Info("mediamon exiting")
 }
