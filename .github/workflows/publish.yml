@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: 1.15
+          go-version: 1.16
       - name: test
         run: |
           go test ./... -race -coverprofile=coverage.txt -covermode=atomic
@@ -27,12 +27,12 @@ jobs:
       matrix:
         target: [ mediamon ]
         platform: [ linux ]
-        arch: [ amd64, arm ]
+        arch: [ amd64, arm, arm64 ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: 1.15
+          go-version: 1.16
       - name: Version number
         id: vars
         run: echo ::set-output name=tag::${GITHUB_REF##*/}
@@ -59,6 +59,10 @@ jobs:
           path: ./bld
       - uses: actions/download-artifact@v2
         with:
+          name: mediamon-linux-arm64
+          path: ./bld
+      - uses: actions/download-artifact@v2
+        with:
           name: mediamon-linux-amd64
           path: ./bld
       - name: Fix permissions
@@ -82,7 +86,7 @@ jobs:
         with:
           context: .
           file: ./build/Dockerfile
-          platforms: linux/amd64,linux/arm/v7
+          platforms: linux/amd64,linux/arm,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
