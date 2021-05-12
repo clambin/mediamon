@@ -16,7 +16,7 @@ jobs:
       - name: test
         run: |
           go test ./... -race -coverprofile=coverage.txt -covermode=atomic
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v1.5.0
         with:
           file: coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -82,7 +82,7 @@ jobs:
             type=sha
             type=semver,pattern={{version}}
       - name: Build docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v2.4.0
         with:
           context: .
           file: ./build/Dockerfile
