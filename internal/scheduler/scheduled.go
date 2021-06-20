@@ -13,6 +13,7 @@ type Scheduled struct {
 }
 
 func (scheduled *Scheduled) Run() {
+	_ = scheduled.task.Run()
 loop:
 	for {
 		select {
