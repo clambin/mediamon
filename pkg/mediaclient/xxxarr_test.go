@@ -341,7 +341,7 @@ const (
     "hasFile": true
   }
 ]`
-	queued = `[ {}, {}, {} ]`
+	queued = `{ "totalRecords": 3 }`
 
 	monitored = `[ { "monitored": true }, { "monitored": false }, { "monitored": true } ]`
 )

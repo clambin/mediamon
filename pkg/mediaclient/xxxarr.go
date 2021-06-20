@@ -96,9 +96,9 @@ func (client *XXXArrClient) GetQueue() (int, error) {
 	)
 	if resp, err = client.call("/api/v3/queue"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
-		var stats []struct{ Status string }
+		var stats struct{ TotalRecords int }
 		if err = decoder.Decode(&stats); err == nil {
-			queue = len(stats)
+			queue = stats.TotalRecords
 		}
 	}
 
