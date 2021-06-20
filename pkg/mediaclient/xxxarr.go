@@ -43,7 +43,7 @@ func (client *XXXArrClient) GetVersion() (string, error) {
 		}
 	)
 
-	if resp, err = client.call("/api/system/status"); err == nil {
+	if resp, err = client.call("/api/v3/system/status"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
 	}
@@ -65,7 +65,7 @@ func (client *XXXArrClient) GetCalendar() (int, error) {
 		calendar int
 	)
 	// TODO: add start/end date optional parameters?
-	if resp, err = client.call("/api/calendar"); err == nil {
+	if resp, err = client.call("/api/v3/calendar"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		var stats []struct{ HasFile bool }
 		if err = decoder.Decode(&stats); err == nil {
@@ -94,7 +94,7 @@ func (client *XXXArrClient) GetQueue() (int, error) {
 		resp  []byte
 		queue int
 	)
-	if resp, err = client.call("/api/queue"); err == nil {
+	if resp, err = client.call("/api/v3/queue"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		var stats []struct{ Status string }
 		if err = decoder.Decode(&stats); err == nil {
@@ -122,9 +122,9 @@ func (client *XXXArrClient) GetMonitored() (int, int, error) {
 	)
 
 	if client.Application == "sonarr" {
-		endpoint = "/api/series"
+		endpoint = "/api/v3/series"
 	} else if client.Application == "radarr" {
-		endpoint = "/api/movie"
+		endpoint = "/api/v3/movie"
 	} else {
 		panic("invalid application: " + client.Application)
 	}
@@ -168,14 +168,12 @@ func (client *XXXArrClient) call(endpoint string) ([]byte, error) {
 	req.Header.Add("X-Api-Key", client.APIKey)
 
 	if resp, err = client.Client.Do(req); err == nil {
-		defer resp.Body.Close()
-
 		if resp.StatusCode == 200 {
 			body, err = ioutil.ReadAll(resp.Body)
 		} else {
 			err = errors.New(resp.Status)
 		}
+		_ = resp.Body.Close()
 	}
-
 	return body, err
 }

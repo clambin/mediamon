@@ -155,13 +155,12 @@ func (client *PlexClient) call(endpoint string) ([]byte, error) {
 		req.Header.Add("X-Plex-Token", client.authToken)
 
 		if resp, err = client.Client.Do(req); err == nil {
-			defer resp.Body.Close()
-
 			if resp.StatusCode == 200 {
 				body, err = ioutil.ReadAll(resp.Body)
 			} else {
 				err = errors.New(resp.Status)
 			}
+			_ = resp.Body.Close()
 		}
 	}
 
@@ -189,8 +188,6 @@ func (client *PlexClient) authenticate() (string, error) {
 		req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
 
 		if resp, err = client.Client.Do(req); err == nil {
-			defer resp.Body.Close()
-
 			if resp.StatusCode == 201 {
 				// TODO: there's three different places in the response where the authToken appears.
 				// Which is the officially supported version?
@@ -206,6 +203,7 @@ func (client *PlexClient) authenticate() (string, error) {
 			} else {
 				err = errors.New(resp.Status)
 			}
+			_ = resp.Body.Close()
 		}
 		log.WithFields(log.Fields{
 			"err":       err,

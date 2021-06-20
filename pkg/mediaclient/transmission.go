@@ -108,7 +108,7 @@ func (client *TransmissionClient) call(method string) (response []byte, err erro
 			} else {
 				err = errors.New(resp.Status)
 			}
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	}
 	return

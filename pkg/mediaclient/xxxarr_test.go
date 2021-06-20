@@ -287,31 +287,31 @@ func xxxArrLoopback(req *http.Request) *http.Response {
 		}
 	}
 	switch req.URL.Path {
-	case "/api/system/status":
+	case "/api/v3/system/status":
 		return &http.Response{
 			StatusCode: 200,
 			Header:     nil,
 			Body:       ioutil.NopCloser(bytes.NewBufferString(systemStatus)),
 		}
-	case "/api/calendar":
+	case "/api/v3/calendar":
 		return &http.Response{
 			StatusCode: 200,
 			Header:     nil,
 			Body:       ioutil.NopCloser(bytes.NewBufferString(calendar)),
 		}
-	case "/api/queue":
+	case "/api/v3/queue":
 		return &http.Response{
 			StatusCode: 200,
 			Header:     nil,
 			Body:       ioutil.NopCloser(bytes.NewBufferString(queued)),
 		}
-	case "/api/series":
+	case "/api/v3/series":
 		return &http.Response{
 			StatusCode: 200,
 			Header:     nil,
 			Body:       ioutil.NopCloser(bytes.NewBufferString(monitored)),
 		}
-	case "/api/movie":
+	case "/api/v3/movie":
 		return &http.Response{
 			StatusCode: 200,
 			Header:     nil,
