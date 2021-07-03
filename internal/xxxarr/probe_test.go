@@ -14,32 +14,32 @@ type client struct {
 	fail        bool
 }
 
-func (client *client) GetApplication() string {
+func (client *client) GetApplication(_ context.Context) string {
 	return client.application
 }
 
-func (client *client) GetVersion() (string, error) {
+func (client *client) GetVersion(_ context.Context) (string, error) {
 	if client.fail {
 		return "", errors.New("failing")
 	}
 	return "foo", nil
 }
 
-func (client *client) GetCalendar() (int, error) {
+func (client *client) GetCalendar(_ context.Context) (int, error) {
 	if client.fail {
 		return 0, errors.New("failing")
 	}
 	return 1, nil
 }
 
-func (client *client) GetQueue() (int, error) {
+func (client *client) GetQueue(_ context.Context) (int, error) {
 	if client.fail {
 		return 0, errors.New("failing")
 	}
 	return 2, nil
 }
 
-func (client *client) GetMonitored() (int, int, error) {
+func (client *client) GetMonitored(_ context.Context) (int, int, error) {
 	if client.fail {
 		return 0, 0, errors.New("failing")
 	}

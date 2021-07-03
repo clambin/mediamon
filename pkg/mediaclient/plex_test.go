@@ -2,6 +2,7 @@ package mediaclient_test
 
 import (
 	"bytes"
+	"context"
 	"github.com/clambin/gotools/httpstub"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ func TestPlexClient_GetVersion(t *testing.T) {
 		Password: "somepassword",
 	}
 
-	version, err := client.GetVersion()
+	version, err := client.GetVersion(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, "SomeVersion", version)
 }
@@ -31,7 +32,7 @@ func TestPlexClient_GetStats(t *testing.T) {
 		Password: "somepassword",
 	}
 
-	users, modes, transcoding, speed, err := client.GetSessions()
+	users, modes, transcoding, speed, err := client.GetSessions(context.Background())
 	assert.Nil(t, err)
 	assert.Len(t, users, 3)
 	assert.Len(t, modes, 3)
@@ -82,7 +83,7 @@ func TestPlexClient_Authentication(t *testing.T) {
 		Password: "badpassword",
 	}
 
-	_, err := client.GetVersion()
+	_, err := client.GetVersion(context.Background())
 	assert.NotNil(t, err)
 	assert.Equal(t, "Unauthorized", err.Error())
 }

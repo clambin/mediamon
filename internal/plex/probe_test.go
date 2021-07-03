@@ -14,14 +14,14 @@ type client struct {
 	scenario int
 }
 
-func (client *client) GetVersion() (string, error) {
+func (client *client) GetVersion(_ context.Context) (string, error) {
 	if client.failing {
 		return "", errors.New("failing")
 	}
 	return "foo", nil
 }
 
-func (client *client) GetSessions() (map[string]int, map[string]int, int, float64, error) {
+func (client *client) GetSessions(_ context.Context) (map[string]int, map[string]int, int, float64, error) {
 	if client.failing {
 		return nil, nil, 0, 0.0, errors.New("failing")
 	}

@@ -2,6 +2,7 @@ package mediaclient_test
 
 import (
 	"bytes"
+	"context"
 	"github.com/clambin/gotools/httpstub"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ func TestXXXArrClient_GetApplication(t *testing.T) {
 		Application: "sonarr",
 	}
 
-	assert.Equal(t, "sonarr", client.GetApplication())
+	assert.Equal(t, "sonarr", client.GetApplication(context.Background()))
 }
 
 func TestXXXArrClient_GetVersion(t *testing.T) {
@@ -65,7 +66,7 @@ func TestXXXArrClient_GetVersion(t *testing.T) {
 				APIKey:      tt.fields.APIKey,
 				Application: tt.fields.Application,
 			}
-			got, err := client.GetVersion()
+			got, err := client.GetVersion(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetVersion() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -121,7 +122,7 @@ func TestXXXArrClient_GetCalendar(t *testing.T) {
 				APIKey:      tt.fields.APIKey,
 				Application: tt.fields.Application,
 			}
-			got, err := client.GetCalendar()
+			got, err := client.GetCalendar(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetCalendar() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -177,7 +178,7 @@ func TestXXXArrClient_GetQueue(t *testing.T) {
 				APIKey:      tt.fields.APIKey,
 				Application: tt.fields.Application,
 			}
-			got, err := client.GetQueue()
+			got, err := client.GetQueue(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetQueue() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -236,7 +237,7 @@ func TestXXXArrClient_GetMonitored(t *testing.T) {
 				APIKey:      tt.fields.APIKey,
 				Application: tt.fields.Application,
 			}
-			got, got1, err := client.GetMonitored()
+			got, got1, err := client.GetMonitored(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetMonitored() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -259,7 +260,7 @@ func TestXXXArrClient_GetMonitored_Panic(t *testing.T) {
 		Application: "invalid",
 	}
 
-	assert.Panics(t, func() { _, _, _ = client.GetMonitored() })
+	assert.Panics(t, func() { _, _, _ = client.GetMonitored(context.Background()) })
 }
 
 func TestXXXArrClient_ServerDown(t *testing.T) {
@@ -270,7 +271,7 @@ func TestXXXArrClient_ServerDown(t *testing.T) {
 		Application: "sonarr",
 	}
 
-	_, err := client.GetVersion()
+	_, err := client.GetVersion(context.Background())
 
 	assert.NotNil(t, err)
 	assert.Equal(t, "internal server error", err.Error())

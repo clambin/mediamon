@@ -13,14 +13,14 @@ type server struct {
 	fail bool
 }
 
-func (server *server) GetVersion() (string, error) {
+func (server *server) GetVersion(_ context.Context) (string, error) {
 	if server.fail {
 		return "", errors.New("failed")
 	}
 	return "foo", nil
 }
 
-func (server *server) GetStats() (int, int, int, int, error) {
+func (server *server) GetStats(_ context.Context) (int, int, int, int, error) {
 	if server.fail {
 		return 0, 0, 0, 0, errors.New("failed")
 	}

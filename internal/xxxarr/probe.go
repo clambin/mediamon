@@ -19,7 +19,7 @@ func NewProbe(url string, apiKey string, application string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run(_ context.Context) error {
+func (probe *Probe) Run(ctx context.Context) error {
 	var (
 		err         error
 		version     string
@@ -28,35 +28,37 @@ func (probe *Probe) Run(_ context.Context) error {
 		unmonitored int
 	)
 
-	probeLogger := log.WithField("application", probe.GetApplication())
+	app := probe.GetApplication(ctx)
+
+	probeLogger := log.WithField("application", app)
 
 	// Get the version
-	if version, err = probe.GetVersion(); err != nil {
+	if version, err = probe.GetVersion(ctx); err != nil {
 		probeLogger.WithField("err", err).Warning("could not get version")
 	} else {
-		metrics.MediaServerVersion.WithLabelValues(probe.GetApplication(), version).Set(1)
+		metrics.MediaServerVersion.WithLabelValues(app, version).Set(1)
 	}
 
 	// Get the calendar
-	if count, err = probe.GetCalendar(); err != nil {
+	if count, err = probe.GetCalendar(ctx); err != nil {
 		probeLogger.WithField("err", err).Warning("could not get calendar")
 	} else {
-		metrics.XXXArrCalendarCount.WithLabelValues(probe.GetApplication()).Set(float64(count))
+		metrics.XXXArrCalendarCount.WithLabelValues(app).Set(float64(count))
 	}
 
 	// Get queued series / movies
-	if count, err = probe.GetQueue(); err != nil {
+	if count, err = probe.GetQueue(ctx); err != nil {
 		probeLogger.WithField("err", err).Warning("could not get queue")
 	} else {
-		metrics.XXXArrQueuedCount.WithLabelValues(probe.GetApplication()).Set(float64(count))
+		metrics.XXXArrQueuedCount.WithLabelValues(app).Set(float64(count))
 	}
 
 	// Get monitored/unmonitored series / movies
-	if monitored, unmonitored, err = probe.GetMonitored(); err != nil {
+	if monitored, unmonitored, err = probe.GetMonitored(ctx); err != nil {
 		probeLogger.WithField("err", err).Warning("could not get monitored series/movies")
 	} else {
-		metrics.XXXArrMonitoredCount.WithLabelValues(probe.GetApplication()).Set(float64(monitored))
-		metrics.XXXArrUnmonitoredCount.WithLabelValues(probe.GetApplication()).Set(float64(unmonitored))
+		metrics.XXXArrMonitoredCount.WithLabelValues(app).Set(float64(monitored))
+		metrics.XXXArrUnmonitoredCount.WithLabelValues(app).Set(float64(unmonitored))
 	}
 
 	return err

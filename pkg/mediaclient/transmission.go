@@ -2,6 +2,7 @@ package mediaclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	log "github.com/sirupsen/logrus"
@@ -11,8 +12,8 @@ import (
 
 // TransmissionAPI interface
 type TransmissionAPI interface {
-	GetVersion() (string, error)
-	GetStats() (int, int, int, int, error)
+	GetVersion(context.Context) (string, error)
+	GetStats(context.Context) (int, int, int, int, error)
 }
 
 // TransmissionClient calls the Transmission APIs
@@ -23,7 +24,7 @@ type TransmissionClient struct {
 }
 
 // GetVersion determines the version of the Transmission server
-func (client *TransmissionClient) GetVersion() (version string, err error) {
+func (client *TransmissionClient) GetVersion(ctx context.Context) (version string, err error) {
 	var (
 		resp  []byte
 		stats = struct {
@@ -33,7 +34,7 @@ func (client *TransmissionClient) GetVersion() (version string, err error) {
 		}{}
 	)
 
-	if resp, err = client.call("session-get"); err == nil {
+	if resp, err = client.call(ctx, "session-get"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		if err = decoder.Decode(&stats); err == nil {
 			version = stats.Arguments.Version
@@ -56,7 +57,7 @@ func (client *TransmissionClient) GetVersion() (version string, err error) {
 //   - total download speed
 //   - total upload speed
 //   - encountered error
-func (client *TransmissionClient) GetStats() (active int, paused int, download int, upload int, err error) {
+func (client *TransmissionClient) GetStats(ctx context.Context) (active int, paused int, download int, upload int, err error) {
 	var (
 		resp  []byte
 		stats = struct {
@@ -70,7 +71,7 @@ func (client *TransmissionClient) GetStats() (active int, paused int, download i
 		}{}
 	)
 
-	if resp, err = client.call("session-stats"); err == nil {
+	if resp, err = client.call(ctx, "session-stats"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		if err = decoder.Decode(&stats); err == nil {
 			active = stats.Arguments.ActiveTorrentCount
@@ -89,11 +90,11 @@ func (client *TransmissionClient) GetStats() (active int, paused int, download i
 }
 
 // call the specified Transmission API endpoint
-func (client *TransmissionClient) call(method string) (response []byte, err error) {
+func (client *TransmissionClient) call(ctx context.Context, method string) (response []byte, err error) {
 	var answer bool
 	for answer == false && err == nil {
 
-		req, _ := http.NewRequest(http.MethodPost, client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
+		req, _ := http.NewRequestWithContext(ctx, http.MethodPost, client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 

@@ -2,9 +2,11 @@ package mediaclient_test
 
 import (
 	"bytes"
+	"context"
 	"github.com/clambin/gotools/httpstub"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -14,7 +16,7 @@ import (
 func TestTransmissionClient_GetVersion(t *testing.T) {
 	client := &mediaclient.TransmissionClient{Client: httpstub.NewTestClient(transmissionLoopback)}
 
-	version, err := client.GetVersion()
+	version, err := client.GetVersion(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, "2.94 (d8e60ee44f)", version)
 }
@@ -22,7 +24,7 @@ func TestTransmissionClient_GetVersion(t *testing.T) {
 func TestTransmissionClient_GetStats(t *testing.T) {
 	client := &mediaclient.TransmissionClient{Client: httpstub.NewTestClient(transmissionLoopback)}
 
-	active, paused, download, upload, err := client.GetStats()
+	active, paused, download, upload, err := client.GetStats(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, 1, active)
 	assert.Equal(t, 2, paused)
@@ -40,13 +42,13 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 	client := &mediaclient.TransmissionClient{Client: httpstub.NewTestClient(transmissionLoopback)}
 	//log.SetLevel(log.DebugLevel)
 
-	oldVersion, err = client.GetVersion()
+	oldVersion, err = client.GetVersion(context.Background())
 	assert.Nil(t, err)
 
 	// simulate the session key expiring
 	client.SessionID = "4321"
 
-	newVersion, err = client.GetVersion()
+	newVersion, err = client.GetVersion(context.Background())
 	// call succeeded
 	assert.Nil(t, err)
 	// and the next SessionID has been set
@@ -59,7 +61,7 @@ func TestCallFailure(t *testing.T) {
 	client := &mediaclient.TransmissionClient{Client: httpstub.NewTestClient(serverUnavailable)}
 
 	assert.Eventually(t, func() bool {
-		_, err := client.GetVersion()
+		_, err := client.GetVersion(context.Background())
 		return err != nil
 
 	}, 1*time.Second, 10*time.Millisecond)
@@ -96,7 +98,9 @@ func transmissionLoopback(req *http.Request) *http.Response {
 		}
 	}
 
-	defer req.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(req.Body)
 
 	if string(body) == `{ "method": "session-get" }` {
 		return &http.Response{

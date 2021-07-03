@@ -2,6 +2,7 @@ package mediaclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	log "github.com/sirupsen/logrus"
@@ -11,11 +12,11 @@ import (
 
 // XXXArrAPI interface
 type XXXArrAPI interface {
-	GetVersion() (string, error)
-	GetCalendar() (int, error)
-	GetQueue() (int, error)
-	GetMonitored() (int, int, error)
-	GetApplication() string
+	GetVersion(ctx context.Context) (string, error)
+	GetCalendar(ctx context.Context) (int, error)
+	GetQueue(ctx context.Context) (int, error)
+	GetMonitored(ctx context.Context) (int, int, error)
+	GetApplication(ctx context.Context) string
 }
 
 // XXXArrClient calls the Sonarr/Radarr APIs.  Application specifies whether this is a
@@ -29,12 +30,12 @@ type XXXArrClient struct {
 }
 
 // GetApplication returns the client's configured application
-func (client *XXXArrClient) GetApplication() string {
+func (client *XXXArrClient) GetApplication(_ context.Context) string {
 	return client.Application
 }
 
 // GetVersion retrieves the version of the Sonarr/Radarr server
-func (client *XXXArrClient) GetVersion() (string, error) {
+func (client *XXXArrClient) GetVersion(ctx context.Context) (string, error) {
 	var (
 		err   error
 		resp  []byte
@@ -43,7 +44,7 @@ func (client *XXXArrClient) GetVersion() (string, error) {
 		}
 	)
 
-	if resp, err = client.call("/api/v3/system/status"); err == nil {
+	if resp, err = client.call(ctx, "/api/v3/system/status"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
 	}
@@ -58,14 +59,14 @@ func (client *XXXArrClient) GetVersion() (string, error) {
 }
 
 // GetCalendar retrieves the number of upcoming movies/series airing today and tomorrow
-func (client *XXXArrClient) GetCalendar() (int, error) {
+func (client *XXXArrClient) GetCalendar(ctx context.Context) (int, error) {
 	var (
 		err      error
 		resp     []byte
 		calendar int
 	)
 	// TODO: add start/end date optional parameters?
-	if resp, err = client.call("/api/v3/calendar"); err == nil {
+	if resp, err = client.call(ctx, "/api/v3/calendar"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		var stats []struct{ HasFile bool }
 		if err = decoder.Decode(&stats); err == nil {
@@ -88,13 +89,13 @@ func (client *XXXArrClient) GetCalendar() (int, error) {
 }
 
 // GetQueue retrieves how many movies/series are currently downloading
-func (client *XXXArrClient) GetQueue() (int, error) {
+func (client *XXXArrClient) GetQueue(ctx context.Context) (int, error) {
 	var (
 		err   error
 		resp  []byte
 		queue int
 	)
-	if resp, err = client.call("/api/v3/queue"); err == nil {
+	if resp, err = client.call(ctx, "/api/v3/queue"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		var stats struct{ TotalRecords int }
 		if err = decoder.Decode(&stats); err == nil {
@@ -112,7 +113,7 @@ func (client *XXXArrClient) GetQueue() (int, error) {
 }
 
 // GetMonitored retrieves how many moves/series are being monitored & unmonitored
-func (client *XXXArrClient) GetMonitored() (int, int, error) {
+func (client *XXXArrClient) GetMonitored(ctx context.Context) (int, int, error) {
 	var (
 		err         error
 		resp        []byte
@@ -129,7 +130,7 @@ func (client *XXXArrClient) GetMonitored() (int, int, error) {
 		panic("invalid application: " + client.Application)
 	}
 
-	if resp, err = client.call(endpoint); err == nil {
+	if resp, err = client.call(ctx, endpoint); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		var stats []struct{ Monitored bool }
 		if err = decoder.Decode(&stats); err == nil {
@@ -157,14 +158,14 @@ func (client *XXXArrClient) GetMonitored() (int, int, error) {
 }
 
 // call the specified Sonarr/Radarr API endpoint
-func (client *XXXArrClient) call(endpoint string) ([]byte, error) {
+func (client *XXXArrClient) call(ctx context.Context, endpoint string) ([]byte, error) {
 	var (
 		err  error
 		body []byte
 		resp *http.Response
 	)
 
-	req, _ := http.NewRequest("GET", client.URL+endpoint, nil)
+	req, _ := http.NewRequestWithContext(ctx, "GET", client.URL+endpoint, nil)
 	req.Header.Add("X-Api-Key", client.APIKey)
 
 	if resp, err = client.Client.Do(req); err == nil {

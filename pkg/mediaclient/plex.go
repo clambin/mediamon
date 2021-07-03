@@ -2,6 +2,7 @@ package mediaclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -15,8 +16,8 @@ import (
 
 // PlexAPI interface
 type PlexAPI interface {
-	GetVersion() (string, error)
-	GetSessions() (map[string]int, map[string]int, int, float64, error)
+	GetVersion(context.Context) (string, error)
+	GetSessions(context.Context) (map[string]int, map[string]int, int, float64, error)
 }
 
 // PlexClient calls the Plex APIs
@@ -29,7 +30,7 @@ type PlexClient struct {
 }
 
 // GetVersion retrieves the version of the Plex server
-func (client *PlexClient) GetVersion() (string, error) {
+func (client *PlexClient) GetVersion(ctx context.Context) (string, error) {
 	var (
 		err   error
 		resp  []byte
@@ -40,7 +41,7 @@ func (client *PlexClient) GetVersion() (string, error) {
 		}
 	)
 
-	if resp, err = client.call("/identity"); err == nil {
+	if resp, err = client.call(ctx, "/identity"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
 	}
@@ -62,7 +63,7 @@ func (client *PlexClient) GetVersion() (string, error) {
 //   - number of active transcoders
 //   - total transcoding speed
 //   - any encounters errors
-func (client *PlexClient) GetSessions() (map[string]int, map[string]int, int, float64, error) {
+func (client *PlexClient) GetSessions(ctx context.Context) (map[string]int, map[string]int, int, float64, error) {
 	var (
 		err         error
 		resp        []byte
@@ -88,7 +89,7 @@ func (client *PlexClient) GetSessions() (map[string]int, map[string]int, int, fl
 		}
 	)
 
-	if resp, err = client.call("/status/sessions"); err == nil {
+	if resp, err = client.call(ctx, "/status/sessions"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		if err = decoder.Decode(&stats); err == nil {
 			for _, entry := range stats.MediaContainer.Metadata {
@@ -141,16 +142,16 @@ func (client *PlexClient) GetSessions() (map[string]int, map[string]int, int, fl
 }
 
 // call the specified Plex API endpoint
-func (client *PlexClient) call(endpoint string) ([]byte, error) {
+func (client *PlexClient) call(ctx context.Context, endpoint string) ([]byte, error) {
 	var (
 		err  error
 		body []byte
 		resp *http.Response
 	)
 
-	if client.authToken, err = client.authenticate(); err == nil && client.authToken != "" {
+	if client.authToken, err = client.authenticate(ctx); err == nil && client.authToken != "" {
 
-		req, _ := http.NewRequest("GET", client.URL+endpoint, nil)
+		req, _ := http.NewRequestWithContext(ctx, "GET", client.URL+endpoint, nil)
 		req.Header.Add("Accept", "application/json")
 		req.Header.Add("X-Plex-Token", client.authToken)
 
@@ -169,7 +170,7 @@ func (client *PlexClient) call(endpoint string) ([]byte, error) {
 
 // authenticate logs in to plex.tv and gets an authentication token
 // to be used for calls to the Plex server APIs
-func (client *PlexClient) authenticate() (string, error) {
+func (client *PlexClient) authenticate(ctx context.Context) (string, error) {
 	var (
 		err       error
 		resp      *http.Response
@@ -182,7 +183,7 @@ func (client *PlexClient) authenticate() (string, error) {
 			client.Password,
 		)
 
-		req, _ := http.NewRequest("POST", "https://plex.tv/users/sign_in.xml", bytes.NewBufferString(authBody))
+		req, _ := http.NewRequestWithContext(ctx, "POST", "https://plex.tv/users/sign_in.xml", bytes.NewBufferString(authBody))
 		req.Header.Add("X-Plex-Product", "github.com/clambin/mediamon")
 		req.Header.Add("X-Plex-Version", version.BuildVersion)
 		req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)

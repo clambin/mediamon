@@ -30,7 +30,7 @@ func NewProbe(url, username, password string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run(_ context.Context) error {
+func (probe *Probe) Run(ctx context.Context) error {
 	var (
 		err         error
 		version     string
@@ -40,7 +40,7 @@ func (probe *Probe) Run(_ context.Context) error {
 		speed       float64
 	)
 	// Get the version
-	if version, err = probe.GetVersion(); err == nil {
+	if version, err = probe.GetVersion(ctx); err == nil {
 		metrics.MediaServerVersion.WithLabelValues("plex", version).Set(1)
 	} else {
 		log.WithField("err", err).Warning("Could not get Plex version")
@@ -55,7 +55,7 @@ func (probe *Probe) Run(_ context.Context) error {
 	}
 
 	// Get sessions
-	if users, modes, transcoding, speed, err = probe.GetSessions(); err == nil {
+	if users, modes, transcoding, speed, err = probe.GetSessions(ctx); err == nil {
 		// Update statistics
 		for user, count := range users {
 			probe.Users[user] = count
