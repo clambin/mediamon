@@ -2,8 +2,10 @@ package connectivity
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -32,7 +34,7 @@ func NewProbe(proxy *url.URL, token string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run() (err error) {
+func (probe *Probe) Run(_ context.Context) (err error) {
 	var connected float64
 
 	if err = probe.getResponse(); err == nil {
@@ -70,7 +72,9 @@ func (probe *Probe) getResponse() (err error) {
 
 	var resp *http.Response
 	if resp, err = probe.Client.Do(req); err == nil {
-		defer resp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			_ = Body.Close()
+		}(resp.Body)
 
 		var body []byte
 		if resp.StatusCode == 200 {

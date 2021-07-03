@@ -1,6 +1,7 @@
 package scheduler_test
 
 import (
+	"context"
 	"github.com/clambin/mediamon/internal/scheduler"
 	"github.com/stretchr/testify/assert"
 	"sync"
@@ -13,7 +14,7 @@ type Task struct {
 	ran  bool
 }
 
-func (task *Task) Run() error {
+func (task *Task) Run(_ context.Context) error {
 	task.set()
 	return nil
 }
@@ -31,8 +32,9 @@ func (task *Task) get() bool {
 }
 
 func TestScheduler(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
 	s := scheduler.New()
-	go s.Run()
+	go s.Run(ctx)
 
 	task := Task{}
 
@@ -43,5 +45,5 @@ func TestScheduler(t *testing.T) {
 
 	assert.Eventually(t, func() bool { return task.get() }, 100*time.Millisecond, 10*time.Millisecond)
 
-	s.Stop <- struct{}{}
+	cancel()
 }

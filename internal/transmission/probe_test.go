@@ -1,6 +1,7 @@
 package transmission_test
 
 import (
+	"context"
 	"errors"
 	"github.com/clambin/gotools/metrics"
 	"github.com/clambin/mediamon/internal/transmission"
@@ -30,7 +31,7 @@ func TestMockedAPI(t *testing.T) {
 	client := server{}
 	probe := transmission.Probe{TransmissionAPI: &client}
 
-	err := probe.Run()
+	err := probe.Run(context.Background())
 	assert.Nil(t, err)
 	value, _ := metrics.LoadValue("mediaserver_server_info", "transmission", "foo")
 	assert.Equal(t, float64(1), value)
@@ -45,6 +46,6 @@ func TestMockedAPI(t *testing.T) {
 
 	client.fail = true
 
-	err = probe.Run()
+	err = probe.Run(context.Background())
 	assert.NotNil(t, err)
 }

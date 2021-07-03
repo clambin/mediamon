@@ -1,6 +1,7 @@
 package plex
 
 import (
+	"context"
 	"github.com/clambin/mediamon/internal/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	log "github.com/sirupsen/logrus"
@@ -29,7 +30,7 @@ func NewProbe(url, username, password string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run() error {
+func (probe *Probe) Run(_ context.Context) error {
 	var (
 		err         error
 		version     string

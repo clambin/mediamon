@@ -1,26 +1,28 @@
 package scheduler
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type Runnable interface {
-	Run() error
+	Run(ctx context.Context) error
 }
 
 type Scheduled struct {
-	stop   chan struct{}
 	task   Runnable
 	ticker *time.Ticker
 }
 
-func (scheduled *Scheduled) Run() {
-	_ = scheduled.task.Run()
+func (scheduled *Scheduled) Run(ctx context.Context) {
+	_ = scheduled.task.Run(ctx)
 loop:
 	for {
 		select {
-		case <-scheduled.ticker.C:
-			_ = scheduled.task.Run()
-		case <-scheduled.stop:
+		case <-ctx.Done():
 			break loop
+		case <-scheduled.ticker.C:
+			_ = scheduled.task.Run(ctx)
 		}
 	}
 }

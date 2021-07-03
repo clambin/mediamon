@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/clambin/mediamon/internal/bandwidth"
 	"github.com/clambin/mediamon/internal/connectivity"
@@ -67,8 +68,9 @@ func main() {
 	}()
 
 	// Scheduler will run the probes at their configured interval
+	ctx, cancel := context.WithCancel(context.Background())
 	schedulr := scheduler.New()
-	go schedulr.Run()
+	go schedulr.Run(ctx)
 
 	// Transmission Probe
 	if cfg.Services.Transmission.URL != "" {
@@ -128,8 +130,6 @@ func main() {
 	signal.Notify(interrupt, os.Interrupt)
 
 	<-interrupt
-
-	schedulr.Stop <- struct{}{}
-
+	cancel()
 	log.Info("mediamon exiting")
 }

@@ -1,6 +1,7 @@
 package transmission
 
 import (
+	"context"
 	"github.com/clambin/mediamon/internal/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	log "github.com/sirupsen/logrus"
@@ -18,7 +19,7 @@ func NewProbe(url string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run() (err error) {
+func (probe *Probe) Run(_ context.Context) (err error) {
 	var (
 		version        string
 		activeTorrents int

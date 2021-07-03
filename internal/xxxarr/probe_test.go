@@ -1,6 +1,7 @@
 package xxxarr_test
 
 import (
+	"context"
 	"errors"
 	"github.com/clambin/gotools/metrics"
 	"github.com/clambin/mediamon/internal/xxxarr"
@@ -49,7 +50,7 @@ func TestProbe_Run(t *testing.T) {
 	for _, application := range []string{"sonarr", "radarr"} {
 		probe := xxxarr.Probe{XXXArrAPI: &client{application: application}}
 
-		err := probe.Run()
+		err := probe.Run(context.Background())
 		assert.Nil(t, err)
 
 		value, _ := metrics.LoadValue("mediaserver_server_info", application, "foo")
@@ -68,6 +69,6 @@ func TestProbe_Run(t *testing.T) {
 func TestProbe_Fail(t *testing.T) {
 	probe := xxxarr.Probe{XXXArrAPI: &client{fail: true}}
 
-	err := probe.Run()
+	err := probe.Run(context.Background())
 	assert.NotNil(t, err)
 }

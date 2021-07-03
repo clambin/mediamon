@@ -1,6 +1,7 @@
 package plex_test
 
 import (
+	"context"
 	"errors"
 	"github.com/clambin/gotools/metrics"
 	"github.com/clambin/mediamon/internal/plex"
@@ -46,7 +47,7 @@ func TestProbe_Run(t *testing.T) {
 	}
 
 	// log.SetLevel(log.DebugLevel)
-	_ = probe.Run()
+	_ = probe.Run(context.Background())
 
 	// Test version
 	_, err := metrics.LoadValue("mediaserver_server_info", "plex", "SomeVersion")
@@ -109,15 +110,15 @@ func TestProbe_Run(t *testing.T) {
 }
 
 func TestCachedUsers(t *testing.T) {
-	client := client{}
+	c := client{}
 	probe := plex.Probe{
-		PlexAPI: &client,
+		PlexAPI: &c,
 		Users:   make(map[string]int),
 		Modes:   make(map[string]int),
 	}
 
 	// log.SetLevel(log.DebugLevel)
-	_ = probe.Run()
+	_ = probe.Run(context.Background())
 
 	// Test user count
 	for _, testCase := range []struct {
@@ -158,10 +159,10 @@ func TestCachedUsers(t *testing.T) {
 	}
 
 	// Switch to response w/out Snafu user & related transcoders
-	client.scenario = 1
+	c.scenario = 1
 
 	// Run again
-	_ = probe.Run()
+	_ = probe.Run(context.Background())
 
 	// Snafu should still be reported but with zero sessions
 	for _, testCase := range []struct {
@@ -203,13 +204,13 @@ func TestCachedUsers(t *testing.T) {
 }
 
 func TestProbe_Fail(t *testing.T) {
-	client := client{failing: true}
+	c := client{failing: true}
 	probe := plex.Probe{
-		PlexAPI: &client,
+		PlexAPI: &c,
 		Users:   make(map[string]int),
 		Modes:   make(map[string]int),
 	}
 
-	err := probe.Run()
+	err := probe.Run(context.Background())
 	assert.NotNil(t, err)
 }

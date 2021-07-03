@@ -1,6 +1,7 @@
 package bandwidth_test
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -17,7 +18,7 @@ func tempFile(content []byte) (string, error) {
 	if err == nil {
 		filename = file.Name()
 		_, _ = file.Write(content)
-		file.Close()
+		_ = file.Close()
 	}
 	return filename, err
 }
@@ -46,19 +47,19 @@ END`), 0.0, 0.0},
 	for _, testCase := range testCases {
 		if filename, err := tempFile(testCase.content); assert.Nil(t, err, testCase.name) {
 			if probe := bandwidth.NewProbe(filename); assert.NotNil(t, probe, testCase.name) {
-				_ = probe.Run()
+				_ = probe.Run(context.Background())
 				read, _ := metrics.LoadValue("openvpn_client_tcp_udp_read_bytes_total")
 				assert.Equal(t, testCase.read, read, testCase.name)
 				write, _ := metrics.LoadValue("openvpn_client_tcp_udp_write_bytes_total")
 				assert.Equal(t, testCase.write, write, testCase.name)
-				os.Remove(filename)
+				_ = os.Remove(filename)
 			}
 		}
 	}
 
 	// missing file
 
-	_ = bandwidth.NewProbe("invalidfile.txt").Run()
+	_ = bandwidth.NewProbe("invalidfile.txt").Run(context.Background())
 
 	read, _ := metrics.LoadValue("openvpn_client_tcp_udp_read_bytes_total")
 	assert.Equal(t, 0.0, read)

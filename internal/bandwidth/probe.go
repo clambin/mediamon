@@ -2,6 +2,7 @@ package bandwidth
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -23,7 +24,7 @@ func NewProbe(filename string) *Probe {
 }
 
 // Run the probe. Collect all requires metrics
-func (probe *Probe) Run() error {
+func (probe *Probe) Run(_ context.Context) error {
 	var (
 		err   error
 		stats *openVPNStats
@@ -56,7 +57,9 @@ func (probe *Probe) getStats() (*openVPNStats, error) {
 
 	file, err := os.Open(probe.filename)
 	if err == nil {
-		defer file.Close()
+		defer func(file *os.File) {
+			_ = file.Close()
+		}(file)
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {

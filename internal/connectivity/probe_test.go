@@ -2,6 +2,7 @@ package connectivity_test
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -16,7 +17,7 @@ import (
 func TestProbe_Run(t *testing.T) {
 	probe := connectivity.NewProbe(nil, "")
 	probe.Client = httpstub.NewTestClient(loopback)
-	_ = probe.Run()
+	_ = probe.Run(context.Background())
 
 	value, _ := metrics.LoadValue("openvpn_client_status")
 	assert.Equal(t, 1.0, value)
@@ -25,7 +26,7 @@ func TestProbe_Run(t *testing.T) {
 func TestProbe_Run_Fail(t *testing.T) {
 	probe := connectivity.NewProbe(nil, "")
 	probe.Client = httpstub.NewTestClient(httpstub.Failing)
-	_ = probe.Run()
+	_ = probe.Run(context.Background())
 
 	value, _ := metrics.LoadValue("openvpn_client_status")
 	assert.Equal(t, 0.0, value)
