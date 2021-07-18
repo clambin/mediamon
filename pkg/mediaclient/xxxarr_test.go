@@ -1,13 +1,11 @@
 package mediaclient_test
 
 import (
-	"bytes"
 	"context"
-	"github.com/clambin/gotools/httpstub"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -24,8 +22,6 @@ func TestXXXArrClient_GetApplication(t *testing.T) {
 
 func TestXXXArrClient_GetVersion(t *testing.T) {
 	type fields struct {
-		Client      *http.Client
-		URL         string
 		APIKey      string
 		Application string
 	}
@@ -38,8 +34,6 @@ func TestXXXArrClient_GetVersion(t *testing.T) {
 		{
 			name: "sonarr",
 			fields: fields{
-				Client:      httpstub.NewTestClient(xxxArrLoopback),
-				URL:         "",
 				APIKey:      "1234",
 				Application: "sonarr",
 			},
@@ -47,10 +41,16 @@ func TestXXXArrClient_GetVersion(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "sonarr",
+			fields: fields{
+				APIKey:      "",
+				Application: "sonarr",
+			},
+			wantErr: true,
+		},
+		{
 			name: "radarr",
 			fields: fields{
-				Client:      httpstub.NewTestClient(xxxArrLoopback),
-				URL:         "",
 				APIKey:      "1234",
 				Application: "radarr",
 			},
@@ -58,11 +58,15 @@ func TestXXXArrClient_GetVersion(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	testServer := httptest.NewServer(http.HandlerFunc(xxxArrHandler))
+	defer testServer.Close()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &mediaclient.XXXArrClient{
-				Client:      tt.fields.Client,
-				URL:         tt.fields.URL,
+				Client:      &http.Client{},
+				URL:         testServer.URL,
 				APIKey:      tt.fields.APIKey,
 				Application: tt.fields.Application,
 			}
@@ -80,8 +84,6 @@ func TestXXXArrClient_GetVersion(t *testing.T) {
 
 func TestXXXArrClient_GetCalendar(t *testing.T) {
 	type fields struct {
-		Client      *http.Client
-		URL         string
 		APIKey      string
 		Application string
 	}
@@ -94,8 +96,6 @@ func TestXXXArrClient_GetCalendar(t *testing.T) {
 		{
 			name: "sonarr",
 			fields: fields{
-				Client:      httpstub.NewTestClient(xxxArrLoopback),
-				URL:         "",
 				APIKey:      "1234",
 				Application: "sonarr",
 			},
@@ -105,8 +105,6 @@ func TestXXXArrClient_GetCalendar(t *testing.T) {
 		{
 			name: "radarr",
 			fields: fields{
-				Client:      httpstub.NewTestClient(xxxArrLoopback),
-				URL:         "",
 				APIKey:      "1234",
 				Application: "radarr",
 			},
@@ -114,11 +112,15 @@ func TestXXXArrClient_GetCalendar(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	testServer := httptest.NewServer(http.HandlerFunc(xxxArrHandler))
+	defer testServer.Close()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &mediaclient.XXXArrClient{
-				Client:      tt.fields.Client,
-				URL:         tt.fields.URL,
+				Client:      &http.Client{},
+				URL:         testServer.URL,
 				APIKey:      tt.fields.APIKey,
 				Application: tt.fields.Application,
 			}
@@ -136,8 +138,6 @@ func TestXXXArrClient_GetCalendar(t *testing.T) {
 
 func TestXXXArrClient_GetQueue(t *testing.T) {
 	type fields struct {
-		Client      *http.Client
-		URL         string
 		APIKey      string
 		Application string
 	}
@@ -150,8 +150,6 @@ func TestXXXArrClient_GetQueue(t *testing.T) {
 		{
 			name: "sonarr",
 			fields: fields{
-				Client:      httpstub.NewTestClient(xxxArrLoopback),
-				URL:         "",
 				APIKey:      "1234",
 				Application: "sonarr",
 			},
@@ -161,8 +159,6 @@ func TestXXXArrClient_GetQueue(t *testing.T) {
 		{
 			name: "radarr",
 			fields: fields{
-				Client:      httpstub.NewTestClient(xxxArrLoopback),
-				URL:         "",
 				APIKey:      "1234",
 				Application: "radarr",
 			},
@@ -170,11 +166,15 @@ func TestXXXArrClient_GetQueue(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	testServer := httptest.NewServer(http.HandlerFunc(xxxArrHandler))
+	defer testServer.Close()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &mediaclient.XXXArrClient{
-				Client:      tt.fields.Client,
-				URL:         tt.fields.URL,
+				Client:      &http.Client{},
+				URL:         testServer.URL,
 				APIKey:      tt.fields.APIKey,
 				Application: tt.fields.Application,
 			}
@@ -192,8 +192,6 @@ func TestXXXArrClient_GetQueue(t *testing.T) {
 
 func TestXXXArrClient_GetMonitored(t *testing.T) {
 	type fields struct {
-		Client      *http.Client
-		URL         string
 		APIKey      string
 		Application string
 	}
@@ -207,8 +205,6 @@ func TestXXXArrClient_GetMonitored(t *testing.T) {
 		{
 			name: "sonarr",
 			fields: fields{
-				Client:      httpstub.NewTestClient(xxxArrLoopback),
-				URL:         "",
 				APIKey:      "1234",
 				Application: "sonarr",
 			},
@@ -219,8 +215,6 @@ func TestXXXArrClient_GetMonitored(t *testing.T) {
 		{
 			name: "radarr",
 			fields: fields{
-				Client:      httpstub.NewTestClient(xxxArrLoopback),
-				URL:         "",
 				APIKey:      "1234",
 				Application: "radarr",
 			},
@@ -229,11 +223,15 @@ func TestXXXArrClient_GetMonitored(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	testServer := httptest.NewServer(http.HandlerFunc(xxxArrHandler))
+	defer testServer.Close()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &mediaclient.XXXArrClient{
-				Client:      tt.fields.Client,
-				URL:         tt.fields.URL,
+				Client:      &http.Client{},
+				URL:         testServer.URL,
 				APIKey:      tt.fields.APIKey,
 				Application: tt.fields.Application,
 			}
@@ -253,9 +251,12 @@ func TestXXXArrClient_GetMonitored(t *testing.T) {
 }
 
 func TestXXXArrClient_GetMonitored_Panic(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(xxxArrHandler))
+	defer testServer.Close()
+
 	client := &mediaclient.XXXArrClient{
-		Client:      httpstub.NewTestClient(xxxArrLoopback),
-		URL:         "",
+		Client:      &http.Client{},
+		URL:         testServer.URL,
 		APIKey:      "",
 		Application: "invalid",
 	}
@@ -264,9 +265,12 @@ func TestXXXArrClient_GetMonitored_Panic(t *testing.T) {
 }
 
 func TestXXXArrClient_ServerDown(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(xxxArrDownHandler))
+	defer testServer.Close()
+
 	client := &mediaclient.XXXArrClient{
-		Client:      httpstub.NewTestClient(httpstub.Failing),
-		URL:         "",
+		Client:      &http.Client{},
+		URL:         testServer.URL,
 		APIKey:      "",
 		Application: "sonarr",
 	}
@@ -274,61 +278,10 @@ func TestXXXArrClient_ServerDown(t *testing.T) {
 	_, err := client.GetVersion(context.Background())
 
 	assert.NotNil(t, err)
-	assert.Equal(t, "internal server error", err.Error())
-}
-
-// Server loopback function
-func xxxArrLoopback(req *http.Request) *http.Response {
-	if req.Header.Get("X-Api-Key") != "1234" {
-		return &http.Response{
-			StatusCode: 409,
-			Status:     "No/invalid Application Key",
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-		}
-	}
-	switch req.URL.Path {
-	case "/api/v3/system/status":
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(systemStatus)),
-		}
-	case "/api/v3/calendar":
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(calendar)),
-		}
-	case "/api/v3/queue":
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(queued)),
-		}
-	case "/api/v3/series":
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(monitored)),
-		}
-	case "/api/v3/movie":
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(monitored)),
-		}
-	default:
-		return &http.Response{
-			StatusCode: 404,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(``)),
-		}
-	}
+	assert.Equal(t, "500 Internal Server Error", err.Error())
 }
 
 // Responses
-
 const (
 	systemStatus = `{
   "version": "1.2.3.4444"
@@ -346,3 +299,34 @@ const (
 
 	monitored = `[ { "monitored": true }, { "monitored": false }, { "monitored": true } ]`
 )
+
+// Server handler
+func xxxArrHandler(w http.ResponseWriter, req *http.Request) {
+	if req.Header.Get("X-Api-Key") != "1234" {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	var response string
+	switch req.URL.Path {
+	case "/api/v3/system/status":
+		response = systemStatus
+	case "/api/v3/calendar":
+		response = calendar
+	case "/api/v3/queue":
+		response = queued
+	case "/api/v3/series":
+		response = monitored
+	case "/api/v3/movie":
+		response = monitored
+	default:
+		http.Error(w, "endpoint not implemented", http.StatusNotFound)
+		return
+	}
+
+	_, _ = w.Write([]byte(response))
+}
+
+func xxxArrDownHandler(w http.ResponseWriter, _ *http.Request) {
+	http.Error(w, "the software, it no workie", http.StatusInternalServerError)
+}

@@ -1,39 +1,56 @@
 package mediaclient_test
 
 import (
-	"bytes"
 	"context"
-	"github.com/clambin/gotools/httpstub"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestPlexClient_GetVersion(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
+	defer testServer.Close()
+
+	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	defer authServer.Close()
+
 	client := &mediaclient.PlexClient{
-		Client:   httpstub.NewTestClient(plexLoopback),
-		URL:      "",
+		Client:   &http.Client{},
+		URL:      testServer.URL,
+		AuthURL:  authServer.URL,
 		UserName: "user@example.com",
 		Password: "somepassword",
 	}
 
 	version, err := client.GetVersion(context.Background())
-	assert.Nil(t, err)
+	assert.NoError(t, err)
+	assert.Equal(t, "SomeVersion", version)
+
+	version, err = client.GetVersion(context.Background())
+	assert.NoError(t, err)
 	assert.Equal(t, "SomeVersion", version)
 }
 
 func TestPlexClient_GetStats(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
+	defer testServer.Close()
+
+	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	defer authServer.Close()
+
 	client := &mediaclient.PlexClient{
-		Client:   httpstub.NewTestClient(plexLoopback),
-		URL:      "",
+		Client:   &http.Client{},
+		URL:      testServer.URL,
+		AuthURL:  authServer.URL,
 		UserName: "user@example.com",
 		Password: "somepassword",
 	}
 
 	users, modes, transcoding, speed, err := client.GetSessions(context.Background())
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, users, 3)
 	assert.Len(t, modes, 3)
 	assert.Equal(t, 2, transcoding)
@@ -76,71 +93,77 @@ func TestPlexClient_GetStats(t *testing.T) {
 }
 
 func TestPlexClient_Authentication(t *testing.T) {
+	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	defer authServer.Close()
+
 	client := &mediaclient.PlexClient{
-		Client:   httpstub.NewTestClient(plexLoopback),
+		Client:   &http.Client{},
 		URL:      "",
+		AuthURL:  authServer.URL,
 		UserName: "user@example.com",
 		Password: "badpassword",
 	}
 
 	_, err := client.GetVersion(context.Background())
-	assert.NotNil(t, err)
-	assert.Equal(t, "Unauthorized", err.Error())
+	assert.Error(t, err)
+	assert.Equal(t, "403 Forbidden", err.Error())
 }
 
-// Server loopback function
-func plexLoopback(req *http.Request) *http.Response {
-	if req.URL.String() == "https://plex.tv/users/sign_in.xml" {
-		body, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			return &http.Response{
-				StatusCode: 500,
-				Status:     err.Error(),
-				Header:     nil,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-			}
-		}
-		if string(body) == `user%5Blogin%5D=user@example.com&user%5Bpassword%5D=somepassword` {
-			return &http.Response{
-				StatusCode: 201,
-				Header:     nil,
-				Body:       ioutil.NopCloser(bytes.NewBufferString(authResponse)),
-			}
-		}
-		return &http.Response{
-			StatusCode: 401,
-			Status:     "Unauthorized",
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
-		}
+// Server handlers
 
-	} else if req.URL.Path == "/identity" {
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(identityResponse)),
-		}
-	} else if req.URL.Path == "/status/sessions" {
-		return &http.Response{
-			StatusCode: 200,
-			Header:     nil,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(sessionsResponse)),
-		}
+func plexAuthHandler(w http.ResponseWriter, req *http.Request) {
+	defer func() {
+		_ = req.Body.Close()
+	}()
+	body, err := ioutil.ReadAll(req.Body)
+
+	if err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
 	}
-	return &http.Response{
-		StatusCode: 500,
-		Status:     "Not implemented",
-		Header:     nil,
-		Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+
+	if string(body) != `user%5Blogin%5D=user@example.com&user%5Bpassword%5D=somepassword` {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	_, _ = w.Write([]byte(authResponse))
+}
+
+func plexHandler(w http.ResponseWriter, req *http.Request) {
+	token := req.Header.Get("X-Plex-Token")
+	if token != "some_token" {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	response, ok := plexResponses[req.URL.Path]
+
+	if ok == false {
+		http.Error(w, "endpoint not implemented: "+req.URL.Path, http.StatusNotFound)
+	} else {
+		_, _ = w.Write([]byte(response))
 	}
 }
 
-// Responses
-
-var (
-	// default session response answer
-	sessionsResponse = sessionsResponse1
-)
+var plexResponses = map[string]string{
+	"/identity": `{ "MediaContainer": {
+    	"size": 0,
+    	"claimed": true,
+    	"machineIdentifier": "SomeUUID",
+    	"version": "SomeVersion"
+  	}}`,
+	"/status/sessions": `{ "MediaContainer": {
+		"size": 2,
+		"Metadata": [
+			{ "User": { "title": "foo" } },
+			{ "User": { "title": "bar" },  "TranscodeSession": { "throttled": false, "speed": "3.1", "videoDecision": "copy" } },
+			{ "User": { "title": "snafu" }, "TranscodeSession": { "throttled": true, "speed": "3.1", "videoDecision": "transcode" } },
+			{ "User": { "title": "snafu" }, "TranscodeSession": { "throttled": true, "speed": "3.1", "videoDecision": "transcode" } }
+		]
+	}}`,
+}
 
 const (
 	authResponse = `<?xml version="1.0" encoding="UTF-8"?>
@@ -155,66 +178,4 @@ const (
   <joined-at type="datetime">2000-01-01 00:00:00 UTC</joined-at>
   <authentication-token>some_token</authentication-token>
 </user>`
-
-	identityResponse = `{
-  "MediaContainer": {
-    "size": 0,
-    "claimed": true,
-    "machineIdentifier": "SomeUUID",
-    "version": "SomeVersion"
-  }
-}`
-
-	sessionsResponse1 = `
-{
-  "MediaContainer": 
-  {
-    "size": 2,
-    "Metadata": 
-    [
-      {
-        "User": 
-        {
-          "title": "foo"
-        }
-      },
-      {
-        "User":
-        {
-          "title": "bar"
-        },
-        "TranscodeSession":
-        {
-          "throttled": false,
-          "speed": "3.1",
-          "videoDecision": "copy"
-        }
-      },
-      {
-        "User":
-        {
-          "title": "snafu"
-        },
-        "TranscodeSession":
-        {
-          "throttled": true,
-          "speed": "3.1",
-          "videoDecision": "transcode"
-        }
-      },
-      {
-        "User":
-        {
-          "title": "snafu"
-        },
-        "TranscodeSession":
-        {
-          "throttled": true,
-          "speed": "3.1",
-          "videoDecision": "transcode"
-        }
-      }
-    ]
-  }
-}`
 )

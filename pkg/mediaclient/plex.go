@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"github.com/clambin/mediamon/internal/version"
 	log "github.com/sirupsen/logrus"
@@ -24,34 +23,51 @@ type PlexAPI interface {
 type PlexClient struct {
 	Client    *http.Client
 	URL       string
+	AuthURL   string
 	UserName  string
 	Password  string
 	authToken string
 }
 
 // GetVersion retrieves the version of the Plex server
-func (client *PlexClient) GetVersion(ctx context.Context) (string, error) {
-	var (
-		err   error
-		resp  []byte
-		stats struct {
+func (client *PlexClient) GetVersion(ctx context.Context) (version string, err error) {
+	var resp []byte
+	if resp, err = client.call(ctx, "/identity"); err == nil {
+		decoder := json.NewDecoder(bytes.NewReader(resp))
+
+		var stats struct {
 			MediaContainer struct {
 				Version string
 			}
 		}
-	)
-
-	if resp, err = client.call(ctx, "/identity"); err == nil {
-		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
+
+		if err == nil {
+			version = stats.MediaContainer.Version
+		}
 	}
 
 	log.WithFields(log.Fields{
 		"err":     err,
-		"version": stats.MediaContainer.Version,
+		"version": version,
 	}).Debug("plex getVersion")
 
-	return stats.MediaContainer.Version, err
+	return
+}
+
+type sessionStats struct {
+	MediaContainer struct {
+		Metadata []struct {
+			User struct {
+				Title string
+			}
+			TranscodeSession struct {
+				Throttled     bool
+				Speed         string
+				VideoDecision string
+			}
+		}
+	}
 }
 
 // GetSessions retrieves session information from the server.
@@ -63,70 +79,16 @@ func (client *PlexClient) GetVersion(ctx context.Context) (string, error) {
 //   - number of active transcoders
 //   - total transcoding speed
 //   - any encounters errors
-func (client *PlexClient) GetSessions(ctx context.Context) (map[string]int, map[string]int, int, float64, error) {
-	var (
-		err         error
-		resp        []byte
-		users       = make(map[string]int, 0)
-		modes       = make(map[string]int, 0)
-		transcoding int
-		speed       float64
-		ok          bool
-		count       int
-		stats       struct {
-			MediaContainer struct {
-				Metadata []struct {
-					User struct {
-						Title string
-					}
-					TranscodeSession struct {
-						Throttled     bool
-						Speed         string
-						VideoDecision string
-					}
-				}
-			}
-		}
-	)
-
+func (client *PlexClient) GetSessions(ctx context.Context) (users map[string]int, modes map[string]int, transcoding int, speed float64, err error) {
+	var resp []byte
 	if resp, err = client.call(ctx, "/status/sessions"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
-		if err = decoder.Decode(&stats); err == nil {
-			for _, entry := range stats.MediaContainer.Metadata {
-				// User sessions
-				count, ok = users[entry.User.Title]
-				if ok {
-					users[entry.User.Title] = count + 1
-				} else {
-					users[entry.User.Title] = 1
-				}
-				// Transcoders
-				videoDecision := entry.TranscodeSession.VideoDecision
-				if videoDecision == "" {
-					videoDecision = "direct"
-				}
-				count, ok = modes[videoDecision]
-				if ok {
-					modes[videoDecision] = count + 1
-				} else {
-					modes[videoDecision] = 1
-				}
-				// Active transcoders
-				if !entry.TranscodeSession.Throttled {
-					transcoding++
-					if entry.TranscodeSession.Speed != "" {
-						var parsedSpeed float64
-						if parsedSpeed, err = strconv.ParseFloat(entry.TranscodeSession.Speed, 64); err == nil {
-							speed += parsedSpeed
-						} else {
-							log.WithFields(log.Fields{
-								"err":   err,
-								"Speed": entry.TranscodeSession.Speed,
-							}).Warning("cannot parse Plex encoding speed")
-						}
-					}
-				}
-			}
+
+		var stats sessionStats
+		err = decoder.Decode(&stats)
+
+		if err == nil {
+			users, modes, transcoding, speed, err = parseSessions(stats)
 		}
 	}
 
@@ -138,79 +100,120 @@ func (client *PlexClient) GetSessions(ctx context.Context) (map[string]int, map[
 		"speed":       speed,
 	}).Debug("plex getSessions")
 
-	return users, modes, transcoding, speed, err
+	return
+}
+
+func parseSessions(stats sessionStats) (users map[string]int, modes map[string]int, transcoding int, speed float64, err error) {
+	users = make(map[string]int)
+	modes = make(map[string]int)
+
+	for _, entry := range stats.MediaContainer.Metadata {
+		// User sessions
+		count, ok := users[entry.User.Title]
+		if ok {
+			users[entry.User.Title] = count + 1
+		} else {
+			users[entry.User.Title] = 1
+		}
+		// Transcoders
+		videoDecision := entry.TranscodeSession.VideoDecision
+		if videoDecision == "" {
+			videoDecision = "direct"
+		}
+		count, ok = modes[videoDecision]
+		if ok {
+			modes[videoDecision] = count + 1
+		} else {
+			modes[videoDecision] = 1
+		}
+		// Active transcoders
+		if !entry.TranscodeSession.Throttled {
+			transcoding++
+			if entry.TranscodeSession.Speed != "" {
+				var parsedSpeed float64
+				if parsedSpeed, err = strconv.ParseFloat(entry.TranscodeSession.Speed, 64); err == nil {
+					speed += parsedSpeed
+				} else {
+					log.WithFields(log.Fields{
+						"err":   err,
+						"Speed": entry.TranscodeSession.Speed,
+					}).Warning("cannot parse Plex encoding speed")
+				}
+			}
+		}
+	}
+
+	return
 }
 
 // call the specified Plex API endpoint
-func (client *PlexClient) call(ctx context.Context, endpoint string) ([]byte, error) {
-	var (
-		err  error
-		body []byte
-		resp *http.Response
-	)
+func (client *PlexClient) call(ctx context.Context, endpoint string) (body []byte, err error) {
+	if client.authToken, err = client.authenticate(ctx); err == nil {
 
-	if client.authToken, err = client.authenticate(ctx); err == nil && client.authToken != "" {
-
-		req, _ := http.NewRequestWithContext(ctx, "GET", client.URL+endpoint, nil)
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+endpoint, nil)
 		req.Header.Add("Accept", "application/json")
 		req.Header.Add("X-Plex-Token", client.authToken)
 
+		var resp *http.Response
 		if resp, err = client.Client.Do(req); err == nil {
-			if resp.StatusCode == 200 {
+			if resp.StatusCode == http.StatusOK {
 				body, err = ioutil.ReadAll(resp.Body)
 			} else {
-				err = errors.New(resp.Status)
+				err = fmt.Errorf("%s", resp.Status)
 			}
 			_ = resp.Body.Close()
 		}
 	}
 
-	return body, err
+	return
 }
 
 // authenticate logs in to plex.tv and gets an authentication token
 // to be used for calls to the Plex server APIs
-func (client *PlexClient) authenticate(ctx context.Context) (string, error) {
-	var (
-		err       error
-		resp      *http.Response
-		authToken = client.authToken
-	)
-
-	if authToken == "" {
-		authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s",
-			client.UserName,
-			client.Password,
-		)
-
-		req, _ := http.NewRequestWithContext(ctx, "POST", "https://plex.tv/users/sign_in.xml", bytes.NewBufferString(authBody))
-		req.Header.Add("X-Plex-Product", "github.com/clambin/mediamon")
-		req.Header.Add("X-Plex-Version", version.BuildVersion)
-		req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
-
-		if resp, err = client.Client.Do(req); err == nil {
-			if resp.StatusCode == 201 {
-				// TODO: there's three different places in the response where the authToken appears.
-				// Which is the officially supported version?
-				var authResponse struct {
-					XMLName             xml.Name `xml:"user"`
-					AuthenticationToken string   `xml:"authenticationToken,attr"`
-				}
-
-				body, _ := ioutil.ReadAll(resp.Body)
-				if err = xml.Unmarshal(body, &authResponse); err == nil {
-					authToken = authResponse.AuthenticationToken
-				}
-			} else {
-				err = errors.New(resp.Status)
-			}
-			_ = resp.Body.Close()
-		}
-		log.WithFields(log.Fields{
-			"err":       err,
-			"authToken": authToken,
-		}).Debug("plex authenticate")
+func (client *PlexClient) authenticate(ctx context.Context) (authToken string, err error) {
+	if authToken = client.authToken; authToken != "" {
+		return
 	}
 
-	return authToken, err
+	authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s",
+		client.UserName,
+		client.Password,
+	)
+
+	authURL := "https://plex.tv/users/sign_in.xml"
+	if client.AuthURL != "" {
+		authURL = client.AuthURL
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, authURL, bytes.NewBufferString(authBody))
+	req.Header.Add("X-Plex-Product", "github.com/clambin/mediamon")
+	req.Header.Add("X-Plex-Version", version.BuildVersion)
+	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
+
+	var resp *http.Response
+	if resp, err = client.Client.Do(req); err == nil {
+		if resp.StatusCode == http.StatusCreated {
+			// TODO: there's three different places in the response where the authToken appears.
+			// Which is the officially supported version?
+			var authResponse struct {
+				XMLName             xml.Name `xml:"user"`
+				AuthenticationToken string   `xml:"authenticationToken,attr"`
+			}
+
+			body, _ := ioutil.ReadAll(resp.Body)
+			if err = xml.Unmarshal(body, &authResponse); err == nil {
+				authToken = authResponse.AuthenticationToken
+			}
+		} else {
+			err = fmt.Errorf("%s", resp.Status)
+		}
+		_ = resp.Body.Close()
+	}
+
+	log.WithFields(log.Fields{
+		"err":       err,
+		"authToken": authToken,
+	}).Debug("plex authenticate")
+
+	return
 }
