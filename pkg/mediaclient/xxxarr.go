@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -165,14 +165,14 @@ func (client *XXXArrClient) call(ctx context.Context, endpoint string) ([]byte, 
 		resp *http.Response
 	)
 
-	req, _ := http.NewRequestWithContext(ctx, "GET", client.URL+endpoint, nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+endpoint, nil)
 	req.Header.Add("X-Api-Key", client.APIKey)
 
 	if resp, err = client.Client.Do(req); err == nil {
 		if resp.StatusCode == 200 {
 			body, err = ioutil.ReadAll(resp.Body)
 		} else {
-			err = errors.New(resp.Status)
+			err = fmt.Errorf("%s", resp.Status)
 		}
 		_ = resp.Body.Close()
 	}

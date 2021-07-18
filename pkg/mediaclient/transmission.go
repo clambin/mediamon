@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -100,14 +100,14 @@ func (client *TransmissionClient) call(ctx context.Context, method string) (resp
 
 		var resp *http.Response
 		if resp, err = client.Client.Do(req); err == nil {
-			if resp.StatusCode == 409 {
+			if resp.StatusCode == http.StatusForbidden {
 				// Transmission-Session-Id has expired. Get the new one and retry
 				client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
 			} else if resp.StatusCode == 200 {
 				response, err = ioutil.ReadAll(resp.Body)
 				answer = true
 			} else {
-				err = errors.New(resp.Status)
+				err = fmt.Errorf("%s", resp.Status)
 			}
 			_ = resp.Body.Close()
 		}
