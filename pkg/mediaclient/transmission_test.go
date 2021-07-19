@@ -78,7 +78,7 @@ func transmissionHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header()["X-Transmission-Session-Id"] = []string{sessionID}
 
 	if req.Header.Get("X-Transmission-Session-Id") != sessionID {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		http.Error(w, "Forbidden", http.StatusConflict)
 		return
 	}
 

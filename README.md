@@ -19,7 +19,7 @@ cd mediamon
 go build
 ```
 
-You will need to have go 1.15 installed on your system.
+You will need to have go 1.16 installed on your system.
 
 ## Running mediamon
 ### Command-line options
@@ -108,19 +108,21 @@ scrape_configs:
 mediamon exposes the following metrics:
 
 ```
-* mediaserver_active_torrent_count: Number of active torrents
-* mediaserver_calendar_count: Number of upcoming episodes / movies
-* mediaserver_download_speed: Transmission download speed in bytes / sec
-* mediaserver_monitored_count: Number of monitored series / movies
-* mediaserver_paused_torrent_count: Number of paused torrents
-* mediaserver_plex_session_count: Active Plex sessions by user
-* mediaserver_plex_transcoder_encoding_count: Number of active transcoders
-* mediaserver_plex_transcoder_speed_total: Speed of active transcoders (total)
-* mediaserver_plex_transcoder_type_count: Active Transcoder count by type
-* mediaserver_queued_count: Number of queued torrents
-* mediaserver_server_info: Server info. The 'version' label shows the current version of sonarr/radarr/transmission/plex
-* mediaserver_unmonitored_count: Number of unmonitored series / movies
-* mediaserver_upload_speed: Transmission upload speed in bytes / sec
+* mediamon_plex_session_count: Active Plex sessions by user
+* mediamon_plex_transcoder_encoding_count: Number of active transcoders
+* mediamon_plex_transcoder_speed_total: Speed of active transcoders (total)
+* mediamon_plex_transcoder_type_count: Active Transcoder count by type
+* mediamon_plex_version: Plex version number
+* mediamon_transmission_active_torrent_count: Number of active torrents
+* mediamon_transmission_download_speed: Transmission download speed in bytes / sec
+* mediamon_transmission_paused_torrent_count: Number of paused torrents
+* mediamon_transmission_upload_speed: Transmission upload speed in bytes / sec
+* mediamon_transmission_version: Transmission version number
+* mediamon_xxxarr_calendar_count: Number of upcoming episodes / movies
+* mediamon_xxxarr_monitored_count: Number of monitored series / movies
+* mediamon_xxxarr_queued_count: Number of queued torrents
+* mediamon_xxxarr_unmonitored_count: Number of unmonitored series / movies
+* mediamon_xxxarr_version: Sonarr/Radarr version number
 * openvpn_client_status: OpenVPN Client Status
 * openvpn_client_tcp_udp_read_bytes_total: OpenVPN client bytes read
 * openvpn_client_tcp_udp_write_bytes_total: OpenVPN client bytes written

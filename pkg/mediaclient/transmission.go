@@ -100,7 +100,7 @@ func (client *TransmissionClient) call(ctx context.Context, method string) (resp
 
 		var resp *http.Response
 		if resp, err = client.Client.Do(req); err == nil {
-			if resp.StatusCode == http.StatusForbidden {
+			if resp.StatusCode == http.StatusConflict {
 				// Transmission-Session-Id has expired. Get the new one and retry
 				client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
 			} else if resp.StatusCode == 200 {

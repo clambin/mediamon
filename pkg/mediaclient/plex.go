@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/clambin/mediamon/internal/version"
+	version2 "github.com/clambin/mediamon/version"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -187,8 +187,8 @@ func (client *PlexClient) authenticate(ctx context.Context) (authToken string, e
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, authURL, bytes.NewBufferString(authBody))
 	req.Header.Add("X-Plex-Product", "github.com/clambin/mediamon")
-	req.Header.Add("X-Plex-Version", version.BuildVersion)
-	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
+	req.Header.Add("X-Plex-Version", version2.BuildVersion)
+	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version2.BuildVersion)
 
 	var resp *http.Response
 	if resp, err = client.Client.Do(req); err == nil {

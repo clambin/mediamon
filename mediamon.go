@@ -1,22 +1,20 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"github.com/clambin/mediamon/internal/bandwidth"
-	"github.com/clambin/mediamon/internal/connectivity"
-	"github.com/clambin/mediamon/internal/plex"
-	"github.com/clambin/mediamon/internal/scheduler"
-	"github.com/clambin/mediamon/internal/services"
-	"github.com/clambin/mediamon/internal/transmission"
-	"github.com/clambin/mediamon/internal/version"
-	"github.com/clambin/mediamon/internal/xxxarr"
+	"github.com/clambin/mediamon/collectors/bandwidth"
+	"github.com/clambin/mediamon/collectors/connectivity"
+	"github.com/clambin/mediamon/collectors/plex"
+	"github.com/clambin/mediamon/collectors/transmission"
+	"github.com/clambin/mediamon/collectors/xxxarr"
+	"github.com/clambin/mediamon/services"
+	"github.com/clambin/mediamon/version"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	"os"
-	"os/signal"
 	"path/filepath"
 )
 
@@ -59,77 +57,71 @@ func main() {
 
 	log.WithField("version", version.BuildVersion).Info("media monitor starting")
 
-	go func() {
-		// Run initialized & runs the metrics
-		listenAddress := fmt.Sprintf(":%d", cfg.Port)
-		http.Handle("/metrics", promhttp.Handler())
-		err = http.ListenAndServe(listenAddress, nil)
-		log.WithField("err", err).Error("Failed to start Prometheus http handler")
-	}()
-
-	// Scheduler will run the probes at their configured interval
-	ctx, cancel := context.WithCancel(context.Background())
-	schedulr := scheduler.New()
-	go schedulr.Run(ctx)
-
-	// Transmission Probe
+	// Transmission Collector
 	if cfg.Services.Transmission.URL != "" {
 		log.WithField("url", cfg.Services.Transmission.URL).Info("monitoring Transmission")
-		schedulr.Schedule <- &scheduler.ScheduledTask{
-			Task:     transmission.NewProbe(cfg.Services.Transmission.URL),
-			Interval: cfg.Services.Transmission.Interval,
-		}
+		prometheus.DefaultRegisterer.MustRegister(transmission.NewCollector(
+			cfg.Services.Transmission.URL,
+			cfg.Services.Transmission.Interval,
+		))
 	}
 
-	// Sonarr Probe
+	// Sonarr Collector
 	if cfg.Services.Sonarr.URL != "" {
 		log.WithField("url", cfg.Services.Sonarr.URL).Info("monitoring Sonarr")
-		schedulr.Schedule <- &scheduler.ScheduledTask{
-			Task:     xxxarr.NewProbe(cfg.Services.Sonarr.URL, cfg.Services.Sonarr.APIKey, "sonarr"),
-			Interval: cfg.Services.Sonarr.Interval,
-		}
+		prometheus.DefaultRegisterer.MustRegister(xxxarr.NewCollector(
+			cfg.Services.Sonarr.URL,
+			cfg.Services.Sonarr.APIKey,
+			"sonarr",
+			cfg.Services.Sonarr.Interval,
+		))
 	}
 
-	// Radarr Probe
+	// Radarr Collector
 	if cfg.Services.Radarr.URL != "" {
 		log.WithField("url", cfg.Services.Radarr.URL).Info("monitoring Radarr")
-		schedulr.Schedule <- &scheduler.ScheduledTask{
-			Task:     xxxarr.NewProbe(cfg.Services.Radarr.URL, cfg.Services.Radarr.APIKey, "radarr"),
-			Interval: cfg.Services.Radarr.Interval,
-		}
+		prometheus.DefaultRegisterer.MustRegister(xxxarr.NewCollector(
+			cfg.Services.Radarr.URL,
+			cfg.Services.Radarr.APIKey,
+			"radarr",
+			cfg.Services.Radarr.Interval,
+		))
 	}
 
-	// Plex Probe
+	// Plex Collector
 	if cfg.Services.Plex.URL != "" {
 		log.WithField("url", cfg.Services.Plex.URL).Info("monitoring Plex")
-		schedulr.Schedule <- &scheduler.ScheduledTask{
-			Task:     plex.NewProbe(cfg.Services.Plex.URL, cfg.Services.Plex.UserName, cfg.Services.Plex.Password),
-			Interval: cfg.Services.Plex.Interval,
-		}
+		prometheus.DefaultRegisterer.MustRegister(plex.NewCollector(
+			cfg.Services.Plex.URL,
+			cfg.Services.Plex.UserName,
+			cfg.Services.Plex.Password,
+			cfg.Services.Plex.Interval,
+		))
 	}
 
 	// Bandwidth Probe
 	if cfg.Services.OpenVPN.Bandwidth.FileName != "" {
 		log.WithField("filename", cfg.Services.OpenVPN.Bandwidth.FileName).Info("monitoring OpenVPN Bandwidth usage")
-		schedulr.Schedule <- &scheduler.ScheduledTask{
-			Task:     bandwidth.NewProbe(cfg.Services.OpenVPN.Bandwidth.FileName),
-			Interval: cfg.Services.OpenVPN.Bandwidth.Interval,
-		}
+		prometheus.DefaultRegisterer.MustRegister(bandwidth.NewCollector(
+			cfg.Services.OpenVPN.Bandwidth.FileName,
+			cfg.Services.OpenVPN.Bandwidth.Interval,
+		))
 	}
 
 	// Connectivity Probe
 	if cfg.Services.OpenVPN.Connectivity.ProxyURL != nil {
 		log.WithField("proxyURL", cfg.Services.OpenVPN.Connectivity.ProxyURL).Info("monitoring OpenVPN connectivity")
-		schedulr.Schedule <- &scheduler.ScheduledTask{
-			Task:     connectivity.NewProbe(cfg.Services.OpenVPN.Connectivity.ProxyURL, cfg.Services.OpenVPN.Connectivity.Token),
-			Interval: cfg.Services.OpenVPN.Connectivity.Interval,
-		}
+		prometheus.DefaultRegisterer.MustRegister(connectivity.NewCollector(
+			cfg.Services.OpenVPN.Connectivity.Token,
+			cfg.Services.OpenVPN.Connectivity.Proxy,
+			cfg.Services.OpenVPN.Connectivity.Interval,
+		))
 	}
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
+	listenAddress := fmt.Sprintf(":%d", cfg.Port)
+	http.Handle("/metrics", promhttp.Handler())
+	err = http.ListenAndServe(listenAddress, nil)
+	log.WithField("err", err).Error("Failed to start Prometheus http handler")
 
-	<-interrupt
-	cancel()
 	log.Info("mediamon exiting")
 }

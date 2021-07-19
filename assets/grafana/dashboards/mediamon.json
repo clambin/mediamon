@@ -35,9 +35,6 @@
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null
-          },
           "decimals": 1,
           "mappings": [],
           "thresholds": {
@@ -78,9 +75,10 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": true
+        "showThresholdMarkers": true,
+        "text": {}
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "targets": [
         {
           "expr": "sum(openvpn_client_status)",
@@ -101,9 +99,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -132,7 +128,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -142,13 +138,15 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(openvpn_client_tcp_udp_read_bytes_total[5m]))",
+          "exemplar": true,
+          "expr": "avg(rate(openvpn_client_tcp_udp_read_bytes_total[5m]))",
           "interval": "",
           "legendFormat": "In",
           "refId": "B"
         },
         {
-          "expr": "-sum(rate(openvpn_client_tcp_udp_write_bytes_total[5m]))",
+          "exemplar": true,
+          "expr": "-avg(rate(openvpn_client_tcp_udp_write_bytes_total[5m]))",
           "interval": "",
           "legendFormat": "Out",
           "refId": "A"
@@ -174,6 +172,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:93",
           "format": "Bps",
           "label": null,
           "logBase": 1,
@@ -182,6 +181,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:94",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -205,9 +205,7 @@
       "datasource": "Prometheus",
       "description": "",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 6,
@@ -236,7 +234,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -280,6 +278,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:636",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -288,6 +287,7 @@
           "show": false
         },
         {
+          "$$hashKey": "object:637",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -317,7 +317,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -354,12 +353,14 @@
           "fields": "/^version$/",
           "values": false
         },
+        "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "targets": [
         {
-          "expr": "mediaserver_server_info{server=\"transmission\",version=~\"[0-9]+.[0-9]+.*\"}",
+          "exemplar": true,
+          "expr": "mediamon_transmission_version{version=~\"[0-9]+.[0-9]+.*\"}",
           "format": "table",
           "interval": "",
           "legendFormat": "",
@@ -378,9 +379,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -409,7 +408,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -419,13 +418,15 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(mediaserver_download_speed)",
+          "exemplar": true,
+          "expr": "sum(mediamon_transmission_download_speed)",
           "interval": "",
           "legendFormat": "Download",
           "refId": "A"
         },
         {
-          "expr": "-sum(mediaserver_upload_speed)",
+          "exemplar": true,
+          "expr": "-sum(mediamon_transmission_upload_speed)",
           "interval": "",
           "legendFormat": "Upload",
           "refId": "B"
@@ -451,6 +452,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:668",
           "decimals": null,
           "format": "Bps",
           "label": "",
@@ -460,6 +462,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:669",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -480,9 +483,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -511,23 +512,25 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
       "seriesOverrides": [],
       "spaceLength": 10,
-      "stack": false,
+      "stack": true,
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(mediaserver_active_torrent_count)",
+          "exemplar": true,
+          "expr": "sum(mediamon_transmission_active_torrent_count)",
           "interval": "",
           "legendFormat": "Active",
           "refId": "B"
         },
         {
-          "expr": "sum(mediaserver_paused_torrent_count)",
+          "exemplar": true,
+          "expr": "sum(mediamon_transmission_paused_torrent_count)",
           "interval": "",
           "legendFormat": "Paused",
           "refId": "C"
@@ -553,6 +556,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:213",
           "decimals": 0,
           "format": "short",
           "label": "",
@@ -562,6 +566,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:214",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -591,7 +596,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -629,12 +633,14 @@
           "limit": 1,
           "values": false
         },
+        "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "targets": [
         {
-          "expr": "mediaserver_server_info{server=\"sonarr\"}",
+          "exemplar": true,
+          "expr": "mediamon_xxxarr_version{server=\"sonarr\"}",
           "format": "table",
           "interval": "",
           "legendFormat": "",
@@ -653,9 +659,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -684,7 +688,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -694,7 +698,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(mediaserver_queued_count) by (server)",
+          "exemplar": true,
+          "expr": "sum(mediamon_xxxarr_queued_count) by (server)",
           "interval": "",
           "legendFormat": "{{server}}",
           "refId": "A"
@@ -720,6 +725,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:246",
           "decimals": 0,
           "format": "short",
           "label": "",
@@ -729,6 +735,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:247",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -749,23 +756,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fieldConfig": {
-        "defaults": {
-          "custom": {},
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -794,7 +785,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -804,7 +795,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(mediaserver_calendar_count) by (server)",
+          "exemplar": true,
+          "expr": "sum(mediamon_xxxarr_calendar_count) by (server)",
           "interval": "",
           "legendFormat": "{{server}}",
           "refId": "A"
@@ -830,6 +822,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:96",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -838,6 +831,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:97",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -856,7 +850,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "mappings": [],
           "min": 0,
           "thresholds": {
@@ -889,12 +882,14 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": true
+        "showUnfilled": true,
+        "text": {}
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "targets": [
         {
-          "expr": "sum(mediaserver_unmonitored_count) by (server)",
+          "exemplar": true,
+          "expr": "sum(mediamon_xxxarr_unmonitored_count) by (server)",
           "interval": "",
           "legendFormat": "{{server}}",
           "refId": "A"
@@ -910,7 +905,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "mappings": [],
           "min": 0,
           "thresholds": {
@@ -943,12 +937,14 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": true
+        "showUnfilled": true,
+        "text": {}
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "targets": [
         {
-          "expr": "sum(mediaserver_monitored_count) by (server)",
+          "exemplar": true,
+          "expr": "sum(mediamon_xxxarr_monitored_count) by (server)",
           "interval": "",
           "legendFormat": "{{server}}",
           "refId": "A"
@@ -963,7 +959,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1000,12 +995,14 @@
           "fields": "/^version$/",
           "values": false
         },
+        "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "targets": [
         {
-          "expr": "mediaserver_server_info{server=\"radarr\"}",
+          "exemplar": true,
+          "expr": "mediamon_xxxarr_version{server=\"radarr\"}",
           "format": "table",
           "interval": "",
           "legendFormat": "",
@@ -1033,7 +1030,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1070,12 +1066,14 @@
           "fields": "/^version$/",
           "values": false
         },
+        "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "targets": [
         {
-          "expr": "mediaserver_server_info{server=\"plex\"}",
+          "exemplar": true,
+          "expr": "mediamon_plex_version",
           "format": "table",
           "interval": "",
           "legendFormat": "",
@@ -1094,9 +1092,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -1125,7 +1121,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1135,7 +1131,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (user) (mediaserver_plex_session_count)",
+          "exemplar": true,
+          "expr": "sum by (user) (mediamon_plex_session_count)",
           "interval": "",
           "legendFormat": "{{user}}",
           "refId": "A"
@@ -1161,6 +1158,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:400",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1169,6 +1167,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:401",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1189,9 +1188,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -1220,7 +1217,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1230,13 +1227,15 @@
       "steppedLine": false,
       "targets": [
         {
+          "exemplar": true,
           "expr": "sum(rate(container_network_transmit_bytes_total{pod=~\"plex-.*\"}[5m]))",
           "interval": "",
           "legendFormat": "Transmit",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(container_network_receive_bytes_total{pod=~\"plex-.*\"}[5m]))",
+          "exemplar": true,
+          "expr": "-sum(rate(container_network_receive_bytes_total{pod=~\"plex-.*\"}[5m]))",
           "interval": "",
           "legendFormat": "Receive",
           "refId": "B"
@@ -1262,6 +1261,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:417",
           "format": "Bps",
           "label": null,
           "logBase": 1,
@@ -1270,6 +1270,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:418",
           "format": "Bps",
           "label": null,
           "logBase": 1,
@@ -1290,9 +1291,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -1321,12 +1320,13 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
       "seriesOverrides": [
         {
+          "$$hashKey": "object:554",
           "alias": "/^speed/",
           "yaxis": 2
         }
@@ -1336,19 +1336,22 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (mode) (mediaserver_plex_transcoder_type_count)",
+          "exemplar": true,
+          "expr": "sum by (mode) (mediamon_plex_transcoder_type_count)",
           "interval": "",
           "legendFormat": "{{mode}}",
           "refId": "C"
         },
         {
-          "expr": "sum(mediaserver_plex_transcoder_encoding_count)",
+          "exemplar": true,
+          "expr": "sum(mediamon_plex_transcoder_encoding_count)",
           "interval": "",
           "legendFormat": "encoding",
           "refId": "B"
         },
         {
-          "expr": "sum(mediaserver_plex_transcoder_speed_total)",
+          "exemplar": true,
+          "expr": "sum(mediamon_plex_transcoder_speed_total)",
           "interval": "",
           "legendFormat": "speed",
           "refId": "A"
@@ -1374,6 +1377,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:561",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1382,6 +1386,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:562",
           "decimals": null,
           "format": "short",
           "label": null,
@@ -1397,15 +1402,16 @@
       }
     },
     {
-      "aliasColors": {},
+      "aliasColors": {
+        "system": "semi-dark-yellow",
+        "user": "semi-dark-green"
+      },
       "bars": false,
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
       "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
+        "defaults": {},
         "overrides": []
       },
       "fill": 1,
@@ -1434,20 +1440,29 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.6",
+      "pluginVersion": "7.5.10",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
       "seriesOverrides": [],
       "spaceLength": 10,
-      "stack": false,
+      "stack": true,
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{pod=~\"plex-.*\"}[5m])) / scalar(count(node_cpu_seconds_total{mode=\"user\"})) * 100",
+          "exemplar": true,
+          "expr": "sum(rate(container_cpu_user_seconds_total{container=\"plex\"}[2m]))",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "system",
           "refId": "A"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(rate(container_cpu_system_seconds_total{container=\"plex\"}[2m]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "user",
+          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1470,7 +1485,8 @@
       },
       "yaxes": [
         {
-          "format": "percent",
+          "$$hashKey": "object:168",
+          "format": "none",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -1478,6 +1494,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:169",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1493,14 +1510,14 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 26,
+  "schemaVersion": 27,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-24h",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {
@@ -1520,5 +1537,5 @@
   "timezone": "",
   "title": "Media Server",
   "uid": "8C0N81WRl",
-  "version": 6
+  "version": 19
 }

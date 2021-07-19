@@ -1,7 +1,7 @@
 package services_test
 
 import (
-	"github.com/clambin/mediamon/internal/services"
+	services2 "github.com/clambin/mediamon/services"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
@@ -25,11 +25,16 @@ plex:
 		panic(err)
 	}
 
-	defer os.Remove(f.Name())
+	defer func(name string) {
+		err2 := os.Remove(name)
+		if err2 != nil {
+			t.Logf("failed to remove file: %v", err2)
+		}
+	}(f.Name())
 	_, _ = f.Write(content)
 	_ = f.Close()
 
-	cfg, err := services.ParseConfigFile(f.Name())
+	cfg, err := services2.ParseConfigFile(f.Name())
 
 	assert.Nil(t, err)
 	assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
@@ -80,7 +85,7 @@ futurefeature:
   foo: 'bar'
 `)
 
-	cfg, err := services.ParseConfig(content)
+	cfg, err := services2.ParseConfig(content)
 
 	if assert.Nil(t, err) {
 		assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
@@ -110,18 +115,18 @@ func TestParseInvalidProxy(t *testing.T) {
     token: notatoken
     interval: 1h
 `
-	_, err := services.ParseConfig([]byte(invalidConfig))
+	_, err := services2.ParseConfig([]byte(invalidConfig))
 
 	assert.NotNil(t, err)
 }
 
 func TestParseInvalidConfig(t *testing.T) {
 	var content = []byte(`not a valid yaml file`)
-	_, err := services.ParseConfig(content)
+	_, err := services2.ParseConfig(content)
 	assert.NotNil(t, err)
 }
 
 func TestParseMissingConfig(t *testing.T) {
-	_, err := services.ParseConfigFile("not_a_file")
+	_, err := services2.ParseConfigFile("not_a_file")
 	assert.NotNil(t, err)
 }
