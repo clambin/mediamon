@@ -3,6 +3,7 @@ package transmission
 import (
 	"context"
 	"github.com/clambin/mediamon/cache"
+	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
@@ -32,6 +33,9 @@ func NewCollector(url string, interval time.Duration) prometheus.Collector {
 		TransmissionAPI: &mediaclient.TransmissionClient{
 			Client: &http.Client{},
 			URL:    url,
+			Options: mediaclient.TransmissionOpts{
+				PrometheusSummary: metrics.RequestDuration,
+			},
 		},
 		version: prometheus.NewDesc(
 			prometheus.BuildFQName("mediamon", "transmission", "version"),
@@ -91,6 +95,7 @@ func (coll *Collector) getStats() (interface{}, error) {
 	var err error
 
 	ctx := context.Background()
+
 	stats.version, err = coll.GetVersion(ctx)
 
 	if err == nil {

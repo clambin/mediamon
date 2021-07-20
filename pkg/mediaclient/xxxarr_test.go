@@ -3,6 +3,9 @@ package mediaclient_test
 import (
 	"context"
 	"github.com/clambin/mediamon/pkg/mediaclient"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -17,7 +20,7 @@ func TestXXXArrClient_GetApplication(t *testing.T) {
 		Application: "sonarr",
 	}
 
-	assert.Equal(t, "sonarr", client.GetApplication(context.Background()))
+	assert.Equal(t, "sonarr", client.GetApplication())
 }
 
 func TestXXXArrClient_GetVersion(t *testing.T) {
@@ -279,6 +282,39 @@ func TestXXXArrClient_ServerDown(t *testing.T) {
 
 	assert.NotNil(t, err)
 	assert.Equal(t, "500 Internal Server Error", err.Error())
+}
+
+func TestXXXArrClient_WithMetrics(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(xxxArrHandler))
+	defer testServer.Close()
+
+	requestDuration := promauto.NewSummaryVec(prometheus.SummaryOpts{
+		Name: "xxxarr_request_duration_seconds",
+		Help: "Duration of API requests.",
+	}, []string{"application", "request"})
+
+	client := &mediaclient.XXXArrClient{
+		Client:      &http.Client{},
+		URL:         testServer.URL,
+		APIKey:      "1234",
+		Application: "sonarr",
+		Options: mediaclient.XXXArrOpts{
+			PrometheusSummary: requestDuration,
+		},
+	}
+
+	_, err := client.GetVersion(context.Background())
+	assert.NoError(t, err)
+
+	// validate that a metric was recorded
+	ch := make(chan prometheus.Metric)
+	go requestDuration.Collect(ch)
+
+	desc := <-ch
+	var m io_prometheus_client.Metric
+	err = desc.Write(&m)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(1), *m.Summary.SampleCount)
 }
 
 // Responses

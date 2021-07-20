@@ -113,6 +113,6 @@ func (s *server) GetMonitored(_ context.Context) (monitored, unmonitored int, er
 	return 10, 3, nil
 }
 
-func (s *server) GetApplication(_ context.Context) (application string) {
+func (s *server) GetApplication() (application string) {
 	return s.application
 }

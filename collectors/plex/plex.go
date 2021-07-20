@@ -3,6 +3,7 @@ package plex
 import (
 	"context"
 	"github.com/clambin/mediamon/cache"
+	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
@@ -34,6 +35,9 @@ func NewCollector(url, username, password string, interval time.Duration) promet
 			URL:      url,
 			UserName: username,
 			Password: password,
+			Options: mediaclient.PlexOpts{
+				PrometheusSummary: metrics.RequestDuration,
+			},
 		},
 		version: prometheus.NewDesc(
 			prometheus.BuildFQName("mediamon", "plex", "version"),
@@ -99,6 +103,7 @@ func (coll *Collector) getStats() (interface{}, error) {
 	var err error
 
 	ctx := context.Background()
+
 	stats.version, err = coll.GetVersion(ctx)
 
 	if err == nil {

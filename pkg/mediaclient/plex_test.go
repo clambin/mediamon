@@ -3,6 +3,9 @@ package mediaclient_test
 import (
 	"context"
 	"github.com/clambin/mediamon/pkg/mediaclient"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -107,6 +110,43 @@ func TestPlexClient_Authentication(t *testing.T) {
 	_, err := client.GetVersion(context.Background())
 	assert.Error(t, err)
 	assert.Equal(t, "403 Forbidden", err.Error())
+}
+
+func TestPlexClient_WithMetrics(t *testing.T) {
+	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	defer authServer.Close()
+	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
+	defer testServer.Close()
+
+	requestDuration := promauto.NewSummaryVec(prometheus.SummaryOpts{
+		Name: "plex_request_duration_seconds",
+		Help: "Duration of API requests.",
+	}, []string{"application", "request"})
+
+	client := &mediaclient.PlexClient{
+		Client:   &http.Client{},
+		URL:      testServer.URL,
+		AuthURL:  authServer.URL,
+		UserName: "user@example.com",
+		Password: "somepassword",
+		Options: mediaclient.PlexOpts{
+			PrometheusSummary: requestDuration,
+		},
+	}
+
+	_, err := client.GetVersion(context.Background())
+	assert.NoError(t, err)
+
+	// validate that the metrics were recorded
+	ch := make(chan prometheus.Metric)
+	go requestDuration.Collect(ch)
+
+	desc := <-ch
+	var m io_prometheus_client.Metric
+	err = desc.Write(&m)
+	assert.NoError(t, err)
+	// TODO: why isn't this 2 (one for auth, one for API call)?
+	assert.Equal(t, uint64(1), *m.Summary.SampleCount)
 }
 
 // Server handlers

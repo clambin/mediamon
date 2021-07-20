@@ -3,6 +3,7 @@ package xxxarr
 import (
 	"context"
 	"github.com/clambin/mediamon/cache"
+	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
@@ -38,6 +39,9 @@ func NewCollector(url, apiKey, application string, interval time.Duration) prome
 			URL:         url,
 			APIKey:      apiKey,
 			Application: application,
+			Options: mediaclient.XXXArrOpts{
+				PrometheusSummary: metrics.RequestDuration,
+			},
 		},
 		version: prometheus.NewDesc(
 			prometheus.BuildFQName("mediamon", "xxxarr", "version"),
@@ -99,6 +103,7 @@ func (coll *Collector) getStats() (interface{}, error) {
 	var err error
 
 	ctx := context.Background()
+
 	stats.version, err = coll.GetVersion(ctx)
 
 	if err == nil {

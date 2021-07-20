@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -21,6 +22,12 @@ type TransmissionClient struct {
 	Client    *http.Client
 	URL       string
 	SessionID string
+	Options   TransmissionOpts
+}
+
+// TransmissionOpts contains options to alter TransmissionClient behaviour
+type TransmissionOpts struct {
+	PrometheusSummary *prometheus.SummaryVec
 }
 
 // GetVersion determines the version of the Transmission server
@@ -98,12 +105,23 @@ func (client *TransmissionClient) call(ctx context.Context, method string) (resp
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
+		var timer *prometheus.Timer
+		if client.Options.PrometheusSummary != nil {
+			timer = prometheus.NewTimer(client.Options.PrometheusSummary.WithLabelValues("transmission", method))
+		}
+
 		var resp *http.Response
-		if resp, err = client.Client.Do(req); err == nil {
+		resp, err = client.Client.Do(req)
+
+		if timer != nil {
+			timer.ObserveDuration()
+		}
+
+		if err == nil {
 			if resp.StatusCode == http.StatusConflict {
 				// Transmission-Session-Id has expired. Get the new one and retry
 				client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
-			} else if resp.StatusCode == 200 {
+			} else if resp.StatusCode == http.StatusOK {
 				response, err = ioutil.ReadAll(resp.Body)
 				answer = true
 			} else {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -16,7 +17,7 @@ type XXXArrAPI interface {
 	GetCalendar(ctx context.Context) (int, error)
 	GetQueue(ctx context.Context) (int, error)
 	GetMonitored(ctx context.Context) (int, int, error)
-	GetApplication(ctx context.Context) string
+	GetApplication() string
 }
 
 // XXXArrClient calls the Sonarr/Radarr APIs.  Application specifies whether this is a
@@ -27,46 +28,54 @@ type XXXArrClient struct {
 	URL         string
 	APIKey      string
 	Application string
+	Options     XXXArrOpts
+}
+
+// XXXArrOpts contains options to alter XXXArrClient behaviour
+type XXXArrOpts struct {
+	PrometheusSummary *prometheus.SummaryVec
 }
 
 // GetApplication returns the client's configured application
-func (client *XXXArrClient) GetApplication(_ context.Context) string {
+func (client *XXXArrClient) GetApplication() string {
 	return client.Application
 }
 
 // GetVersion retrieves the version of the Sonarr/Radarr server
-func (client *XXXArrClient) GetVersion(ctx context.Context) (string, error) {
-	var (
-		err   error
-		resp  []byte
-		stats struct {
+func (client *XXXArrClient) GetVersion(ctx context.Context) (version string, err error) {
+	var resp []byte
+	resp, err = client.call(ctx, "/api/v3/system/status")
+
+	if err == nil {
+		var stats struct {
 			Version string
 		}
-	)
 
-	if resp, err = client.call(ctx, "/api/v3/system/status"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		err = decoder.Decode(&stats)
+
+		if err == nil {
+			version = stats.Version
+		}
 	}
 
-	log.WithFields(log.Fields{
-		"err":         err,
+	log.WithError(err).WithFields(log.Fields{
 		"application": client.Application,
-		"version":     stats.Version,
+		"version":     version,
 	}).Debug("xxxarr Version")
 
-	return stats.Version, err
+	return
 }
 
 // GetCalendar retrieves the number of upcoming movies/series airing today and tomorrow
-func (client *XXXArrClient) GetCalendar(ctx context.Context) (int, error) {
+func (client *XXXArrClient) GetCalendar(ctx context.Context) (calendar int, err error) {
 	var (
-		err      error
-		resp     []byte
-		calendar int
+		resp []byte
 	)
 	// TODO: add start/end date optional parameters?
-	if resp, err = client.call(ctx, "/api/v3/calendar"); err == nil {
+	resp, err = client.call(ctx, "/api/v3/calendar")
+
+	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		var stats []struct{ HasFile bool }
 		if err = decoder.Decode(&stats); err == nil {
@@ -79,23 +88,21 @@ func (client *XXXArrClient) GetCalendar(ctx context.Context) (int, error) {
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"err":         err,
+	log.WithError(err).WithFields(log.Fields{
 		"application": client.Application,
 		"calendar":    calendar,
 	}).Debug("xxxarr getCalendar")
 
-	return calendar, err
+	return
 }
 
 // GetQueue retrieves how many movies/series are currently downloading
-func (client *XXXArrClient) GetQueue(ctx context.Context) (int, error) {
-	var (
-		err   error
-		resp  []byte
-		queue int
-	)
-	if resp, err = client.call(ctx, "/api/v3/queue"); err == nil {
+func (client *XXXArrClient) GetQueue(ctx context.Context) (queue int, err error) {
+	var resp []byte
+
+	resp, err = client.call(ctx, "/api/v3/queue")
+
+	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		var stats struct{ TotalRecords int }
 		if err = decoder.Decode(&stats); err == nil {
@@ -103,25 +110,17 @@ func (client *XXXArrClient) GetQueue(ctx context.Context) (int, error) {
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"err":         err,
+	log.WithError(err).WithFields(log.Fields{
 		"application": client.Application,
 		"queue":       queue,
 	}).Debug("xxxarr GetQueue")
 
-	return queue, err
+	return
 }
 
 // GetMonitored retrieves how many moves/series are being monitored & unmonitored
-func (client *XXXArrClient) GetMonitored(ctx context.Context) (int, int, error) {
-	var (
-		err         error
-		resp        []byte
-		monitored   int
-		unmonitored int
-		endpoint    string
-	)
-
+func (client *XXXArrClient) GetMonitored(ctx context.Context) (monitored int, unmonitored int, err error) {
+	var endpoint string
 	if client.Application == "sonarr" {
 		endpoint = "/api/v3/series"
 	} else if client.Application == "radarr" {
@@ -130,7 +129,10 @@ func (client *XXXArrClient) GetMonitored(ctx context.Context) (int, int, error) 
 		panic("invalid application: " + client.Application)
 	}
 
-	if resp, err = client.call(ctx, endpoint); err == nil {
+	var resp []byte
+	resp, err = client.call(ctx, endpoint)
+
+	if err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
 		var stats []struct{ Monitored bool }
 		if err = decoder.Decode(&stats); err == nil {
@@ -147,28 +149,33 @@ func (client *XXXArrClient) GetMonitored(ctx context.Context) (int, int, error) 
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"err":         err,
+	log.WithError(err).WithFields(log.Fields{
 		"application": client.Application,
 		"monitored":   monitored,
 		"unmonitored": unmonitored,
 	}).Debug("xxxarr GetMonitored")
 
-	return monitored, unmonitored, err
+	return
 }
 
 // call the specified Sonarr/Radarr API endpoint
-func (client *XXXArrClient) call(ctx context.Context, endpoint string) ([]byte, error) {
-	var (
-		err  error
-		body []byte
-		resp *http.Response
-	)
-
+func (client *XXXArrClient) call(ctx context.Context, endpoint string) (body []byte, err error) {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+endpoint, nil)
 	req.Header.Add("X-Api-Key", client.APIKey)
 
-	if resp, err = client.Client.Do(req); err == nil {
+	var timer *prometheus.Timer
+	if client.Options.PrometheusSummary != nil {
+		timer = prometheus.NewTimer(client.Options.PrometheusSummary.WithLabelValues(client.Application, endpoint))
+	}
+
+	var resp *http.Response
+	resp, err = client.Client.Do(req)
+
+	if timer != nil {
+		timer.ObserveDuration()
+	}
+
+	if err == nil {
 		if resp.StatusCode == 200 {
 			body, err = ioutil.ReadAll(resp.Body)
 		} else {

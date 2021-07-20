@@ -3,6 +3,9 @@ package mediaclient_test
 import (
 	"context"
 	"github.com/clambin/mediamon/pkg/mediaclient"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -69,6 +72,37 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 	assert.Equal(t, "1234", client.SessionID)
 	// and the call worked
 	assert.Equal(t, oldVersion, newVersion)
+}
+
+func TestTransmissionClient_WithMetrics(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(transmissionHandler))
+	defer testServer.Close()
+
+	requestDuration := promauto.NewSummaryVec(prometheus.SummaryOpts{
+		Name: "transmission_request_duration_seconds",
+		Help: "Duration of API requests.",
+	}, []string{"application", "request"})
+
+	client := &mediaclient.TransmissionClient{
+		Client: &http.Client{},
+		URL:    testServer.URL,
+		Options: mediaclient.TransmissionOpts{
+			PrometheusSummary: requestDuration,
+		},
+	}
+
+	_, err := client.GetVersion(context.Background())
+	assert.NoError(t, err)
+
+	// validate that a metric was recorded
+	ch := make(chan prometheus.Metric)
+	go requestDuration.Collect(ch)
+
+	desc := <-ch
+	var m io_prometheus_client.Metric
+	err = desc.Write(&m)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(2), *m.Summary.SampleCount)
 }
 
 // Server handlers

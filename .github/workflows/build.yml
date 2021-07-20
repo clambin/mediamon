@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - collectors
+      - metrics
 jobs:
   test:
     runs-on: ubuntu-latest

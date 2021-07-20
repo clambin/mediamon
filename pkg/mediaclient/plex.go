@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	version2 "github.com/clambin/mediamon/version"
+	"github.com/clambin/mediamon/version"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -23,10 +24,16 @@ type PlexAPI interface {
 type PlexClient struct {
 	Client    *http.Client
 	URL       string
+	Options   PlexOpts
 	AuthURL   string
 	UserName  string
 	Password  string
 	authToken string
+}
+
+// PlexOpts contains options to alter PlexClient behaviour
+type PlexOpts struct {
+	PrometheusSummary *prometheus.SummaryVec
 }
 
 // GetVersion retrieves the version of the Plex server
@@ -109,23 +116,17 @@ func parseSessions(stats sessionStats) (users map[string]int, modes map[string]i
 
 	for _, entry := range stats.MediaContainer.Metadata {
 		// User sessions
-		count, ok := users[entry.User.Title]
-		if ok {
-			users[entry.User.Title] = count + 1
-		} else {
-			users[entry.User.Title] = 1
-		}
+		count, _ := users[entry.User.Title]
+		users[entry.User.Title] = count + 1
+
 		// Transcoders
 		videoDecision := entry.TranscodeSession.VideoDecision
 		if videoDecision == "" {
 			videoDecision = "direct"
 		}
-		count, ok = modes[videoDecision]
-		if ok {
-			modes[videoDecision] = count + 1
-		} else {
-			modes[videoDecision] = 1
-		}
+		count, _ = modes[videoDecision]
+		modes[videoDecision] = count + 1
+
 		// Active transcoders
 		if !entry.TranscodeSession.Throttled {
 			transcoding++
@@ -148,14 +149,27 @@ func parseSessions(stats sessionStats) (users map[string]int, modes map[string]i
 
 // call the specified Plex API endpoint
 func (client *PlexClient) call(ctx context.Context, endpoint string) (body []byte, err error) {
-	if client.authToken, err = client.authenticate(ctx); err == nil {
+	client.authToken, err = client.authenticate(ctx)
+
+	if err == nil {
 
 		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+endpoint, nil)
 		req.Header.Add("Accept", "application/json")
 		req.Header.Add("X-Plex-Token", client.authToken)
 
+		var timer *prometheus.Timer
+		if client.Options.PrometheusSummary != nil {
+			timer = prometheus.NewTimer(client.Options.PrometheusSummary.WithLabelValues("plex", endpoint))
+		}
+
 		var resp *http.Response
-		if resp, err = client.Client.Do(req); err == nil {
+		resp, err = client.Client.Do(req)
+
+		if timer != nil {
+			timer.ObserveDuration()
+		}
+
+		if err == nil {
 			if resp.StatusCode == http.StatusOK {
 				body, err = ioutil.ReadAll(resp.Body)
 			} else {
@@ -187,11 +201,22 @@ func (client *PlexClient) authenticate(ctx context.Context) (authToken string, e
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, authURL, bytes.NewBufferString(authBody))
 	req.Header.Add("X-Plex-Product", "github.com/clambin/mediamon")
-	req.Header.Add("X-Plex-Version", version2.BuildVersion)
-	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version2.BuildVersion)
+	req.Header.Add("X-Plex-Version", version.BuildVersion)
+	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
+
+	var timer *prometheus.Timer
+	if client.Options.PrometheusSummary != nil {
+		timer = prometheus.NewTimer(client.Options.PrometheusSummary.WithLabelValues("plex", "auth"))
+	}
 
 	var resp *http.Response
-	if resp, err = client.Client.Do(req); err == nil {
+	resp, err = client.Client.Do(req)
+
+	if timer != nil {
+		timer.ObserveDuration()
+	}
+
+	if err == nil {
 		if resp.StatusCode == http.StatusCreated {
 			// TODO: there's three different places in the response where the authToken appears.
 			// Which is the officially supported version?
