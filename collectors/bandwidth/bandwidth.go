@@ -2,8 +2,8 @@ package bandwidth
 
 import (
 	"bufio"
-	"github.com/clambin/mediamon/cache"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"regexp"
 	"strconv"
@@ -26,7 +26,6 @@ var (
 )
 
 type Collector struct {
-	cache.Cache
 	filename string
 }
 
@@ -35,10 +34,8 @@ type bandwidthStats struct {
 	written int64
 }
 
-func NewCollector(filename string, interval time.Duration) prometheus.Collector {
-	c := &Collector{filename: filename}
-	c.Cache = *cache.New(interval, bandwidthStats{}, c.getStats)
-	return c
+func NewCollector(filename string, _ time.Duration) prometheus.Collector {
+	return &Collector{filename: filename}
 }
 
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
@@ -47,13 +44,16 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
-	stats := coll.Update().(bandwidthStats)
-
+	stats, err := coll.getStats()
+	if err != nil {
+		log.WithError(err).Warning("failed to collect bandwidth metrics")
+		return
+	}
 	ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(stats.read))
 	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
 }
 
-func (coll *Collector) getStats() (interface{}, error) {
+func (coll *Collector) getStats() (bandwidthStats, error) {
 	var stats bandwidthStats
 	file, err := os.Open(coll.filename)
 
