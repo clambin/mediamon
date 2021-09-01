@@ -2,10 +2,10 @@ package transmission
 
 import (
 	"context"
-	"github.com/clambin/mediamon/cache"
 	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
 )
@@ -49,7 +49,6 @@ var (
 
 type Collector struct {
 	mediaclient.TransmissionAPI
-	cache.Cache
 	url string
 }
 
@@ -61,7 +60,7 @@ type transmissionStats struct {
 	upload   int
 }
 
-func NewCollector(url string, interval time.Duration) prometheus.Collector {
+func NewCollector(url string, _ time.Duration) prometheus.Collector {
 	c := &Collector{
 		TransmissionAPI: &mediaclient.TransmissionClient{
 			Client: &http.Client{},
@@ -72,7 +71,6 @@ func NewCollector(url string, interval time.Duration) prometheus.Collector {
 		},
 		url: url,
 	}
-	c.Cache = *cache.New(interval, transmissionStats{}, c.getStats)
 	return c
 }
 
@@ -85,8 +83,11 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
-	stats := coll.Update().(transmissionStats)
-
+	stats, err := coll.getStats()
+	if err != nil {
+		log.WithError(err).Warning("failed to collect transmission metrics")
+		return
+	}
 	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.url)
 	ch <- prometheus.MustNewConstMetric(activeTorrentsMetric, prometheus.GaugeValue, float64(stats.active), coll.url)
 	ch <- prometheus.MustNewConstMetric(pausedTorrentsMetric, prometheus.GaugeValue, float64(stats.paused), coll.url)
@@ -94,10 +95,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(uploadSpeedMetric, prometheus.GaugeValue, float64(stats.upload), coll.url)
 }
 
-func (coll *Collector) getStats() (interface{}, error) {
-	var stats transmissionStats
-	var err error
-
+func (coll *Collector) getStats() (stats transmissionStats, err error) {
 	ctx := context.Background()
 
 	stats.version, err = coll.GetVersion(ctx)
