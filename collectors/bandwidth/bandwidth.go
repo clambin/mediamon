@@ -2,6 +2,7 @@ package bandwidth
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"os"
@@ -53,26 +54,35 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
 }
 
-func (coll *Collector) getStats() (bandwidthStats, error) {
-	var stats bandwidthStats
-	file, err := os.Open(coll.filename)
+func (coll *Collector) getStats() (stats bandwidthStats, err error) {
+	var file *os.File
+	file, err = os.Open(coll.filename)
 
-	if err == nil {
-		r := regexp.MustCompile(`^(.+),(\d+)$`)
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			for _, match := range r.FindAllStringSubmatch(scanner.Text(), -1) {
-				value, _ := strconv.ParseInt(match[2], 10, 64)
-				switch match[1] {
-				case "TCP/UDP read bytes":
-					stats.read = value
-				case "TCP/UDP write bytes":
-					stats.written = value
-				}
-			}
-		}
-		_ = file.Close()
+	if err != nil {
+		return
 	}
 
-	return stats, err
+	fieldsFound := 0
+	r := regexp.MustCompile(`^(.+),(\d+)$`)
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		for _, match := range r.FindAllStringSubmatch(scanner.Text(), -1) {
+			value, _ := strconv.ParseInt(match[2], 10, 64)
+			switch match[1] {
+			case "TCP/UDP read bytes":
+				stats.read = value
+				fieldsFound++
+			case "TCP/UDP write bytes":
+				stats.written = value
+				fieldsFound++
+			}
+		}
+	}
+	_ = file.Close()
+
+	if fieldsFound != 2 {
+		err = fmt.Errorf("not all fields were found in the openvpn status file")
+	}
+
+	return
 }

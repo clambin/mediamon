@@ -45,6 +45,19 @@ func TestCollector_Collect(t *testing.T) {
 	}
 }
 
+func TestCollector_Collect_Fail(t *testing.T) {
+	c := transmission.NewCollector("", time.Minute)
+	c.(*transmission.Collector).TransmissionAPI = &server{fail: true}
+
+	metrics := make(chan prometheus.Metric)
+	go c.Collect(metrics)
+
+	assert.Never(t, func() bool {
+		_ = <-metrics
+		return true
+	}, 100*time.Millisecond, 10*time.Millisecond)
+}
+
 type server struct {
 	fail bool
 }

@@ -74,8 +74,10 @@ func TestCollector_Collect_Fail(t *testing.T) {
 	metrics := make(chan prometheus.Metric)
 	go c.Collect(metrics)
 
-	assert.Never(t, func() bool { return len(metrics) > 0 }, 100*time.Millisecond, 10*time.Millisecond)
-
+	assert.Never(t, func() bool {
+		_ = <-metrics
+		return true
+	}, 100*time.Millisecond, 10*time.Millisecond)
 }
 
 type client struct {

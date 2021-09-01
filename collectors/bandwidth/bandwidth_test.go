@@ -69,7 +69,10 @@ END`),
 				write := <-metrics
 				assert.True(t, tests.ValidateMetric(write, testCase.write, "", ""))
 			} else {
-				assert.Never(t, func() bool { return len(metrics) > 0 }, 100*time.Millisecond, 10*time.Millisecond)
+				assert.Never(t, func() bool {
+					_ = <-metrics
+					return true
+				}, 100*time.Millisecond, 10*time.Millisecond)
 
 			}
 
