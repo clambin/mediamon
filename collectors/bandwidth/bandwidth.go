@@ -10,11 +10,24 @@ import (
 	"time"
 )
 
+var (
+	readMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("openvpn", "client", "tcp_udp_read_bytes_total"),
+		"OpenVPN client bytes read",
+		nil,
+		nil,
+	)
+	writeMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("openvpn", "client", "tcp_udp_write_bytes_total"),
+		"OpenVPN client bytes written",
+		nil,
+		nil,
+	)
+)
+
 type Collector struct {
 	cache.Cache
 	filename string
-	read     *prometheus.Desc
-	write    *prometheus.Desc
 }
 
 type bandwidthStats struct {
@@ -23,37 +36,21 @@ type bandwidthStats struct {
 }
 
 func NewCollector(filename string, interval time.Duration) prometheus.Collector {
-	c := &Collector{
-		filename: filename,
-		read: prometheus.NewDesc(
-			prometheus.BuildFQName("openvpn", "client", "tcp_udp_read_bytes_total"),
-			"OpenVPN client bytes read",
-			nil,
-			nil,
-		),
-		write: prometheus.NewDesc(
-			prometheus.BuildFQName("openvpn", "client", "tcp_udp_write_bytes_total"),
-			"OpenVPN client bytes written",
-			nil,
-			nil,
-		),
-	}
-
+	c := &Collector{filename: filename}
 	c.Cache = *cache.New(interval, bandwidthStats{}, c.getStats)
-
 	return c
 }
 
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- coll.read
-	ch <- coll.write
+	ch <- readMetric
+	ch <- writeMetric
 }
 
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats := coll.Update().(bandwidthStats)
 
-	ch <- prometheus.MustNewConstMetric(coll.read, prometheus.GaugeValue, float64(stats.read))
-	ch <- prometheus.MustNewConstMetric(coll.write, prometheus.GaugeValue, float64(stats.written))
+	ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(stats.read))
+	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
 }
 
 func (coll *Collector) getStats() (interface{}, error) {

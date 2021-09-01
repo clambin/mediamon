@@ -10,14 +10,48 @@ import (
 	"time"
 )
 
+var (
+	versionMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "xxxarr", "version"),
+		"version info",
+		[]string{"version", "url", "server"},
+		nil,
+	)
+
+	calendarMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "xxxarr", "calendar_count"),
+		"Number of upcoming episodes / movies",
+		[]string{"url", "server"},
+		nil,
+	)
+
+	queuedMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "xxxarr", "queued_count"),
+		"Number of episodes / movies being downloaded",
+		[]string{"url", "server"},
+		nil,
+	)
+
+	monitoredMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "xxxarr", "monitored_count"),
+		"Number of monitored series / movies",
+		[]string{"url", "server"},
+		nil,
+	)
+
+	unmonitoredMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "xxxarr", "unmonitored_count"),
+		"Number of unmonitored series / movies",
+		[]string{"url", "server"},
+		nil,
+	)
+)
+
 type Collector struct {
 	mediaclient.XXXArrAPI
 	cache.Cache
-	version     *prometheus.Desc
-	calendar    *prometheus.Desc
-	queued      *prometheus.Desc
-	monitored   *prometheus.Desc
-	unmonitored *prometheus.Desc
+	application string
+	url         string
 }
 
 type xxxArrStats struct {
@@ -43,36 +77,8 @@ func NewCollector(url, apiKey, application string, interval time.Duration) prome
 				PrometheusSummary: metrics.RequestDuration,
 			},
 		},
-		version: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "xxxarr", "version"),
-			"version info",
-			[]string{"version"},
-			prometheus.Labels{"url": url, "server": application},
-		),
-		calendar: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "xxxarr", "calendar_count"),
-			"Number of upcoming episodes / movies",
-			nil,
-			prometheus.Labels{"url": url, "server": application},
-		),
-		queued: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "xxxarr", "queued_count"),
-			"Number of episodes / movies being downloaded",
-			nil,
-			prometheus.Labels{"url": url, "server": application},
-		),
-		monitored: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "xxxarr", "monitored_count"),
-			"Number of monitored series / movies",
-			nil,
-			prometheus.Labels{"url": url, "server": application},
-		),
-		unmonitored: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "xxxarr", "unmonitored_count"),
-			"Number of unmonitored series / movies",
-			nil,
-			prometheus.Labels{"url": url, "server": application},
-		),
+		application: application,
+		url:         url,
 	}
 
 	c.Cache = *cache.New(interval, xxxArrStats{}, c.getStats)
@@ -81,21 +87,21 @@ func NewCollector(url, apiKey, application string, interval time.Duration) prome
 }
 
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- coll.version
-	ch <- coll.calendar
-	ch <- coll.queued
-	ch <- coll.monitored
-	ch <- coll.unmonitored
+	ch <- versionMetric
+	ch <- calendarMetric
+	ch <- queuedMetric
+	ch <- monitoredMetric
+	ch <- unmonitoredMetric
 }
 
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats := coll.Update().(xxxArrStats)
 
-	ch <- prometheus.MustNewConstMetric(coll.version, prometheus.GaugeValue, float64(1), stats.version)
-	ch <- prometheus.MustNewConstMetric(coll.calendar, prometheus.GaugeValue, float64(stats.calendar))
-	ch <- prometheus.MustNewConstMetric(coll.queued, prometheus.GaugeValue, float64(stats.queued))
-	ch <- prometheus.MustNewConstMetric(coll.monitored, prometheus.GaugeValue, float64(stats.monitored))
-	ch <- prometheus.MustNewConstMetric(coll.unmonitored, prometheus.GaugeValue, float64(stats.unmonitored))
+	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.url, coll.application)
+	ch <- prometheus.MustNewConstMetric(calendarMetric, prometheus.GaugeValue, float64(stats.calendar), coll.url, coll.application)
+	ch <- prometheus.MustNewConstMetric(queuedMetric, prometheus.GaugeValue, float64(stats.queued), coll.url, coll.application)
+	ch <- prometheus.MustNewConstMetric(monitoredMetric, prometheus.GaugeValue, float64(stats.monitored), coll.url, coll.application)
+	ch <- prometheus.MustNewConstMetric(unmonitoredMetric, prometheus.GaugeValue, float64(stats.unmonitored), coll.url, coll.application)
 }
 
 func (coll *Collector) getStats() (interface{}, error) {

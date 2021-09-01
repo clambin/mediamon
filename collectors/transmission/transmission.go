@@ -10,14 +10,47 @@ import (
 	"time"
 )
 
+var (
+	versionMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "transmission", "version"),
+		"version info",
+		[]string{"version", "url"},
+		nil,
+	)
+
+	activeTorrentsMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "transmission", "active_torrent_count"),
+		"Number of active torrents",
+		[]string{"url"},
+		nil,
+	)
+
+	pausedTorrentsMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "transmission", "paused_torrent_count"),
+		"Number of paused torrents",
+		[]string{"url"},
+		nil,
+	)
+
+	downloadSpeedMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "transmission", "download_speed"),
+		"Transmission download speed in bytes / sec",
+		[]string{"url"},
+		nil,
+	)
+
+	uploadSpeedMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "transmission", "upload_speed"),
+		"Transmission upload speed in bytes / sec",
+		[]string{"url"},
+		nil,
+	)
+)
+
 type Collector struct {
 	mediaclient.TransmissionAPI
 	cache.Cache
-	version        *prometheus.Desc
-	activeTorrents *prometheus.Desc
-	pausedTorrents *prometheus.Desc
-	downloadSpeed  *prometheus.Desc
-	uploadSpeed    *prometheus.Desc
+	url string
 }
 
 type transmissionStats struct {
@@ -37,57 +70,28 @@ func NewCollector(url string, interval time.Duration) prometheus.Collector {
 				PrometheusSummary: metrics.RequestDuration,
 			},
 		},
-		version: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "transmission", "version"),
-			"version info",
-			[]string{"version"},
-			prometheus.Labels{"url": url},
-		),
-		activeTorrents: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "transmission", "active_torrent_count"),
-			"Number of active torrents",
-			nil,
-			prometheus.Labels{"url": url},
-		),
-		pausedTorrents: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "transmission", "paused_torrent_count"),
-			"Number of paused torrents",
-			nil,
-			prometheus.Labels{"url": url},
-		),
-		downloadSpeed: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "transmission", "download_speed"),
-			"Transmission download speed in bytes / sec",
-			nil,
-			prometheus.Labels{"url": url},
-		),
-		uploadSpeed: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "transmission", "upload_speed"),
-			"Transmission upload speed in bytes / sec",
-			nil,
-			prometheus.Labels{"url": url},
-		),
+		url: url,
 	}
 	c.Cache = *cache.New(interval, transmissionStats{}, c.getStats)
 	return c
 }
 
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- coll.version
-	ch <- coll.activeTorrents
-	ch <- coll.pausedTorrents
-	ch <- coll.downloadSpeed
-	ch <- coll.uploadSpeed
+	ch <- versionMetric
+	ch <- activeTorrentsMetric
+	ch <- pausedTorrentsMetric
+	ch <- downloadSpeedMetric
+	ch <- uploadSpeedMetric
 }
 
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats := coll.Update().(transmissionStats)
 
-	ch <- prometheus.MustNewConstMetric(coll.version, prometheus.GaugeValue, float64(1), stats.version)
-	ch <- prometheus.MustNewConstMetric(coll.activeTorrents, prometheus.GaugeValue, float64(stats.active))
-	ch <- prometheus.MustNewConstMetric(coll.pausedTorrents, prometheus.GaugeValue, float64(stats.paused))
-	ch <- prometheus.MustNewConstMetric(coll.downloadSpeed, prometheus.GaugeValue, float64(stats.download))
-	ch <- prometheus.MustNewConstMetric(coll.uploadSpeed, prometheus.GaugeValue, float64(stats.upload))
+	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.url)
+	ch <- prometheus.MustNewConstMetric(activeTorrentsMetric, prometheus.GaugeValue, float64(stats.active), coll.url)
+	ch <- prometheus.MustNewConstMetric(pausedTorrentsMetric, prometheus.GaugeValue, float64(stats.paused), coll.url)
+	ch <- prometheus.MustNewConstMetric(downloadSpeedMetric, prometheus.GaugeValue, float64(stats.download), coll.url)
+	ch <- prometheus.MustNewConstMetric(uploadSpeedMetric, prometheus.GaugeValue, float64(stats.upload), coll.url)
 }
 
 func (coll *Collector) getStats() (interface{}, error) {

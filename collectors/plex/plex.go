@@ -10,14 +10,47 @@ import (
 	"time"
 )
 
+var (
+	versionMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "version"),
+		"version info",
+		[]string{"version", "url"},
+		nil,
+	)
+
+	transcodingMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "transcoder_encoding_count"),
+		"Number of active transcoders",
+		[]string{"url"},
+		nil,
+	)
+
+	speedMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "transcoder_speed_total"),
+		"Speed of active transcoders",
+		[]string{"url"},
+		nil,
+	)
+
+	usersMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "session_count"),
+		"Active Plex Sessions",
+		[]string{"user", "url"},
+		nil,
+	)
+
+	modesMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "transcoder_type_count"),
+		"Active Transcoder count by type",
+		[]string{"mode", "url"},
+		nil,
+	)
+)
+
 type Collector struct {
 	mediaclient.PlexAPI
 	cache.Cache
-	version     *prometheus.Desc
-	users       *prometheus.Desc
-	modes       *prometheus.Desc
-	transcoding *prometheus.Desc
-	speed       *prometheus.Desc
+	url string
 }
 
 type plexStats struct {
@@ -39,36 +72,7 @@ func NewCollector(url, username, password string, interval time.Duration) promet
 				PrometheusSummary: metrics.RequestDuration,
 			},
 		},
-		version: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "plex", "version"),
-			"version info",
-			[]string{"version"},
-			prometheus.Labels{"url": url},
-		),
-		transcoding: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "plex", "transcoder_encoding_count"),
-			"Number of active transcoders",
-			nil,
-			prometheus.Labels{"url": url},
-		),
-		speed: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "plex", "transcoder_speed_total"),
-			"Speed of active transcoders",
-			nil,
-			prometheus.Labels{"url": url},
-		),
-		users: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "plex", "session_count"),
-			"Active Plex Sessions",
-			[]string{"user"},
-			prometheus.Labels{"url": url},
-		),
-		modes: prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "plex", "transcoder_type_count"),
-			"Active Transcoder count by type",
-			[]string{"mode"},
-			prometheus.Labels{"url": url},
-		),
+		url: url,
 	}
 
 	c.Cache = *cache.New(interval, plexStats{}, c.getStats)
@@ -77,24 +81,24 @@ func NewCollector(url, username, password string, interval time.Duration) promet
 }
 
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- coll.version
-	ch <- coll.transcoding
-	ch <- coll.speed
-	ch <- coll.users
-	ch <- coll.modes
+	ch <- versionMetric
+	ch <- transcodingMetric
+	ch <- speedMetric
+	ch <- usersMetric
+	ch <- modesMetric
 }
 
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats := coll.Update().(plexStats)
 
-	ch <- prometheus.MustNewConstMetric(coll.version, prometheus.GaugeValue, float64(1), stats.version)
-	ch <- prometheus.MustNewConstMetric(coll.transcoding, prometheus.GaugeValue, float64(stats.transcoding))
-	ch <- prometheus.MustNewConstMetric(coll.speed, prometheus.GaugeValue, stats.speed)
+	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.url)
+	ch <- prometheus.MustNewConstMetric(transcodingMetric, prometheus.GaugeValue, float64(stats.transcoding), coll.url)
+	ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, stats.speed, coll.url)
 	for user, count := range stats.users {
-		ch <- prometheus.MustNewConstMetric(coll.users, prometheus.GaugeValue, float64(count), user)
+		ch <- prometheus.MustNewConstMetric(usersMetric, prometheus.GaugeValue, float64(count), user, coll.url)
 	}
 	for mode, count := range stats.modes {
-		ch <- prometheus.MustNewConstMetric(coll.modes, prometheus.GaugeValue, float64(count), mode)
+		ch <- prometheus.MustNewConstMetric(modesMetric, prometheus.GaugeValue, float64(count), mode, coll.url)
 	}
 }
 

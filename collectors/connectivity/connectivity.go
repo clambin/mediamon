@@ -13,24 +13,26 @@ import (
 	"time"
 )
 
+var (
+	upMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("openvpn", "client", "status"),
+		"OpenVPN client status",
+		nil,
+		nil,
+	)
+)
+
 type Collector struct {
 	cache.Cache
 	URL    string
 	token  string
 	client *http.Client
-	up     *prometheus.Desc
 }
 
 func NewCollector(token, proxyURL string, interval time.Duration) prometheus.Collector {
 	c := &Collector{
 		token:  token,
 		client: getClient(proxyURL),
-		up: prometheus.NewDesc(
-			prometheus.BuildFQName("openvpn", "client", "status"),
-			"OpenVPN client status",
-			nil,
-			nil,
-		),
 	}
 	c.Cache = *cache.New(interval, false, c.getState)
 
@@ -63,17 +65,15 @@ func getClient(proxyURL string) (client *http.Client) {
 }
 
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- coll.up
+	ch <- upMetric
 }
 
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
-	up := coll.Update().(bool)
-
-	if up {
-		ch <- prometheus.MustNewConstMetric(coll.up, prometheus.GaugeValue, 1.0)
-	} else {
-		ch <- prometheus.MustNewConstMetric(coll.up, prometheus.GaugeValue, 0.0)
+	value := 0.0
+	if coll.Update().(bool) == true {
+		value = 1.0
 	}
+	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
 }
 
 func (coll *Collector) getState() (state interface{}, err error) {
