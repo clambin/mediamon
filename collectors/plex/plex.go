@@ -2,10 +2,10 @@ package plex
 
 import (
 	"context"
-	"github.com/clambin/mediamon/cache"
 	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
 )
@@ -49,7 +49,6 @@ var (
 
 type Collector struct {
 	mediaclient.PlexAPI
-	cache.Cache
 	url string
 }
 
@@ -61,8 +60,8 @@ type plexStats struct {
 	speed       float64
 }
 
-func NewCollector(url, username, password string, interval time.Duration) prometheus.Collector {
-	c := &Collector{
+func NewCollector(url, username, password string, _ time.Duration) prometheus.Collector {
+	return &Collector{
 		PlexAPI: &mediaclient.PlexClient{
 			Client:   &http.Client{},
 			URL:      url,
@@ -74,10 +73,6 @@ func NewCollector(url, username, password string, interval time.Duration) promet
 		},
 		url: url,
 	}
-
-	c.Cache = *cache.New(interval, plexStats{}, c.getStats)
-
-	return c
 }
 
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
@@ -89,8 +84,11 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
-	stats := coll.Update().(plexStats)
-
+	stats, err := coll.getStats()
+	if err != nil {
+		log.WithError(err).Warning("failed to collect plex metrics")
+		return
+	}
 	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.url)
 	ch <- prometheus.MustNewConstMetric(transcodingMetric, prometheus.GaugeValue, float64(stats.transcoding), coll.url)
 	ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, stats.speed, coll.url)
@@ -102,17 +100,11 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 }
 
-func (coll *Collector) getStats() (interface{}, error) {
-	var stats plexStats
-	var err error
-
+func (coll *Collector) getStats() (stats plexStats, err error) {
 	ctx := context.Background()
-
 	stats.version, err = coll.GetVersion(ctx)
-
 	if err == nil {
 		stats.users, stats.modes, stats.transcoding, stats.speed, err = coll.GetSessions(ctx)
 	}
-
 	return stats, err
 }

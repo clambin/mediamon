@@ -61,7 +61,7 @@ type transmissionStats struct {
 }
 
 func NewCollector(url string, _ time.Duration) prometheus.Collector {
-	c := &Collector{
+	return &Collector{
 		TransmissionAPI: &mediaclient.TransmissionClient{
 			Client: &http.Client{},
 			URL:    url,
@@ -71,7 +71,6 @@ func NewCollector(url string, _ time.Duration) prometheus.Collector {
 		},
 		url: url,
 	}
-	return c
 }
 
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
