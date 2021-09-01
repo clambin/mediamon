@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"github.com/clambin/gotools/metrics"
 	"github.com/clambin/mediamon/collectors/bandwidth"
 	"github.com/clambin/mediamon/collectors/connectivity"
 	"github.com/clambin/mediamon/collectors/plex"
@@ -10,7 +10,6 @@ import (
 	"github.com/clambin/mediamon/services"
 	"github.com/clambin/mediamon/version"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
@@ -25,9 +24,7 @@ type configuration struct {
 }
 
 func main() {
-	var (
-		servicesFilename string
-	)
+	var servicesFilename string
 
 	cfg := configuration{}
 
@@ -118,10 +115,11 @@ func main() {
 		))
 	}
 
-	listenAddress := fmt.Sprintf(":%d", cfg.Port)
-	http.Handle("/metrics", promhttp.Handler())
-	err = http.ListenAndServe(listenAddress, nil)
-	log.WithField("err", err).Error("Failed to start Prometheus http handler")
+	server := metrics.NewServer(cfg.Port)
+	err = server.Run()
+	if err != http.ErrServerClosed {
+		log.WithField("err", err).Error("Failed to start Prometheus http handler")
+	}
 
 	log.Info("mediamon exiting")
 }
