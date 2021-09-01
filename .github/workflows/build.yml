@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - metrics
+      - fix
 jobs:
   test:
     runs-on: ubuntu-latest

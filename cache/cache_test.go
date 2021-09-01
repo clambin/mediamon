@@ -23,7 +23,11 @@ func (s stats) update() (interface{}, error) {
 
 func TestCache_Update(t *testing.T) {
 	s := stats{next: 1}
-	c := cache.New(time.Hour, stats{}, s.update)
+	c := cache.Cache{
+		Expiry:    time.Hour,
+		LastStats: stats{},
+		Updater:   s.update,
+	}
 
 	updated := c.Update()
 	assert.Equal(t, 1, updated.(stats).value)

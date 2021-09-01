@@ -7,12 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := connectivity.NewCollector("123", "http://localhost:8888", 5*time.Minute)
+	proxy, _ := url.Parse("http://localhost:8888")
+	c := connectivity.NewCollector("123", proxy, 5*time.Minute)
 	metrics := make(chan *prometheus.Desc)
 	go c.Describe(metrics)
 
@@ -26,7 +28,7 @@ func TestCollector_Collect_Up(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(up))
 	defer testServer.Close()
 
-	c := connectivity.NewCollector("foo", "", 5*time.Minute)
+	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
 	c.(*connectivity.Collector).URL = testServer.URL
 	metrics := make(chan prometheus.Metric)
 	go c.Collect(metrics)
@@ -39,7 +41,7 @@ func TestCollector_Collect_Down(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(down))
 	defer testServer.Close()
 
-	c := connectivity.NewCollector("foo", "", 5*time.Minute)
+	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
 	c.(*connectivity.Collector).URL = testServer.URL
 	metrics := make(chan prometheus.Metric)
 	go c.Collect(metrics)

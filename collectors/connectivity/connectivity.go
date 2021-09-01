@@ -29,39 +29,28 @@ type Collector struct {
 	client *http.Client
 }
 
-func NewCollector(token, proxyURL string, interval time.Duration) prometheus.Collector {
-	c := &Collector{
-		token:  token,
-		client: getClient(proxyURL),
+const httpTimeout = 10 * time.Second
+
+func NewCollector(token string, proxyURL *url.URL, interval time.Duration) prometheus.Collector {
+	transport := &http.Transport{}
+	if proxyURL != nil {
+		transport.Proxy = http.ProxyURL(proxyURL)
 	}
-	c.Cache = *cache.New(interval, false, c.getState)
+
+	c := &Collector{
+		token: token,
+		client: &http.Client{
+			Transport: transport,
+			Timeout:   httpTimeout,
+		},
+	}
+	c.Cache = cache.Cache{
+		Expiry:    interval,
+		LastStats: false,
+		Updater:   c.getState,
+	}
 
 	return c
-}
-
-func getClient(proxyURL string) (client *http.Client) {
-	const httpTimeout = 10 * time.Second
-	var proxy *url.URL
-
-	if proxyURL != "" {
-		var err error
-		proxy, err = url.Parse(proxyURL)
-		if err != nil {
-			log.WithError(err).WithField("url", proxyURL).Warning("invalid proxy URL. ignoring")
-			proxy = nil
-		}
-	}
-
-	if proxy != nil {
-		return &http.Client{
-			Transport: &http.Transport{Proxy: http.ProxyURL(proxy)},
-			Timeout:   httpTimeout,
-		}
-	}
-
-	return &http.Client{
-		Timeout: httpTimeout,
-	}
 }
 
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {

@@ -11,10 +11,12 @@ import (
 	"github.com/clambin/mediamon/version"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type configuration struct {
@@ -66,10 +68,9 @@ func main() {
 	// Sonarr Collector
 	if cfg.Services.Sonarr.URL != "" {
 		log.WithField("url", cfg.Services.Sonarr.URL).Info("monitoring Sonarr")
-		prometheus.DefaultRegisterer.MustRegister(xxxarr.NewCollector(
+		prometheus.DefaultRegisterer.MustRegister(xxxarr.NewSonarrCollector(
 			cfg.Services.Sonarr.URL,
 			cfg.Services.Sonarr.APIKey,
-			"sonarr",
 			cfg.Services.Sonarr.Interval,
 		))
 	}
@@ -77,10 +78,9 @@ func main() {
 	// Radarr Collector
 	if cfg.Services.Radarr.URL != "" {
 		log.WithField("url", cfg.Services.Radarr.URL).Info("monitoring Radarr")
-		prometheus.DefaultRegisterer.MustRegister(xxxarr.NewCollector(
+		prometheus.DefaultRegisterer.MustRegister(xxxarr.NewRadarrCollector(
 			cfg.Services.Radarr.URL,
 			cfg.Services.Radarr.APIKey,
-			"radarr",
 			cfg.Services.Radarr.Interval,
 		))
 	}
@@ -110,16 +110,23 @@ func main() {
 		log.WithField("proxyURL", cfg.Services.OpenVPN.Connectivity.ProxyURL).Info("monitoring OpenVPN connectivity")
 		prometheus.DefaultRegisterer.MustRegister(connectivity.NewCollector(
 			cfg.Services.OpenVPN.Connectivity.Token,
-			cfg.Services.OpenVPN.Connectivity.Proxy,
+			cfg.Services.OpenVPN.Connectivity.ProxyURL,
 			cfg.Services.OpenVPN.Connectivity.Interval,
 		))
 	}
 
 	server := metrics.NewServer(cfg.Port)
-	err = server.Run()
-	if err != http.ErrServerClosed {
-		log.WithField("err", err).Error("Failed to start Prometheus http handler")
-	}
+	go func() {
+		err = server.Run()
+		if err != http.ErrServerClosed {
+			log.WithField("err", err).Error("Failed to start Prometheus http handler")
+		}
+	}()
+	log.Info("mediamon started")
+
+	<-shutdown.Chan()
+
+	_ = server.Shutdown(30 * time.Second)
 
 	log.Info("mediamon exiting")
 }

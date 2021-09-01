@@ -23,6 +23,17 @@ func TestXXXArrClient_GetApplication(t *testing.T) {
 	assert.Equal(t, "sonarr", client.GetApplication())
 }
 
+func TestXXXArrClient_GetURL(t *testing.T) {
+	client := mediaclient.XXXArrClient{
+		Client:      &http.Client{},
+		URL:         "https://localhost:4321",
+		APIKey:      "",
+		Application: "sonarr",
+	}
+
+	assert.Equal(t, "https://localhost:4321", client.GetURL())
+}
+
 func TestXXXArrClient_GetVersion(t *testing.T) {
 	type fields struct {
 		APIKey      string

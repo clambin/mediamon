@@ -18,6 +18,7 @@ type XXXArrAPI interface {
 	GetQueue(ctx context.Context) (int, error)
 	GetMonitored(ctx context.Context) (int, int, error)
 	GetApplication() string
+	GetURL() string
 }
 
 // XXXArrClient calls the Sonarr/Radarr APIs.  Application specifies whether this is a
@@ -39,6 +40,11 @@ type XXXArrOpts struct {
 // GetApplication returns the client's configured application
 func (client *XXXArrClient) GetApplication() string {
 	return client.Application
+}
+
+// GetURL returns the server URL
+func (client *XXXArrClient) GetURL() string {
+	return client.URL
 }
 
 // GetVersion retrieves the version of the Sonarr/Radarr server

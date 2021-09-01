@@ -3,18 +3,15 @@ package xxxarr_test
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/mediamon/collectors/xxxarr"
 	"github.com/clambin/mediamon/tests"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"time"
 )
 
-func TestCollector_Describe(t *testing.T) {
-	c := xxxarr.NewCollector("http://localhost:8888", "", "sonarr", 5*time.Minute)
+func testCollectorDescribe(t *testing.T, collector prometheus.Collector, labelString string) {
 	metrics := make(chan *prometheus.Desc)
-	go c.Describe(metrics)
+	go collector.Describe(metrics)
 
 	for _, metricName := range []string{
 		"mediamon_xxxarr_version",
@@ -24,16 +21,15 @@ func TestCollector_Describe(t *testing.T) {
 		"mediamon_xxxarr_unmonitored_count",
 	} {
 		metric := <-metrics
-		assert.Contains(t, metric.String(), "\""+metricName+"\"")
+		metricAsString := metric.String()
+		assert.Contains(t, metricAsString, "\""+metricName+"\"")
+		assert.Contains(t, metricAsString, labelString)
 	}
 }
 
-func TestCollector_Collect_Sonarr(t *testing.T) {
-	c := xxxarr.NewCollector("", "", "sonarr", 5*time.Minute)
-	c.(*xxxarr.Collector).XXXArrAPI = &server{application: "sonarr"}
-
+func testCollectorCollect(t *testing.T, collector prometheus.Collector) {
 	metrics := make(chan prometheus.Metric)
-	go c.Collect(metrics)
+	go collector.Collect(metrics)
 
 	metric := <-metrics
 	assert.True(t, tests.ValidateMetric(metric, 1, "version", "foo"))
@@ -49,35 +45,6 @@ func TestCollector_Collect_Sonarr(t *testing.T) {
 
 	metric = <-metrics
 	assert.True(t, tests.ValidateMetric(metric, 3, "", ""))
-}
-
-func TestCollector_Collect_Radarr(t *testing.T) {
-	c := xxxarr.NewCollector("", "", "radarr", 5*time.Minute)
-	c.(*xxxarr.Collector).XXXArrAPI = &server{application: "radarr"}
-
-	metrics := make(chan prometheus.Metric)
-	go c.Collect(metrics)
-
-	metric := <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 1, "version", "foo"))
-
-	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 5, "", ""))
-
-	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 2, "", ""))
-
-	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 10, "", ""))
-
-	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 3, "", ""))
-}
-
-func TestCollector_Bad_Application(t *testing.T) {
-	assert.Panics(t, func() {
-		_ = xxxarr.NewCollector("", "", "foo", 5*time.Minute)
-	})
 }
 
 type server struct {
@@ -115,4 +82,8 @@ func (s *server) GetMonitored(_ context.Context) (monitored, unmonitored int, er
 
 func (s *server) GetApplication() (application string) {
 	return s.application
+}
+
+func (s *server) GetURL() (url string) {
+	return "https://localhost:4321"
 }
