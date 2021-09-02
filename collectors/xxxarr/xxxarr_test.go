@@ -31,6 +31,7 @@ func testCollectorCollect(t *testing.T, collector prometheus.Collector) {
 	metrics := make(chan prometheus.Metric)
 	go collector.Collect(metrics)
 
+	// TODO: validate the metric application label (sonarr/radarr)
 	metric := <-metrics
 	assert.True(t, tests.ValidateMetric(metric, 1, "version", "foo"))
 

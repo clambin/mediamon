@@ -84,9 +84,9 @@ func (coll *RadarrCollector) Describe(ch chan<- *prometheus.Desc) {
 func (coll *RadarrCollector) Collect(ch chan<- prometheus.Metric) {
 	stats := coll.Update().(xxxArrStats)
 
-	ch <- prometheus.MustNewConstMetric(sonarrVersionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.Updater.XXXArrAPI.GetURL())
-	ch <- prometheus.MustNewConstMetric(sonarrCalendarMetric, prometheus.GaugeValue, float64(stats.calendar), coll.Updater.XXXArrAPI.GetURL())
-	ch <- prometheus.MustNewConstMetric(sonarrQueuedMetric, prometheus.GaugeValue, float64(stats.queued), coll.Updater.XXXArrAPI.GetURL())
-	ch <- prometheus.MustNewConstMetric(sonarrMonitoredMetric, prometheus.GaugeValue, float64(stats.monitored), coll.Updater.XXXArrAPI.GetURL())
-	ch <- prometheus.MustNewConstMetric(sonarrUnmonitoredMetric, prometheus.GaugeValue, float64(stats.unmonitored), coll.Updater.XXXArrAPI.GetURL())
+	ch <- prometheus.MustNewConstMetric(radarrVersionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.Updater.XXXArrAPI.GetURL())
+	ch <- prometheus.MustNewConstMetric(radarrCalendarMetric, prometheus.GaugeValue, float64(stats.calendar), coll.Updater.XXXArrAPI.GetURL())
+	ch <- prometheus.MustNewConstMetric(radarrQueuedMetric, prometheus.GaugeValue, float64(stats.queued), coll.Updater.XXXArrAPI.GetURL())
+	ch <- prometheus.MustNewConstMetric(radarrMonitoredMetric, prometheus.GaugeValue, float64(stats.monitored), coll.Updater.XXXArrAPI.GetURL())
+	ch <- prometheus.MustNewConstMetric(radarrUnmonitoredMetric, prometheus.GaugeValue, float64(stats.unmonitored), coll.Updater.XXXArrAPI.GetURL())
 }
