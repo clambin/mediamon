@@ -27,25 +27,24 @@ func testCollectorDescribe(t *testing.T, collector prometheus.Collector, labelSt
 	}
 }
 
-func testCollectorCollect(t *testing.T, collector prometheus.Collector) {
+func testCollectorCollect(t *testing.T, collector prometheus.Collector, application string) {
 	metrics := make(chan prometheus.Metric)
 	go collector.Collect(metrics)
 
-	// TODO: validate the metric application label (sonarr/radarr)
 	metric := <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 1, "version", "foo"))
+	assert.True(t, tests.ValidateMetric(metric, 1, "application", application, "version", "foo"))
 
 	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 5, "", ""))
+	assert.True(t, tests.ValidateMetric(metric, 5, "application", application))
 
 	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 2, "", ""))
+	assert.True(t, tests.ValidateMetric(metric, 2, "application", application))
 
 	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 10, "", ""))
+	assert.True(t, tests.ValidateMetric(metric, 10, "application", application))
 
 	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 3, "", ""))
+	assert.True(t, tests.ValidateMetric(metric, 3, "application", application))
 }
 
 type server struct {

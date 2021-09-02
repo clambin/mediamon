@@ -15,5 +15,5 @@ func TestRadarrCollector_Collect(t *testing.T) {
 	c := xxxarr.NewRadarrCollector("", "", 5*time.Minute)
 	c.(*xxxarr.RadarrCollector).Updater.XXXArrAPI = &server{application: "sonarr"}
 
-	testCollectorCollect(t, c)
+	testCollectorCollect(t, c, "radarr")
 }
