@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/alecthomas/units v0.0.0-20210208195552-ff826a37aa15 // indirect
-	github.com/clambin/gotools v0.5.3
+	github.com/clambin/gotools v0.5.4
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/client_model v0.2.0
