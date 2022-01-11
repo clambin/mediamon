@@ -1,8 +1,8 @@
 package bandwidth_test
 
 import (
+	"github.com/clambin/gotools/metrics"
 	"github.com/clambin/mediamon/collectors/bandwidth"
-	"github.com/clambin/mediamon/tests"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -12,11 +12,11 @@ import (
 
 func TestCollector_Describe(t *testing.T) {
 	c := bandwidth.NewCollector("", 5*time.Minute)
-	metrics := make(chan *prometheus.Desc)
-	go c.Describe(metrics)
+	ch := make(chan *prometheus.Desc)
+	go c.Describe(ch)
 
 	for _, metricName := range []string{"openvpn_client_tcp_udp_read_bytes_total", "openvpn_client_tcp_udp_write_bytes_total"} {
-		metric := <-metrics
+		metric := <-ch
 		assert.Contains(t, metric.String(), "\""+metricName+"\"")
 	}
 }
@@ -60,16 +60,16 @@ END`),
 	for _, testCase := range testCases {
 		if filename, err := tempFile(testCase.content); assert.Nil(t, err, testCase.name) {
 			c := bandwidth.NewCollector(filename, 5*time.Minute)
-			metrics := make(chan prometheus.Metric)
-			go c.Collect(metrics)
+			ch := make(chan prometheus.Metric)
+			go c.Collect(ch)
 
 			if testCase.pass {
-				read := <-metrics
-				assert.True(t, tests.ValidateMetric(read, testCase.read, "", ""))
-				write := <-metrics
-				assert.True(t, tests.ValidateMetric(write, testCase.write, "", ""))
+				read := <-ch
+				assert.Equal(t, testCase.read, metrics.MetricValue(read).GetGauge().GetValue())
+				write := <-ch
+				assert.Equal(t, testCase.write, metrics.MetricValue(write).GetGauge().GetValue())
 			} else {
-				metric := <-metrics
+				metric := <-ch
 				assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`, metric.Desc().String())
 			}
 		}
@@ -89,10 +89,9 @@ func tempFile(content []byte) (string, error) {
 
 func TestCollector_Collect_Failure(t *testing.T) {
 	c := bandwidth.NewCollector("invalid file", 5*time.Minute)
-	metrics := make(chan prometheus.Metric)
+	ch := make(chan prometheus.Metric)
 
-	go c.Collect(metrics)
-	metric := <-metrics
+	go c.Collect(ch)
+	metric := <-ch
 	assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`, metric.Desc().String())
-
 }

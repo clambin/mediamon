@@ -3,15 +3,15 @@ package xxxarr_test
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/mediamon/tests"
+	"github.com/clambin/gotools/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func testCollectorDescribe(t *testing.T, collector prometheus.Collector, labelString string) {
-	metrics := make(chan *prometheus.Desc)
-	go collector.Describe(metrics)
+	ch := make(chan *prometheus.Desc)
+	go collector.Describe(ch)
 
 	for _, metricName := range []string{
 		"mediamon_xxxarr_version",
@@ -20,7 +20,7 @@ func testCollectorDescribe(t *testing.T, collector prometheus.Collector, labelSt
 		"mediamon_xxxarr_monitored_count",
 		"mediamon_xxxarr_unmonitored_count",
 	} {
-		metric := <-metrics
+		metric := <-ch
 		metricAsString := metric.String()
 		assert.Contains(t, metricAsString, "\""+metricName+"\"")
 		assert.Contains(t, metricAsString, labelString)
@@ -28,23 +28,18 @@ func testCollectorDescribe(t *testing.T, collector prometheus.Collector, labelSt
 }
 
 func testCollectorCollect(t *testing.T, collector prometheus.Collector, application string) {
-	metrics := make(chan prometheus.Metric)
-	go collector.Collect(metrics)
+	ch := make(chan prometheus.Metric)
+	go collector.Collect(ch)
 
-	metric := <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 1, "application", application, "version", "foo"))
+	metric := <-ch
+	assert.Equal(t, 1.0, metrics.MetricValue(metric).GetGauge().GetValue())
+	assert.Equal(t, "foo", metrics.MetricLabel(metric, "version"))
 
-	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 5, "application", application))
-
-	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 2, "application", application))
-
-	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 10, "application", application))
-
-	metric = <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 3, "application", application))
+	for _, value := range []float64{5, 2, 10, 3} {
+		metric = <-ch
+		assert.Equal(t, value, metrics.MetricValue(metric).GetGauge().GetValue())
+		assert.Equal(t, application, metrics.MetricLabel(metric, "application"))
+	}
 }
 
 type server struct {

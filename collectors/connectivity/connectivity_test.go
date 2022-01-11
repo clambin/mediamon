@@ -1,8 +1,8 @@
 package connectivity_test
 
 import (
+	"github.com/clambin/gotools/metrics"
 	"github.com/clambin/mediamon/collectors/connectivity"
-	"github.com/clambin/mediamon/tests"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -15,11 +15,11 @@ import (
 func TestCollector_Describe(t *testing.T) {
 	proxy, _ := url.Parse("http://localhost:8888")
 	c := connectivity.NewCollector("123", proxy, 5*time.Minute)
-	metrics := make(chan *prometheus.Desc)
-	go c.Describe(metrics)
+	ch := make(chan *prometheus.Desc)
+	go c.Describe(ch)
 
 	for _, metricName := range []string{"openvpn_client_status"} {
-		metric := <-metrics
+		metric := <-ch
 		assert.Contains(t, metric.String(), "\""+metricName+"\"")
 	}
 }
@@ -30,11 +30,11 @@ func TestCollector_Collect_Up(t *testing.T) {
 
 	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
 	c.(*connectivity.Collector).URL = testServer.URL
-	metrics := make(chan prometheus.Metric)
-	go c.Collect(metrics)
+	ch := make(chan prometheus.Metric)
+	go c.Collect(ch)
 
-	metric := <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 1.0, "", ""))
+	metric := <-ch
+	assert.Equal(t, 1.0, metrics.MetricValue(metric).GetGauge().GetValue())
 }
 
 func TestCollector_Collect_Down(t *testing.T) {
@@ -43,11 +43,11 @@ func TestCollector_Collect_Down(t *testing.T) {
 
 	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
 	c.(*connectivity.Collector).URL = testServer.URL
-	metrics := make(chan prometheus.Metric)
-	go c.Collect(metrics)
+	ch := make(chan prometheus.Metric)
+	go c.Collect(ch)
 
-	metric := <-metrics
-	assert.True(t, tests.ValidateMetric(metric, 0.0, "", ""))
+	metric := <-ch
+	assert.Equal(t, 0.0, metrics.MetricValue(metric).GetGauge().GetValue())
 }
 
 func up(w http.ResponseWriter, _ *http.Request) {

@@ -75,10 +75,7 @@ func (client *XXXArrClient) GetVersion(ctx context.Context) (version string, err
 
 // GetCalendar retrieves the number of upcoming movies/series airing today and tomorrow
 func (client *XXXArrClient) GetCalendar(ctx context.Context) (calendar int, err error) {
-	var (
-		resp []byte
-	)
-	// TODO: add start/end date optional parameters?
+	var resp []byte
 	resp, err = client.call(ctx, "/api/v3/calendar")
 
 	if err == nil {
@@ -105,7 +102,6 @@ func (client *XXXArrClient) GetCalendar(ctx context.Context) (calendar int, err 
 // GetQueue retrieves how many movies/series are currently downloading
 func (client *XXXArrClient) GetQueue(ctx context.Context) (queue int, err error) {
 	var resp []byte
-
 	resp, err = client.call(ctx, "/api/v3/queue")
 
 	if err == nil {
