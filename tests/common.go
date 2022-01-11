@@ -7,7 +7,8 @@ import (
 
 // ValidateMetric checks that a prometheus metric has a specified value
 func ValidateMetric(metric prometheus.Metric, value float64, args ...string) bool {
-	if metrics.MetricValue(metric).GetGauge().GetValue() != value {
+	val := metrics.MetricValue(metric).GetGauge().GetValue()
+	if val != value {
 		return false
 	}
 

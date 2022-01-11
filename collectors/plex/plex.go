@@ -3,7 +3,7 @@ package plex
 import (
 	"context"
 	"github.com/clambin/mediamon/metrics"
-	"github.com/clambin/mediamon/pkg/mediaclient"
+	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -18,56 +18,55 @@ var (
 		nil,
 	)
 
+	transcodersMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "transcoder_total_count"),
+		"Number of transcode sessions",
+		[]string{"url"},
+		nil,
+	)
+
 	transcodingMetric = prometheus.NewDesc(
-		prometheus.BuildFQName("mediamon", "plex", "transcoder_encoding_count"),
-		"Number of active transcoders",
+		prometheus.BuildFQName("mediamon", "plex", "transcoder_active_count"),
+		"Number of active transcode sessions",
 		[]string{"url"},
 		nil,
 	)
 
 	speedMetric = prometheus.NewDesc(
 		prometheus.BuildFQName("mediamon", "plex", "transcoder_speed_total"),
-		"Speed of active transcoders",
+		"Total speed of active transcoders",
 		[]string{"url"},
 		nil,
 	)
 
-	usersMetric = prometheus.NewDesc(
-		prometheus.BuildFQName("mediamon", "plex", "session_count"),
-		"Active Plex Sessions",
-		[]string{"user", "url"},
+	locationMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "session_location_count"),
+		"Active plex sessions by user",
+		[]string{"location", "url"},
 		nil,
 	)
 
-	modesMetric = prometheus.NewDesc(
-		prometheus.BuildFQName("mediamon", "plex", "transcoder_type_count"),
-		"Active Transcoder count by type",
-		[]string{"mode", "url"},
+	usersMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "session_user_count"),
+		"Active Plex sessions by location",
+		[]string{"user", "url"},
 		nil,
 	)
 )
 
 type Collector struct {
-	mediaclient.PlexAPI
+	plex.API
 	url string
-}
-
-type plexStats struct {
-	version     string
-	users       map[string]int
-	modes       map[string]int
-	transcoding int
-	speed       float64
 }
 
 func NewCollector(url, username, password string, _ time.Duration) prometheus.Collector {
 	return &Collector{
-		PlexAPI: &mediaclient.PlexClient{
+		API: &plex.Client{
 			Client:   &http.Client{},
 			URL:      url,
 			UserName: username,
 			Password: password,
-			Options: mediaclient.PlexOpts{
+			Options: plex.Options{
 				PrometheusSummary: metrics.RequestDuration,
 			},
 		},
@@ -77,34 +76,75 @@ func NewCollector(url, username, password string, _ time.Duration) prometheus.Co
 
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- versionMetric
+	ch <- transcodersMetric
 	ch <- transcodingMetric
 	ch <- speedMetric
+	ch <- locationMetric
 	ch <- usersMetric
-	ch <- modesMetric
 }
 
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
-	stats, err := coll.getStats()
-	if err != nil {
-		log.WithError(err).Warning("failed to collect plex metrics")
-		return
-	}
-	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.url)
-	ch <- prometheus.MustNewConstMetric(transcodingMetric, prometheus.GaugeValue, float64(stats.transcoding), coll.url)
-	ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, stats.speed, coll.url)
-	for user, count := range stats.users {
-		ch <- prometheus.MustNewConstMetric(usersMetric, prometheus.GaugeValue, float64(count), user, coll.url)
-	}
-	for mode, count := range stats.modes {
-		ch <- prometheus.MustNewConstMetric(modesMetric, prometheus.GaugeValue, float64(count), mode, coll.url)
-	}
+	coll.collectVersion(ch)
+	coll.collectSessionStats(ch)
 }
 
-func (coll *Collector) getStats() (stats plexStats, err error) {
-	ctx := context.Background()
-	stats.version, err = coll.GetVersion(ctx)
-	if err == nil {
-		stats.users, stats.modes, stats.transcoding, stats.speed, err = coll.GetSessions(ctx)
+func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {
+	version, err := coll.GetVersion(context.Background())
+	if err != nil {
+		ch <- prometheus.NewInvalidMetric(
+			prometheus.NewDesc("mediamon_error",
+				"Error getting Plex version", nil, nil),
+			err)
+		log.WithError(err).Warning("failed to collect Plex version")
+		return
 	}
-	return stats, err
+
+	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), version, coll.url)
+}
+
+func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
+	sessions, err := coll.GetSessions(context.Background())
+	if err != nil {
+		ch <- prometheus.NewInvalidMetric(
+			prometheus.NewDesc("mediamon_error",
+				"Error getting Plex session stats", nil, nil),
+			err)
+		log.WithError(err).Warning("failed to collect Plex session stats")
+		return
+	}
+
+	users := map[string]int{}
+	transcoders := 0.0
+	transcoding := 0.0
+	speed := 0.0
+	lan := 0.0
+	wan := 0.0
+
+	for _, session := range sessions {
+		if session.Transcode {
+			transcoders++
+			if session.Throttled == false {
+				transcoding++
+			}
+			speed += session.Speed
+		}
+		if session.Local {
+			lan++
+		} else {
+			wan++
+		}
+		count, _ := users[session.User]
+		count++
+		users[session.User] = count
+	}
+
+	ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, transcoders, coll.url)
+	ch <- prometheus.MustNewConstMetric(transcodingMetric, prometheus.GaugeValue, transcoding, coll.url)
+	ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, speed, coll.url)
+	ch <- prometheus.MustNewConstMetric(locationMetric, prometheus.GaugeValue, lan, "lan", coll.url)
+	ch <- prometheus.MustNewConstMetric(locationMetric, prometheus.GaugeValue, wan, "wan", coll.url)
+
+	for user, count := range users {
+		ch <- prometheus.MustNewConstMetric(usersMetric, prometheus.GaugeValue, float64(count), user, coll.url)
+	}
 }

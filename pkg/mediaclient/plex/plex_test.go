@@ -1,12 +1,13 @@
-package mediaclient_test
+package plex_test
 
 import (
 	"context"
-	"github.com/clambin/mediamon/pkg/mediaclient"
+	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +21,7 @@ func TestPlexClient_GetVersion(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
 
-	client := &mediaclient.PlexClient{
+	client := &plex.Client{
 		Client:   &http.Client{},
 		URL:      testServer.URL,
 		AuthURL:  authServer.URL,
@@ -29,11 +30,11 @@ func TestPlexClient_GetVersion(t *testing.T) {
 	}
 
 	version, err := client.GetVersion(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "SomeVersion", version)
 
 	version, err = client.GetVersion(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "SomeVersion", version)
 }
 
@@ -44,7 +45,7 @@ func TestPlexClient_GetStats(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
 
-	client := &mediaclient.PlexClient{
+	client := &plex.Client{
 		Client:   &http.Client{},
 		URL:      testServer.URL,
 		AuthURL:  authServer.URL,
@@ -52,54 +53,21 @@ func TestPlexClient_GetStats(t *testing.T) {
 		Password: "somepassword",
 	}
 
-	users, modes, transcoding, speed, err := client.GetSessions(context.Background())
-	assert.NoError(t, err)
-	assert.Len(t, users, 3)
-	assert.Len(t, modes, 3)
-	assert.Equal(t, 2, transcoding)
-	assert.Equal(t, 3.1, speed)
-
-	// User count
-	for _, testCase := range []struct {
-		user  string
-		ok    bool
-		value int
-	}{
-		{"foo", true, 1},
-		{"bar", true, 1},
-		{"snafu", true, 2},
-		{"ufans", false, 0},
-	} {
-		userCount, ok := users[testCase.user]
-		assert.Equal(t, testCase.ok, ok)
-		if testCase.ok {
-			assert.Equal(t, testCase.value, userCount, testCase.user)
-		}
-	}
-	// Mode count
-	for _, testCase := range []struct {
-		mode  string
-		ok    bool
-		value int
-	}{
-		{"direct", true, 1},
-		{"copy", true, 1},
-		{"transcode", true, 2},
-		{"snafu", false, 0},
-	} {
-		modeCount, ok := modes[testCase.mode]
-		assert.Equal(t, testCase.ok, ok)
-		if testCase.ok {
-			assert.Equal(t, testCase.value, modeCount, testCase.mode)
-		}
-	}
+	sessions, err := client.GetSessions(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, []plex.Session{
+		{Title: "", User: "foo", Local: true, Transcode: false, Throttled: false, Speed: 0},
+		{Title: "", User: "bar", Local: false, Transcode: false, Throttled: false, Speed: 2.1},
+		{Title: "", User: "snafu", Local: true, Transcode: true, Throttled: true, Speed: 3.1},
+		{Title: "", User: "snafu", Local: true, Transcode: true, Throttled: true, Speed: 4.1},
+	}, sessions)
 }
 
 func TestPlexClient_Authentication(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
 
-	client := &mediaclient.PlexClient{
+	client := &plex.Client{
 		Client:   &http.Client{},
 		URL:      "",
 		AuthURL:  authServer.URL,
@@ -123,13 +91,13 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 		Help: "Duration of API requests.",
 	}, []string{"application", "request"})
 
-	client := &mediaclient.PlexClient{
+	client := &plex.Client{
 		Client:   &http.Client{},
 		URL:      testServer.URL,
 		AuthURL:  authServer.URL,
 		UserName: "user@example.com",
 		Password: "somepassword",
-		Options: mediaclient.PlexOpts{
+		Options: plex.Options{
 			PrometheusSummary: requestDuration,
 		},
 	}
@@ -197,10 +165,10 @@ var plexResponses = map[string]string{
 	"/status/sessions": `{ "MediaContainer": {
 		"size": 2,
 		"Metadata": [
-			{ "User": { "title": "foo" } },
-			{ "User": { "title": "bar" },  "TranscodeSession": { "throttled": false, "speed": "3.1", "videoDecision": "copy" } },
-			{ "User": { "title": "snafu" }, "TranscodeSession": { "throttled": true, "speed": "3.1", "videoDecision": "transcode" } },
-			{ "User": { "title": "snafu" }, "TranscodeSession": { "throttled": true, "speed": "3.1", "videoDecision": "transcode" } }
+			{ "User": { "title": "foo" }, "Player": { "local": true }},
+			{ "User": { "title": "bar" },  "Player": { "local": false }, "TranscodeSession": { "throttled": false, "speed": 2.1, "videoDecision": "copy" } },
+			{ "User": { "title": "snafu" }, "Player": { "local": true }, "TranscodeSession": { "throttled": true, "speed": 3.1, "videoDecision": "transcode" } },
+			{ "User": { "title": "snafu" }, "Player": { "local": true }, "TranscodeSession": { "throttled": true, "speed": 4.1, "videoDecision": "transcode" } }
 		]
 	}}`,
 }

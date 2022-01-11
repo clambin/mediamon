@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/clambin/mediamon/collectors/plex"
+	plexAPI "github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/clambin/mediamon/tests"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -18,19 +19,20 @@ func TestCollector_Describe(t *testing.T) {
 
 	for _, metricName := range []string{
 		"mediamon_plex_version",
-		"mediamon_plex_transcoder_encoding_count",
+		"mediamon_plex_transcoder_total_count",
+		"mediamon_plex_transcoder_active_count",
 		"mediamon_plex_transcoder_speed_total",
-		"mediamon_plex_session_count",
-		"mediamon_plex_transcoder_type_count",
+		"mediamon_plex_session_location_count",
+		"mediamon_plex_session_user_count",
 	} {
 		metric := <-metrics
-		assert.Contains(t, metric.String(), "\""+metricName+"\"")
+		assert.Contains(t, metric.String(), "\""+metricName+"\"", metricName)
 	}
 }
 
 func TestCollector_Collect(t *testing.T) {
 	c := plex.NewCollector("", "", "", time.Minute)
-	c.(*plex.Collector).PlexAPI = &client{}
+	c.(*plex.Collector).API = &client{}
 
 	metrics := make(chan prometheus.Metric)
 	go c.Collect(metrics)
@@ -38,46 +40,41 @@ func TestCollector_Collect(t *testing.T) {
 	version := <-metrics
 	assert.True(t, tests.ValidateMetric(version, 1, "version", "foo"))
 
+	transcoders := <-metrics
+	assert.True(t, tests.ValidateMetric(transcoders, 2, "", ""))
+
 	transcoding := <-metrics
-	assert.True(t, tests.ValidateMetric(transcoding, 2, "", ""))
+	assert.True(t, tests.ValidateMetric(transcoding, 1, "", ""))
 
 	speed := <-metrics
-	assert.True(t, tests.ValidateMetric(speed, 3.1, "", ""))
+	assert.True(t, tests.ValidateMetric(speed, 21.0, "", ""))
+
+	location := <-metrics
+	assert.True(t, tests.ValidateMetric(location, 1.0, "location", "lan"))
+	location = <-metrics
+	assert.True(t, tests.ValidateMetric(location, 2.0, "location", "wan"))
 
 	success := 0
 	for i := 0; i < 2; i++ {
 		user := <-metrics
-		for _, name := range []string{"foo", "bar"} {
-			if tests.ValidateMetric(user, 1, "user", name) {
-				success++
-			}
+		if tests.ValidateMetric(user, 2, "user", "foo") ||
+			tests.ValidateMetric(user, 1, "user", "bar") {
+			success++
 		}
 	}
-	assert.Equal(t, 2, success)
 
-	success = 0
-	for i := 0; i < 2; i++ {
-		mode := <-metrics
-		for _, name := range []string{"direct", "copy"} {
-			if tests.ValidateMetric(mode, 1, "mode", name) {
-				success++
-			}
-		}
-	}
 	assert.Equal(t, 2, success)
 }
 
 func TestCollector_Collect_Fail(t *testing.T) {
 	c := plex.NewCollector("", "", "", time.Minute)
-	c.(*plex.Collector).PlexAPI = &client{failing: true}
+	c.(*plex.Collector).API = &client{failing: true}
 
 	metrics := make(chan prometheus.Metric)
 	go c.Collect(metrics)
 
-	assert.Never(t, func() bool {
-		_ = <-metrics
-		return true
-	}, 100*time.Millisecond, 10*time.Millisecond)
+	metric := <-metrics
+	assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting Plex version", constLabels: {}, variableLabels: []}`, metric.Desc().String())
 }
 
 type client struct {
@@ -91,18 +88,31 @@ func (client *client) GetVersion(_ context.Context) (string, error) {
 	return "foo", nil
 }
 
-func (client *client) GetSessions(_ context.Context) (users map[string]int, modes map[string]int, transcoding int, speed float64, err error) {
+func (client *client) GetSessions(_ context.Context) (sessions []plexAPI.Session, err error) {
 	if client.failing {
-		return nil, nil, 0, 0.0, errors.New("failing")
+		return nil, errors.New("failing")
 	}
-	users = make(map[string]int)
-	modes = make(map[string]int)
 
-	users["foo"] = 1
-	users["bar"] = 1
-	modes["direct"] = 1
-	modes["copy"] = 1
-	transcoding = 2
-	speed = 3.1
+	sessions = []plexAPI.Session{
+		{
+			User:      "foo",
+			Local:     true,
+			Transcode: false,
+		},
+		{
+			User:      "bar",
+			Local:     false,
+			Transcode: true,
+			Throttled: false,
+			Speed:     19.2,
+		},
+		{
+			User:      "foo",
+			Local:     false,
+			Transcode: true,
+			Throttled: true,
+			Speed:     1.8,
+		},
+	}
 	return
 }

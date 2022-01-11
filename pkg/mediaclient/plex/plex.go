@@ -1,4 +1,4 @@
-package mediaclient
+package plex
 
 import (
 	"bytes"
@@ -11,33 +11,32 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 )
 
-// PlexAPI interface
-type PlexAPI interface {
+// API interface
+type API interface {
 	GetVersion(context.Context) (string, error)
-	GetSessions(context.Context) (map[string]int, map[string]int, int, float64, error)
+	GetSessions(ctx context.Context) (sessions []Session, err error)
 }
 
-// PlexClient calls the Plex APIs
-type PlexClient struct {
+// Client calls the Plex APIs
+type Client struct {
 	Client    *http.Client
 	URL       string
-	Options   PlexOpts
+	Options   Options
 	AuthURL   string
 	UserName  string
 	Password  string
 	authToken string
 }
 
-// PlexOpts contains options to alter PlexClient behaviour
-type PlexOpts struct {
+// Options contains options to alter Client behaviour
+type Options struct {
 	PrometheusSummary *prometheus.SummaryVec
 }
 
 // GetVersion retrieves the version of the Plex server
-func (client *PlexClient) GetVersion(ctx context.Context) (version string, err error) {
+func (client *Client) GetVersion(ctx context.Context) (version string, err error) {
 	var resp []byte
 	if resp, err = client.call(ctx, "/identity"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
@@ -62,15 +61,36 @@ func (client *PlexClient) GetVersion(ctx context.Context) (version string, err e
 	return
 }
 
+type Session struct {
+	Title     string
+	User      string
+	Local     bool
+	Transcode bool
+	Throttled bool
+	Speed     float64
+}
+
 type sessionStats struct {
 	MediaContainer struct {
 		Metadata []struct {
+			GrandparentTitle string
+			Media            []struct {
+				Part []struct {
+					Stream []struct {
+						Decision string
+						Location string
+					}
+				}
+			}
 			User struct {
 				Title string
 			}
+			Player struct {
+				Local bool
+			}
 			TranscodeSession struct {
 				Throttled     bool
-				Speed         string
+				Speed         float64
 				VideoDecision string
 			}
 		}
@@ -78,15 +98,7 @@ type sessionStats struct {
 }
 
 // GetSessions retrieves session information from the server.
-//
-// Returns:
-//
-//   - number of sessions per user
-//   - number of sessions per type of decoder (direct/copy/transcode)
-//   - number of active transcoders
-//   - total transcoding speed
-//   - any encounters errors
-func (client *PlexClient) GetSessions(ctx context.Context) (users map[string]int, modes map[string]int, transcoding int, speed float64, err error) {
+func (client *Client) GetSessions(ctx context.Context) (sessions []Session, err error) {
 	var resp []byte
 	if resp, err = client.call(ctx, "/status/sessions"); err == nil {
 		decoder := json.NewDecoder(bytes.NewReader(resp))
@@ -94,61 +106,25 @@ func (client *PlexClient) GetSessions(ctx context.Context) (users map[string]int
 		var stats sessionStats
 		err = decoder.Decode(&stats)
 
-		if err == nil {
-			users, modes, transcoding, speed, err = parseSessions(stats)
+		for _, entry := range stats.MediaContainer.Metadata {
+			sessions = append(sessions, Session{
+				Title:     entry.GrandparentTitle,
+				User:      entry.User.Title,
+				Local:     entry.Player.Local,
+				Transcode: entry.TranscodeSession.VideoDecision == "transcode",
+				Throttled: entry.TranscodeSession.Throttled,
+				Speed:     entry.TranscodeSession.Speed,
+			})
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"err":         err,
-		"users":       users,
-		"modes":       modes,
-		"transcoding": transcoding,
-		"speed":       speed,
-	}).Debug("plex getSessions")
-
-	return
-}
-
-func parseSessions(stats sessionStats) (users map[string]int, modes map[string]int, transcoding int, speed float64, err error) {
-	users = make(map[string]int)
-	modes = make(map[string]int)
-
-	for _, entry := range stats.MediaContainer.Metadata {
-		// User sessions
-		count, _ := users[entry.User.Title]
-		users[entry.User.Title] = count + 1
-
-		// Transcoders
-		videoDecision := entry.TranscodeSession.VideoDecision
-		if videoDecision == "" {
-			videoDecision = "direct"
-		}
-		count, _ = modes[videoDecision]
-		modes[videoDecision] = count + 1
-
-		// Active transcoders
-		if !entry.TranscodeSession.Throttled {
-			transcoding++
-			if entry.TranscodeSession.Speed != "" {
-				var parsedSpeed float64
-				if parsedSpeed, err = strconv.ParseFloat(entry.TranscodeSession.Speed, 64); err == nil {
-					speed += parsedSpeed
-				} else {
-					log.WithFields(log.Fields{
-						"err":   err,
-						"Speed": entry.TranscodeSession.Speed,
-					}).Warning("cannot parse Plex encoding speed")
-				}
-			}
-		}
-	}
+	log.WithError(err).Debug("plex getSessions")
 
 	return
 }
 
 // call the specified Plex API endpoint
-func (client *PlexClient) call(ctx context.Context, endpoint string) (body []byte, err error) {
+func (client *Client) call(ctx context.Context, endpoint string) (body []byte, err error) {
 	client.authToken, err = client.authenticate(ctx)
 
 	if err == nil {
@@ -184,7 +160,7 @@ func (client *PlexClient) call(ctx context.Context, endpoint string) (body []byt
 
 // authenticate logs in to plex.tv and gets an authentication token
 // to be used for calls to the Plex server APIs
-func (client *PlexClient) authenticate(ctx context.Context) (authToken string, err error) {
+func (client *Client) authenticate(ctx context.Context) (authToken string, err error) {
 	if authToken = client.authToken; authToken != "" {
 		return
 	}

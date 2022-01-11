@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - fix
+      - refactor
   pull_request_target:
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v2.4.0
       - uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.17
       - name: test
         run: |
           go test ./... -race -coverprofile=coverage.txt -covermode=atomic

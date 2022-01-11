@@ -69,13 +69,9 @@ END`),
 				write := <-metrics
 				assert.True(t, tests.ValidateMetric(write, testCase.write, "", ""))
 			} else {
-				assert.Never(t, func() bool {
-					_ = <-metrics
-					return true
-				}, 100*time.Millisecond, 10*time.Millisecond)
-
+				metric := <-metrics
+				assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`, metric.Desc().String())
 			}
-
 		}
 	}
 }
@@ -89,4 +85,14 @@ func tempFile(content []byte) (string, error) {
 		_ = file.Close()
 	}
 	return filename, err
+}
+
+func TestCollector_Collect_Failure(t *testing.T) {
+	c := bandwidth.NewCollector("invalid file", 5*time.Minute)
+	metrics := make(chan prometheus.Metric)
+
+	go c.Collect(metrics)
+	metric := <-metrics
+	assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`, metric.Desc().String())
+
 }

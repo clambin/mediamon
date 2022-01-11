@@ -19,25 +19,148 @@
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 451,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "loki",
+        "uid": "JrYhCWHnk"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 45,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (container) (rate({namespace=\"media\"}[5m]))",
+          "legendFormat": "{{container}}",
+          "queryType": "randomWalk",
+          "refId": "A"
+        }
+      ],
+      "title": "Events",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "JrYhCWHnk"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 43,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "8.1.2",
+      "targets": [
+        {
+          "expr": "{namespace=\"media\"}",
+          "queryType": "randomWalk",
+          "refId": "A"
+        }
+      ],
+      "title": "Events",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 8
       },
       "id": 35,
       "title": "OpenVPN",
       "type": "row"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -70,7 +193,7 @@
         "h": 5,
         "w": 3,
         "x": 0,
-        "y": 1
+        "y": 9
       },
       "id": 39,
       "options": {
@@ -86,7 +209,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.3",
       "targets": [
         {
           "expr": "sum(openvpn_client_status)",
@@ -95,13 +218,14 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "VPN Uptime",
       "type": "gauge"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -157,7 +281,7 @@
         "h": 5,
         "w": 12,
         "x": 3,
-        "y": 1
+        "y": 9
       },
       "id": 37,
       "options": {
@@ -187,13 +311,14 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "OpenVPN Usage",
+      "title": "Network usage",
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -265,7 +390,7 @@
         "h": 5,
         "w": 9,
         "x": 15,
-        "y": 1
+        "y": 9
       },
       "id": 41,
       "options": {
@@ -281,39 +406,49 @@
       "pluginVersion": "8.0.6",
       "targets": [
         {
-          "expr": "sum(openvpn_client_status)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "exemplar": true,
+          "expr": "avg(openvpn_client_status)",
           "hide": false,
           "interval": "",
           "legendFormat": "On",
           "refId": "A"
         },
         {
-          "expr": "1-sum(openvpn_client_status)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "exemplar": true,
+          "expr": "1-avg(openvpn_client_status)",
           "hide": false,
           "interval": "",
           "legendFormat": "Off",
           "refId": "B"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "OpenVPN Status",
+      "title": "VPN Status",
       "type": "timeseries"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 14
       },
       "id": 33,
       "title": "Transmission",
       "type": "row"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -337,7 +472,7 @@
         "h": 5,
         "w": 3,
         "x": 0,
-        "y": 7
+        "y": 15
       },
       "id": 27,
       "options": {
@@ -355,7 +490,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.3",
       "targets": [
         {
           "exemplar": true,
@@ -366,13 +501,14 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Transmission version",
       "type": "stat"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -428,7 +564,7 @@
         "h": 5,
         "w": 12,
         "x": 3,
-        "y": 7
+        "y": 15
       },
       "id": 12,
       "options": {
@@ -458,13 +594,14 @@
           "refId": "B"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Transmission Network Usage",
+      "title": "Network usage",
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -522,7 +659,7 @@
         "h": 5,
         "w": 9,
         "x": 15,
-        "y": 7
+        "y": 15
       },
       "id": 10,
       "options": {
@@ -552,25 +689,25 @@
           "refId": "C"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Torrents",
       "type": "timeseries"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 20
       },
       "id": 31,
       "title": "Sonarr / Radarr",
       "type": "row"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -594,7 +731,7 @@
         "h": 2,
         "w": 3,
         "x": 0,
-        "y": 13
+        "y": 21
       },
       "id": 16,
       "options": {
@@ -613,7 +750,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.3",
       "targets": [
         {
           "exemplar": true,
@@ -624,13 +761,14 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Sonarr version",
       "type": "stat"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -688,7 +826,7 @@
         "h": 4,
         "w": 12,
         "x": 3,
-        "y": 13
+        "y": 21
       },
       "id": 8,
       "options": {
@@ -711,13 +849,14 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Download Queue",
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -774,7 +913,7 @@
         "h": 4,
         "w": 3,
         "x": 15,
-        "y": 13
+        "y": 21
       },
       "id": 6,
       "options": {
@@ -797,14 +936,14 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "On Calendar",
       "type": "timeseries"
     },
     {
-      "cacheTimeout": null,
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -825,7 +964,7 @@
         "h": 4,
         "w": 3,
         "x": 18,
-        "y": 13
+        "y": 21
       },
       "id": 14,
       "links": [],
@@ -842,7 +981,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.3",
       "targets": [
         {
           "exemplar": true,
@@ -852,14 +991,14 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Not monitored",
       "type": "bargauge"
     },
     {
-      "cacheTimeout": null,
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -880,7 +1019,7 @@
         "h": 4,
         "w": 3,
         "x": 21,
-        "y": 13
+        "y": 21
       },
       "id": 13,
       "links": [],
@@ -897,7 +1036,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.3",
       "targets": [
         {
           "exemplar": true,
@@ -907,13 +1046,14 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Monitoring",
       "type": "bargauge"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -937,7 +1077,7 @@
         "h": 2,
         "w": 3,
         "x": 0,
-        "y": 15
+        "y": 23
       },
       "id": 17,
       "options": {
@@ -955,7 +1095,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.3",
       "targets": [
         {
           "exemplar": true,
@@ -966,25 +1106,25 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Radarr version",
       "type": "stat"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 25
       },
       "id": 29,
       "title": "Plex",
       "type": "row"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -1008,7 +1148,7 @@
         "h": 4,
         "w": 3,
         "x": 0,
-        "y": 18
+        "y": 26
       },
       "id": 18,
       "options": {
@@ -1026,7 +1166,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.1.2",
+      "pluginVersion": "8.3.3",
       "targets": [
         {
           "exemplar": true,
@@ -1037,13 +1177,14 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Plex version",
       "type": "stat"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1100,7 +1241,7 @@
         "h": 4,
         "w": 12,
         "x": 3,
-        "y": 18
+        "y": 26
       },
       "id": 20,
       "options": {
@@ -1116,20 +1257,26 @@
       "pluginVersion": "8.0.6",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "sum by (user) (mediamon_plex_session_count)",
+          "expr": "avg by (user) (mediamon_plex_session_user_count)",
           "interval": "",
           "legendFormat": "{{user}}",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Plex sessions",
+      "title": "Users",
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1185,7 +1332,7 @@
         "h": 4,
         "w": 9,
         "x": 15,
-        "y": 18
+        "y": 26
       },
       "id": 22,
       "options": {
@@ -1215,13 +1362,14 @@
           "refId": "B"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Plex bandwidth",
+      "title": "Network usage",
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1231,8 +1379,8 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -1249,7 +1397,7 @@
             "spanNulls": true,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1278,9 +1426,9 @@
         "h": 4,
         "w": 12,
         "x": 3,
-        "y": 22
+        "y": 30
       },
-      "id": 24,
+      "id": 46,
       "options": {
         "legend": {
           "calcs": [],
@@ -1294,34 +1442,25 @@
       "pluginVersion": "8.0.6",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "sum by (mode) (mediamon_plex_transcoder_type_count)",
+          "expr": "avg by (location) (mediamon_plex_session_location_count)",
           "interval": "",
-          "legendFormat": "{{mode}}",
-          "refId": "C"
-        },
-        {
-          "exemplar": true,
-          "expr": "sum(mediamon_plex_transcoder_encoding_count)",
-          "interval": "",
-          "legendFormat": "encoding",
-          "refId": "B"
-        },
-        {
-          "exemplar": true,
-          "expr": "sum(mediamon_plex_transcoder_speed_total)",
-          "interval": "",
-          "legendFormat": "speed",
+          "legendFormat": "{{location}}",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Plex transcoders",
+      "title": "Sessions by location",
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1408,7 +1547,7 @@
         "h": 4,
         "w": 9,
         "x": 15,
-        "y": 22
+        "y": 30
       },
       "id": 26,
       "options": {
@@ -1439,14 +1578,138 @@
           "refId": "B"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Plex CPU usage",
+      "title": "CPU usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Speed"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 3,
+        "y": 34
+      },
+      "id": 24,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "8.0.6",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "exemplar": true,
+          "expr": "avg(mediamon_plex_transcoder_total_count)",
+          "interval": "",
+          "legendFormat": "Transcode Sessions",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "exemplar": true,
+          "expr": "avg(mediamon_plex_transcoder_active_count)",
+          "interval": "",
+          "legendFormat": "Active Transcode Sessions",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "exemplar": true,
+          "expr": "avg(mediamon_plex_transcoder_speed_total)",
+          "interval": "",
+          "legendFormat": "Speed",
+          "refId": "A"
+        }
+      ],
+      "title": "Plex transcoders",
       "type": "timeseries"
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 30,
+  "schemaVersion": 34,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -1473,5 +1736,6 @@
   "timezone": "",
   "title": "Media Server",
   "uid": "8C0N81WRl",
-  "version": 66
+  "version": 200,
+  "weekStart": ""
 }

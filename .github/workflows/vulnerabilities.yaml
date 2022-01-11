@@ -1,0 +1,23 @@
+name: Vulnerabilities
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - develop
+  schedule:
+    - cron: '23 3 * * 6'
+
+jobs:
+  analyse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.4.0
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+      - name: WriteGoList
+        run: go list -json -deps all > go.list
+      - uses: sonatype-nexus-community/nancy-github-action@main
