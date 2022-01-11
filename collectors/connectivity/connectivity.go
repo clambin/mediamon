@@ -45,7 +45,7 @@ func NewCollector(token string, proxyURL *url.URL, interval time.Duration) prome
 		},
 	}
 	c.Cache = cache.Cache{
-		Expiry:    interval,
+		Duration:  interval,
 		LastStats: false,
 		Updater:   c.getState,
 	}

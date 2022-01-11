@@ -66,7 +66,7 @@ func NewSonarrCollector(url, apiKey string, interval time.Duration) prometheus.C
 		},
 	}
 	collector.Cache = cache.Cache{
-		Expiry:    interval,
+		Duration:  interval,
 		LastStats: xxxArrStats{},
 		Updater:   collector.getStats,
 	}
