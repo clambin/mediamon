@@ -45,7 +45,7 @@ jobs:
         run: |
           CGO_ENABLED=0 \
             go build \
-              -ldflags "-X github.com/clambin/mediamon/version.BuildVersion=$$RELEASE_VERSION" \
+              -ldflags "-X github.com/clambin/mediamon/version.BuildVersion=$RELEASE_VERSION" \
               -o bld/$TARGET-$GOOS-$GOARCH
       - uses: actions/upload-artifact@v2
         with:
