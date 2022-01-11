@@ -7,14 +7,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
+	"github.com/stretchr/testify/require"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestTransmissionClient_GetVersion(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(transmissionHandler))
+	s := server{sessionID: "1234"}
+	testServer := s.start()
 	defer testServer.Close()
 
 	client := &mediaclient.TransmissionClient{
@@ -23,12 +25,13 @@ func TestTransmissionClient_GetVersion(t *testing.T) {
 	}
 
 	version, err := client.GetVersion(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "2.94 (d8e60ee44f)", version)
 }
 
 func TestTransmissionClient_GetStats(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(transmissionHandler))
+	s := server{sessionID: "1234"}
+	testServer := s.start()
 	defer testServer.Close()
 
 	client := &mediaclient.TransmissionClient{
@@ -37,21 +40,40 @@ func TestTransmissionClient_GetStats(t *testing.T) {
 	}
 
 	active, paused, download, upload, err := client.GetStats(context.Background())
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 1, active)
 	assert.Equal(t, 2, paused)
 	assert.Equal(t, 100, download)
 	assert.Equal(t, 25, upload)
 }
 
-func TestTransmissionClient_Authentication(t *testing.T) {
-	var (
-		err        error
-		oldVersion string
-		newVersion string
-	)
+func TestTransmissionClient_Failures(t *testing.T) {
+	s := server{sessionID: "1234", invalid: true}
+	testServer := s.start()
 
-	testServer := httptest.NewServer(http.HandlerFunc(transmissionHandler))
+	client := &mediaclient.TransmissionClient{
+		Client: &http.Client{},
+		URL:    testServer.URL,
+	}
+	_, _, _, _, err := client.GetStats(context.Background())
+	require.Error(t, err)
+
+	s.invalid = false
+	_, _, _, _, err = client.GetStats(context.Background())
+	require.NoError(t, err)
+
+	s.fail = true
+	_, _, _, _, err = client.GetStats(context.Background())
+	require.Error(t, err)
+
+	testServer.Close()
+	_, _, _, _, err = client.GetStats(context.Background())
+	require.Error(t, err)
+}
+
+func TestTransmissionClient_Authentication(t *testing.T) {
+	s := server{sessionID: "1234"}
+	testServer := s.start()
 	defer testServer.Close()
 
 	client := &mediaclient.TransmissionClient{
@@ -59,15 +81,17 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 		URL:    testServer.URL,
 	}
 
-	oldVersion, err = client.GetVersion(context.Background())
-	assert.Nil(t, err)
+	oldVersion, err := client.GetVersion(context.Background())
+	require.NoError(t, err)
 
 	// simulate the session key expiring
 	client.SessionID = "4321"
 
+	var newVersion string
 	newVersion, err = client.GetVersion(context.Background())
+
 	// call succeeded
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	// and the next SessionID has been set
 	assert.Equal(t, "1234", client.SessionID)
 	// and the call worked
@@ -75,7 +99,8 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 }
 
 func TestTransmissionClient_WithMetrics(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(transmissionHandler))
+	s := server{sessionID: "1234"}
+	testServer := s.start()
 	defer testServer.Close()
 
 	requestDuration := promauto.NewSummaryVec(prometheus.SummaryOpts{
@@ -92,7 +117,7 @@ func TestTransmissionClient_WithMetrics(t *testing.T) {
 	}
 
 	_, err := client.GetVersion(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// validate that a metric was recorded
 	ch := make(chan prometheus.Metric)
@@ -101,31 +126,44 @@ func TestTransmissionClient_WithMetrics(t *testing.T) {
 	desc := <-ch
 	var m io_prometheus_client.Metric
 	err = desc.Write(&m)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint64(2), *m.Summary.SampleCount)
 }
 
 // Server handlers
 
-func transmissionHandler(w http.ResponseWriter, req *http.Request) {
-	const sessionID = "1234"
-	w.Header()["X-Transmission-Session-Id"] = []string{sessionID}
+type server struct {
+	sessionID string
+	fail      bool
+	invalid   bool
+}
 
-	if req.Header.Get("X-Transmission-Session-Id") != sessionID {
-		http.Error(w, "Forbidden", http.StatusConflict)
-		return
-	}
+func (s *server) start() *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(s.handler))
+}
 
+func (s *server) handler(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		_ = req.Body.Close()
 	}()
 
-	body, err := ioutil.ReadAll(req.Body)
-
-	if err != nil {
-		http.Error(w, "could not parse request"+err.Error(), http.StatusBadRequest)
+	if s.fail {
+		http.Error(w, "server broken", http.StatusInternalServerError)
+		return
 	}
 
+	w.Header()["X-Transmission-Session-Id"] = []string{s.sessionID}
+	if req.Header.Get("X-Transmission-Session-Id") != s.sessionID {
+		http.Error(w, "Forbidden", http.StatusConflict)
+		return
+	}
+
+	if s.invalid {
+		_, _ = w.Write([]byte(`invalid content`))
+		return
+	}
+
+	body, _ := io.ReadAll(req.Body)
 	response, ok := transmissionResponses[string(body)]
 
 	if ok == false {

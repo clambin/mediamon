@@ -1,8 +1,9 @@
 package services_test
 
 import (
-	services2 "github.com/clambin/mediamon/services"
+	"github.com/clambin/mediamon/services"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -21,9 +22,7 @@ plex:
 `)
 
 	f, err := ioutil.TempFile("", "tmp")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 
 	defer func(name string) {
 		err2 := os.Remove(name)
@@ -34,9 +33,10 @@ plex:
 	_, _ = f.Write(content)
 	_ = f.Close()
 
-	cfg, err := services2.ParseConfigFile(f.Name())
+	cfg, err := services.ParseConfigFile(f.Name())
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
 	assert.Equal(t, 10*time.Second, cfg.Transmission.Interval)
 	assert.Equal(t, "", cfg.Sonarr.URL)
@@ -85,27 +85,26 @@ futurefeature:
   foo: 'bar'
 `)
 
-	cfg, err := services2.ParseConfig(content)
+	cfg, err := services.ParseConfig(content)
+	require.NoError(t, err)
 
-	if assert.Nil(t, err) {
-		assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
-		assert.Equal(t, 10*time.Second, cfg.Transmission.Interval)
-		assert.Equal(t, "http://192.168.0.10:8989", cfg.Sonarr.URL)
-		assert.Equal(t, "sonarr-api-key", cfg.Sonarr.APIKey)
-		assert.Equal(t, 5*time.Minute, cfg.Sonarr.Interval)
-		assert.Equal(t, "http://192.168.0.10:7878", cfg.Radarr.URL)
-		assert.Equal(t, "radarr-api-key", cfg.Radarr.APIKey)
-		assert.Equal(t, 5*time.Minute, cfg.Radarr.Interval)
-		assert.Equal(t, "http://192.168.0.10:32400", cfg.Plex.URL)
-		assert.Equal(t, "email@example.com", cfg.Plex.UserName)
-		assert.Equal(t, "some-password", cfg.Plex.Password)
-		assert.Equal(t, 1*time.Minute, cfg.Plex.Interval)
-		assert.Equal(t, "/foo/bar", cfg.OpenVPN.Bandwidth.FileName)
-		assert.Equal(t, 30*time.Second, cfg.OpenVPN.Bandwidth.Interval)
-		assert.Equal(t, "http://localhost:8888", cfg.OpenVPN.Connectivity.Proxy)
-		assert.Equal(t, "some-token", cfg.OpenVPN.Connectivity.Token)
-		assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
-	}
+	assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
+	assert.Equal(t, 10*time.Second, cfg.Transmission.Interval)
+	assert.Equal(t, "http://192.168.0.10:8989", cfg.Sonarr.URL)
+	assert.Equal(t, "sonarr-api-key", cfg.Sonarr.APIKey)
+	assert.Equal(t, 5*time.Minute, cfg.Sonarr.Interval)
+	assert.Equal(t, "http://192.168.0.10:7878", cfg.Radarr.URL)
+	assert.Equal(t, "radarr-api-key", cfg.Radarr.APIKey)
+	assert.Equal(t, 5*time.Minute, cfg.Radarr.Interval)
+	assert.Equal(t, "http://192.168.0.10:32400", cfg.Plex.URL)
+	assert.Equal(t, "email@example.com", cfg.Plex.UserName)
+	assert.Equal(t, "some-password", cfg.Plex.Password)
+	assert.Equal(t, 1*time.Minute, cfg.Plex.Interval)
+	assert.Equal(t, "/foo/bar", cfg.OpenVPN.Bandwidth.FileName)
+	assert.Equal(t, 30*time.Second, cfg.OpenVPN.Bandwidth.Interval)
+	assert.Equal(t, "http://localhost:8888", cfg.OpenVPN.Connectivity.Proxy)
+	assert.Equal(t, "some-token", cfg.OpenVPN.Connectivity.Token)
+	assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
 }
 
 func TestParseInvalidProxy(t *testing.T) {
@@ -115,18 +114,17 @@ func TestParseInvalidProxy(t *testing.T) {
     token: notatoken
     interval: 1h
 `
-	_, err := services2.ParseConfig([]byte(invalidConfig))
-
-	assert.NotNil(t, err)
+	_, err := services.ParseConfig([]byte(invalidConfig))
+	require.Error(t, err)
 }
 
 func TestParseInvalidConfig(t *testing.T) {
 	var content = []byte(`not a valid yaml file`)
-	_, err := services2.ParseConfig(content)
-	assert.NotNil(t, err)
+	_, err := services.ParseConfig(content)
+	require.Error(t, err)
 }
 
 func TestParseMissingConfig(t *testing.T) {
-	_, err := services2.ParseConfigFile("not_a_file")
-	assert.NotNil(t, err)
+	_, err := services.ParseConfigFile("not_a_file")
+	require.Error(t, err)
 }

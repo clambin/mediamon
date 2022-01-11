@@ -2,12 +2,14 @@ package plex_test
 
 import (
 	"context"
+	"errors"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/unix"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -76,7 +78,7 @@ func TestPlexClient_Authentication(t *testing.T) {
 	}
 
 	_, err := client.GetVersion(context.Background())
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, "403 Forbidden", err.Error())
 }
 
@@ -103,7 +105,7 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 	}
 
 	_, err := client.GetVersion(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// validate that the metrics were recorded
 	ch := make(chan prometheus.Metric)
@@ -112,9 +114,32 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 	desc := <-ch
 	var m io_prometheus_client.Metric
 	err = desc.Write(&m)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// TODO: why isn't this 2 (one for auth, one for API call)?
 	assert.Equal(t, uint64(1), *m.Summary.SampleCount)
+}
+
+func TestClient_Failures(t *testing.T) {
+	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	defer authServer.Close()
+	testServer := httptest.NewServer(http.HandlerFunc(plexBadHandler))
+
+	client := &plex.Client{
+		Client:   &http.Client{},
+		URL:      testServer.URL,
+		AuthURL:  authServer.URL,
+		UserName: "user@example.com",
+		Password: "somepassword",
+	}
+
+	_, err := client.GetVersion(context.Background())
+	require.Error(t, err)
+	assert.Equal(t, "500 Internal Server Error", err.Error())
+
+	testServer.Close()
+	_, err = client.GetVersion(context.Background())
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, unix.ECONNREFUSED))
 }
 
 // Server handlers
@@ -153,6 +178,10 @@ func plexHandler(w http.ResponseWriter, req *http.Request) {
 	} else {
 		_, _ = w.Write([]byte(response))
 	}
+}
+
+func plexBadHandler(w http.ResponseWriter, _ *http.Request) {
+	http.Error(w, "server's having a hard day", http.StatusInternalServerError)
 }
 
 var plexResponses = map[string]string{

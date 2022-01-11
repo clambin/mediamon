@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -32,26 +30,15 @@ type TransmissionOpts struct {
 
 // GetVersion determines the version of the Transmission server
 func (client *TransmissionClient) GetVersion(ctx context.Context) (version string, err error) {
-	var (
-		resp  []byte
-		stats = struct {
-			Arguments struct {
-				Version string
-			}
-		}{}
-	)
-
-	if resp, err = client.call(ctx, "session-get"); err == nil {
-		decoder := json.NewDecoder(bytes.NewReader(resp))
-		if err = decoder.Decode(&stats); err == nil {
-			version = stats.Arguments.Version
+	var stats struct {
+		Arguments struct {
+			Version string
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"err":     err,
-		"version": stats.Arguments.Version,
-	}).Debug("transmission GetVersion")
+	if err = client.call(ctx, "session-get", &stats); err == nil {
+		version = stats.Arguments.Version
+	}
 
 	return
 }
@@ -65,39 +52,28 @@ func (client *TransmissionClient) GetVersion(ctx context.Context) (version strin
 //   - total upload speed
 //   - encountered error
 func (client *TransmissionClient) GetStats(ctx context.Context) (active int, paused int, download int, upload int, err error) {
-	var (
-		resp  []byte
-		stats = struct {
-			Arguments struct {
-				ActiveTorrentCount int
-				PausedTorrentCount int
-				UploadSpeed        int
-				DownloadSpeed      int
-			}
-			Result string
-		}{}
-	)
-
-	if resp, err = client.call(ctx, "session-stats"); err == nil {
-		decoder := json.NewDecoder(bytes.NewReader(resp))
-		if err = decoder.Decode(&stats); err == nil {
-			active = stats.Arguments.ActiveTorrentCount
-			paused = stats.Arguments.PausedTorrentCount
-			download = stats.Arguments.DownloadSpeed
-			upload = stats.Arguments.UploadSpeed
+	var stats struct {
+		Arguments struct {
+			ActiveTorrentCount int
+			PausedTorrentCount int
+			UploadSpeed        int
+			DownloadSpeed      int
 		}
+		Result string
 	}
 
-	log.WithFields(log.Fields{
-		"err":   err,
-		"stats": stats.Arguments,
-	}).Debug("transmission GetStats")
+	if err = client.call(ctx, "session-stats", &stats); err == nil {
+		active = stats.Arguments.ActiveTorrentCount
+		paused = stats.Arguments.PausedTorrentCount
+		download = stats.Arguments.DownloadSpeed
+		upload = stats.Arguments.UploadSpeed
+	}
 
 	return
 }
 
 // call the specified Transmission API endpoint
-func (client *TransmissionClient) call(ctx context.Context, method string) (response []byte, err error) {
+func (client *TransmissionClient) call(ctx context.Context, method string, response interface{}) (err error) {
 	var answer bool
 	for answer == false && err == nil {
 
@@ -117,18 +93,24 @@ func (client *TransmissionClient) call(ctx context.Context, method string) (resp
 			timer.ObserveDuration()
 		}
 
-		if err == nil {
-			if resp.StatusCode == http.StatusConflict {
-				// Transmission-Session-Id has expired. Get the new one and retry
-				client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
-			} else if resp.StatusCode == http.StatusOK {
-				response, err = ioutil.ReadAll(resp.Body)
-				answer = true
-			} else {
-				err = fmt.Errorf("%s", resp.Status)
-			}
-			_ = resp.Body.Close()
+		if err != nil {
+			break
 		}
+
+		switch resp.StatusCode {
+		case http.StatusOK:
+			decoder := json.NewDecoder(resp.Body)
+			err = decoder.Decode(response)
+			answer = true
+		case http.StatusConflict:
+			// Transmission-Session-Id has expired. Get the new one and retry
+			client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
+		default:
+			err = fmt.Errorf("%s", resp.Status)
+		}
+
+		_ = resp.Body.Close()
 	}
+
 	return
 }

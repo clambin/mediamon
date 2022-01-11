@@ -37,27 +37,11 @@ type Options struct {
 
 // GetVersion retrieves the version of the Plex server
 func (client *Client) GetVersion(ctx context.Context) (version string, err error) {
-	var resp []byte
-	if resp, err = client.call(ctx, "/identity"); err == nil {
-		decoder := json.NewDecoder(bytes.NewReader(resp))
-
-		var stats struct {
-			MediaContainer struct {
-				Version string
-			}
-		}
-		err = decoder.Decode(&stats)
-
-		if err == nil {
-			version = stats.MediaContainer.Version
-		}
+	var stats identityStats
+	err = client.call(ctx, "/identity", &stats)
+	if err == nil {
+		version = stats.MediaContainer.Version
 	}
-
-	log.WithFields(log.Fields{
-		"err":     err,
-		"version": version,
-	}).Debug("plex getVersion")
-
 	return
 }
 
@@ -71,42 +55,11 @@ type Session struct {
 	Speed     float64 // Current transcoding speed
 }
 
-type sessionStats struct {
-	MediaContainer struct {
-		Metadata []struct {
-			GrandparentTitle string
-			Media            []struct {
-				Part []struct {
-					Stream []struct {
-						Decision string
-						Location string
-					}
-				}
-			}
-			User struct {
-				Title string
-			}
-			Player struct {
-				Local bool
-			}
-			TranscodeSession struct {
-				Throttled     bool
-				Speed         float64
-				VideoDecision string
-			}
-		}
-	}
-}
-
 // GetSessions retrieves session information from the server.
 func (client *Client) GetSessions(ctx context.Context) (sessions []Session, err error) {
-	var resp []byte
-	if resp, err = client.call(ctx, "/status/sessions"); err == nil {
-		decoder := json.NewDecoder(bytes.NewReader(resp))
-
-		var stats sessionStats
-		err = decoder.Decode(&stats)
-
+	var stats sessionStats
+	err = client.call(ctx, "/status/sessions", &stats)
+	if err == nil {
 		for _, entry := range stats.MediaContainer.Metadata {
 			sessions = append(sessions, Session{
 				Title:     entry.GrandparentTitle,
@@ -118,43 +71,46 @@ func (client *Client) GetSessions(ctx context.Context) (sessions []Session, err 
 			})
 		}
 	}
-
-	log.WithError(err).Debug("plex getSessions")
-
 	return
 }
 
 // call the specified Plex API endpoint
-func (client *Client) call(ctx context.Context, endpoint string) (body []byte, err error) {
+func (client *Client) call(ctx context.Context, endpoint string, response interface{}) (err error) {
 	client.authToken, err = client.authenticate(ctx)
 
-	if err == nil {
-
-		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+endpoint, nil)
-		req.Header.Add("Accept", "application/json")
-		req.Header.Add("X-Plex-Token", client.authToken)
-
-		var timer *prometheus.Timer
-		if client.Options.PrometheusSummary != nil {
-			timer = prometheus.NewTimer(client.Options.PrometheusSummary.WithLabelValues("plex", endpoint))
-		}
-
-		var resp *http.Response
-		resp, err = client.Client.Do(req)
-
-		if timer != nil {
-			timer.ObserveDuration()
-		}
-
-		if err == nil {
-			if resp.StatusCode == http.StatusOK {
-				body, err = ioutil.ReadAll(resp.Body)
-			} else {
-				err = fmt.Errorf("%s", resp.Status)
-			}
-			_ = resp.Body.Close()
-		}
+	if err != nil {
+		return
 	}
+
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+endpoint, nil)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("X-Plex-Token", client.authToken)
+
+	var timer *prometheus.Timer
+	if client.Options.PrometheusSummary != nil {
+		timer = prometheus.NewTimer(client.Options.PrometheusSummary.WithLabelValues("plex", endpoint))
+	}
+
+	var resp *http.Response
+	resp, err = client.Client.Do(req)
+
+	if timer != nil {
+		timer.ObserveDuration()
+	}
+
+	if err != nil {
+		return
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("%s", resp.Status)
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	err = decoder.Decode(&response)
 
 	return
 }

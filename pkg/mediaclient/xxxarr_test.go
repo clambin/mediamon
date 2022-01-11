@@ -2,11 +2,14 @@ package mediaclient_test
 
 import (
 	"context"
+	"errors"
 	"github.com/clambin/mediamon/pkg/mediaclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/unix"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -280,7 +283,6 @@ func TestXXXArrClient_GetMonitored_Panic(t *testing.T) {
 
 func TestXXXArrClient_ServerDown(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(xxxArrDownHandler))
-	defer testServer.Close()
 
 	client := &mediaclient.XXXArrClient{
 		Client:      &http.Client{},
@@ -290,9 +292,13 @@ func TestXXXArrClient_ServerDown(t *testing.T) {
 	}
 
 	_, err := client.GetVersion(context.Background())
-
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Equal(t, "500 Internal Server Error", err.Error())
+
+	testServer.Close()
+	_, err = client.GetVersion(context.Background())
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, unix.ECONNREFUSED))
 }
 
 func TestXXXArrClient_WithMetrics(t *testing.T) {
@@ -315,7 +321,7 @@ func TestXXXArrClient_WithMetrics(t *testing.T) {
 	}
 
 	_, err := client.GetVersion(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// validate that a metric was recorded
 	ch := make(chan prometheus.Metric)
@@ -324,7 +330,7 @@ func TestXXXArrClient_WithMetrics(t *testing.T) {
 	desc := <-ch
 	var m io_prometheus_client.Metric
 	err = desc.Write(&m)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint64(1), *m.Summary.SampleCount)
 }
 
