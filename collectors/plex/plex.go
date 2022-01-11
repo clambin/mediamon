@@ -54,11 +54,13 @@ var (
 	)
 )
 
+// Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
 	plex.API
 	url string
 }
 
+// NewCollector creates a new Collector
 func NewCollector(url, username, password string, _ time.Duration) prometheus.Collector {
 	return &Collector{
 		API: &plex.Client{
@@ -74,6 +76,7 @@ func NewCollector(url, username, password string, _ time.Duration) prometheus.Co
 	}
 }
 
+// Describe implements the prometheus.Collector interface
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- versionMetric
 	ch <- transcodersMetric
@@ -83,6 +86,7 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- usersMetric
 }
 
+// Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	coll.collectVersion(ch)
 	coll.collectSessionStats(ch)

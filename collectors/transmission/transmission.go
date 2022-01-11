@@ -47,6 +47,7 @@ var (
 	)
 )
 
+// Collector presents Transmission statistics as Prometheus metrics
 type Collector struct {
 	mediaclient.TransmissionAPI
 	url string
@@ -60,6 +61,7 @@ type transmissionStats struct {
 	upload   int
 }
 
+// NewCollector creates a new Collector
 func NewCollector(url string, _ time.Duration) prometheus.Collector {
 	return &Collector{
 		TransmissionAPI: &mediaclient.TransmissionClient{
@@ -73,6 +75,7 @@ func NewCollector(url string, _ time.Duration) prometheus.Collector {
 	}
 }
 
+// Describe implements the prometheus.Collector interface
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- versionMetric
 	ch <- activeTorrentsMetric
@@ -81,6 +84,7 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- uploadSpeedMetric
 }
 
+// Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := coll.getStats()
 	if err != nil {

@@ -61,13 +61,14 @@ func (client *Client) GetVersion(ctx context.Context) (version string, err error
 	return
 }
 
+// Session represents a user watching a stream on Plex
 type Session struct {
-	Title     string
-	User      string
-	Local     bool
-	Transcode bool
-	Throttled bool
-	Speed     float64
+	Title     string  // title of the movie, tv show
+	User      string  // Name of user
+	Local     bool    // Is the user local (LAN) or not (WAN)?
+	Transcode bool    // Does the session transcode the video?
+	Throttled bool    // Is transcoding currently throttled?
+	Speed     float64 // Current transcoding speed
 }
 
 type sessionStats struct {

@@ -46,11 +46,13 @@ var (
 	)
 )
 
+// RadarrCollector presents Radarr statistics as Prometheus metrics
 type RadarrCollector struct {
 	Updater
 	cache.Cache
 }
 
+// NewRadarrCollector creates a new RadarrCollector
 func NewRadarrCollector(url, apiKey string, interval time.Duration) prometheus.Collector {
 	collector := &RadarrCollector{
 		Updater: Updater{
@@ -73,6 +75,7 @@ func NewRadarrCollector(url, apiKey string, interval time.Duration) prometheus.C
 	return collector
 }
 
+// Describe implements the prometheus.Collector interface
 func (coll *RadarrCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- radarrVersionMetric
 	ch <- radarrCalendarMetric
@@ -81,6 +84,7 @@ func (coll *RadarrCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- radarrUnmonitoredMetric
 }
 
+// Collect implements the prometheus.Collector interface
 func (coll *RadarrCollector) Collect(ch chan<- prometheus.Metric) {
 	stats := coll.Update().(xxxArrStats)
 

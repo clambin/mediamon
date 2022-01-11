@@ -13,6 +13,7 @@ type xxxArrStats struct {
 	unmonitored int
 }
 
+// Updater provides a generic means of getting stats from Sonarr or Radarr
 type Updater struct {
 	mediaclient.XXXArrAPI
 }

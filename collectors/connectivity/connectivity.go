@@ -22,6 +22,8 @@ var (
 	)
 )
 
+// Collector tests VPN connectivity by checking connection to https://ipinfo.io through a
+// configured proxy
 type Collector struct {
 	cache.Cache
 	URL    string
@@ -31,6 +33,7 @@ type Collector struct {
 
 const httpTimeout = 10 * time.Second
 
+// NewCollector creates a new Collector
 func NewCollector(token string, proxyURL *url.URL, interval time.Duration) prometheus.Collector {
 	transport := &http.Transport{}
 	if proxyURL != nil {
@@ -53,10 +56,12 @@ func NewCollector(token string, proxyURL *url.URL, interval time.Duration) prome
 	return c
 }
 
+// Describe implements the prometheus.Collector interface
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- upMetric
 }
 
+// Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	value := 0.0
 	if coll.Update().(bool) == true {

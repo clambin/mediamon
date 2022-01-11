@@ -26,6 +26,7 @@ var (
 	)
 )
 
+// Collector reads an openvpn status file and provides Prometheus metrics
 type Collector struct {
 	filename string
 }
@@ -35,15 +36,18 @@ type bandwidthStats struct {
 	written int64
 }
 
+// NewCollector creates a new Collector
 func NewCollector(filename string, _ time.Duration) prometheus.Collector {
 	return &Collector{filename: filename}
 }
 
+// Describe implements the prometheus.Collector interface
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- readMetric
 	ch <- writeMetric
 }
 
+// Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := coll.getStats()
 	if err != nil {

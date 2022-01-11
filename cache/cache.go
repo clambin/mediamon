@@ -17,7 +17,7 @@ type Cache struct {
 	lock      sync.Mutex
 }
 
-// UpdateFunc is the signature of the Updater function
+// UpdateFunc is the signature of the updater function
 type UpdateFunc func() (interface{}, error)
 
 // Update is called to get the next update. If the latest update is more recent than Duration, the cached update is

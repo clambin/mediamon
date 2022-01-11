@@ -46,11 +46,13 @@ var (
 	)
 )
 
+// SonarrCollector presents Sonarr statistics as Prometheus metrics
 type SonarrCollector struct {
 	Updater
 	cache.Cache
 }
 
+// NewSonarrCollector creates a new SonarrCollector
 func NewSonarrCollector(url, apiKey string, interval time.Duration) prometheus.Collector {
 	collector := &SonarrCollector{
 		Updater: Updater{
@@ -73,6 +75,7 @@ func NewSonarrCollector(url, apiKey string, interval time.Duration) prometheus.C
 	return collector
 }
 
+// Describe implements the prometheus.Collector interface
 func (coll *SonarrCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- sonarrVersionMetric
 	ch <- sonarrCalendarMetric
@@ -81,6 +84,7 @@ func (coll *SonarrCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- sonarrUnmonitoredMetric
 }
 
+// Collect implements the prometheus.Collector interface
 func (coll *SonarrCollector) Collect(ch chan<- prometheus.Metric) {
 	stats := coll.Update().(xxxArrStats)
 
