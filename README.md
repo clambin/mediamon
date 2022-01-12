@@ -5,11 +5,11 @@
 ![Go Report Card](https://goreportcard.com/badge/github.com/clambin/mediamon)
 ![GitHub](https://img.shields.io/github/license/clambin/mediamon?style=plastic)
 
-Prometheus exporter for various media applications.  Currently supports Transmission, OpenVPN Client, Sonarr, Radarr and Plex.
+Prometheus exporter for various media applications. Currently supports Transmission, OpenVPN Client, Sonarr, Radarr and Plex.
 
 ## Installation
 
-Binaries are available on the [release](https://github.com/clambin/mediamon/releases) page. Docker images are available on [docker hub](https://hub.docker.com/r/clambin/mediamon).
+Binaries are available on the [release](https://github.com/clambin/mediamon/releases) page. Docker images are available on [ghcr.io](https://ghcr.io/clambin/mediamon).
 
 Alternatively, you can clone the repository and build from source:
 
@@ -19,7 +19,7 @@ cd mediamon
 go build
 ```
 
-You will need to have go 1.16 installed on your system.
+You will need to have Go 1.17 installed on your system.
 
 ## Running mediamon
 ### Command-line options
@@ -42,7 +42,7 @@ Flags:
 
 ### Configuration
 
-The mandatory service configuration file configures which services mediamon should monitor:
+The mandatory service configuration file configures the services that mediamon should monitor:
 
 ```
 transmission:
@@ -93,7 +93,7 @@ openvpn:
 ### Prometheus
 
 Add mediamon as a target to let Prometheus scrape the metrics into its database.
-This highly depends on your particular Prometheus configuration. In it simplest form, add a new scrape target to `prometheus.yml`:
+This highly depends on your particular Prometheus configuration. In its simplest form, add a new scrape target to `prometheus.yml`:
 
 ```
 scrape_configs:
@@ -108,24 +108,24 @@ scrape_configs:
 mediamon exposes the following metrics:
 
 ```
-* mediamon_plex_session_count: Active Plex sessions by user
-* mediamon_plex_transcoder_encoding_count: Number of active transcoders
-* mediamon_plex_transcoder_speed_total: Speed of active transcoders (total)
-* mediamon_plex_transcoder_type_count: Active Transcoder count by type
-* mediamon_plex_version: Plex version number
-* mediamon_transmission_active_torrent_count: Number of active torrents
-* mediamon_transmission_download_speed: Transmission download speed in bytes / sec
-* mediamon_transmission_paused_torrent_count: Number of paused torrents
-* mediamon_transmission_upload_speed: Transmission upload speed in bytes / sec
-* mediamon_transmission_version: Transmission version number
-* mediamon_xxxarr_calendar_count: Number of upcoming episodes / movies
-* mediamon_xxxarr_monitored_count: Number of monitored series / movies
-* mediamon_xxxarr_queued_count: Number of queued torrents
-* mediamon_xxxarr_unmonitored_count: Number of unmonitored series / movies
-* mediamon_xxxarr_version: Sonarr/Radarr version number
-* openvpn_client_status: OpenVPN Client Status
-* openvpn_client_tcp_udp_read_bytes_total: OpenVPN client bytes read
-* openvpn_client_tcp_udp_write_bytes_total: OpenVPN client bytes written
+mediamon_plex_session_location_count:       Active plex sessions by location
+mediamon_plex_transcoder_active_count:      Number of active transcode sessions
+mediamon_plex_transcoder_speed_total:       Total speed of active transcoders
+mediamon_plex_transcoder_total_count:       Number of transcode sessions
+mediamon_plex_version:                      version info
+mediamon_transmission_active_torrent_count: Number of active torrents
+mediamon_transmission_download_speed:       Transmission download speed in bytes / sec
+mediamon_transmission_paused_torrent_count: Number of paused torrents
+mediamon_transmission_upload_speed:         Transmission upload speed in bytes / sec
+mediamon_transmission_version:              version info
+mediamon_xxxarr_calendar_count:             Number of upcoming episodes / movies
+mediamon_xxxarr_monitored_count:            Number of monitored series / movies
+mediamon_xxxarr_queued_count:               Number of episodes / movies being downloaded
+mediamon_xxxarr_unmonitored_count:          Number of unmonitored series / movies
+mediamon_xxxarr_version:                    version info
+openvpn_client_status:                      OpenVPN client status
+openvpn_client_tcp_udp_read_bytes_total:    OpenVPN client bytes read
+openvpn_client_tcp_udp_write_bytes_total:   OpenVPN client bytes written
 ```
 
 ### Grafana
