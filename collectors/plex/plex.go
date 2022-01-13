@@ -3,6 +3,7 @@ package plex
 import (
 	"context"
 	"github.com/clambin/mediamon/metrics"
+	metrics2 "github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -69,7 +70,10 @@ func NewCollector(url, username, password string, _ time.Duration) prometheus.Co
 			UserName: username,
 			Password: password,
 			Options: plex.Options{
-				PrometheusSummary: metrics.RequestDuration,
+				PrometheusMetrics: metrics2.PrometheusMetrics{
+					Latency: metrics.Latency,
+					Errors:  metrics.Errors,
+				},
 			},
 		},
 		url: url,

@@ -2,7 +2,7 @@ package xxxarr
 
 import (
 	"context"
-	"github.com/clambin/mediamon/pkg/mediaclient"
+	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 )
 
 type xxxArrStats struct {
@@ -15,7 +15,7 @@ type xxxArrStats struct {
 
 // Updater provides a generic means of getting stats from Sonarr or Radarr
 type Updater struct {
-	mediaclient.XXXArrAPI
+	xxxarr.API
 }
 
 func (updater *Updater) getStats() (interface{}, error) {

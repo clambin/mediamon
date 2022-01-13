@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - refactor
+      - request_errors
 jobs:
   test:
     runs-on: ubuntu-latest

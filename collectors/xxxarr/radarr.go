@@ -3,7 +3,8 @@ package xxxarr
 import (
 	"github.com/clambin/mediamon/cache"
 	"github.com/clambin/mediamon/metrics"
-	"github.com/clambin/mediamon/pkg/mediaclient"
+	metrics2 "github.com/clambin/mediamon/pkg/mediaclient/metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"time"
@@ -56,13 +57,16 @@ type RadarrCollector struct {
 func NewRadarrCollector(url, apiKey string, interval time.Duration) prometheus.Collector {
 	collector := &RadarrCollector{
 		Updater: Updater{
-			XXXArrAPI: &mediaclient.XXXArrClient{
+			API: &xxxarr.Client{
 				Client:      &http.Client{},
 				URL:         url,
 				APIKey:      apiKey,
 				Application: "radarr",
-				Options: mediaclient.XXXArrOpts{
-					PrometheusSummary: metrics.RequestDuration,
+				Options: xxxarr.Options{
+					PrometheusMetrics: metrics2.PrometheusMetrics{
+						Latency: metrics.Latency,
+						Errors:  metrics.Errors,
+					},
 				},
 			},
 		},
@@ -88,9 +92,9 @@ func (coll *RadarrCollector) Describe(ch chan<- *prometheus.Desc) {
 func (coll *RadarrCollector) Collect(ch chan<- prometheus.Metric) {
 	stats := coll.Update().(xxxArrStats)
 
-	ch <- prometheus.MustNewConstMetric(radarrVersionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.Updater.XXXArrAPI.GetURL())
-	ch <- prometheus.MustNewConstMetric(radarrCalendarMetric, prometheus.GaugeValue, float64(stats.calendar), coll.Updater.XXXArrAPI.GetURL())
-	ch <- prometheus.MustNewConstMetric(radarrQueuedMetric, prometheus.GaugeValue, float64(stats.queued), coll.Updater.XXXArrAPI.GetURL())
-	ch <- prometheus.MustNewConstMetric(radarrMonitoredMetric, prometheus.GaugeValue, float64(stats.monitored), coll.Updater.XXXArrAPI.GetURL())
-	ch <- prometheus.MustNewConstMetric(radarrUnmonitoredMetric, prometheus.GaugeValue, float64(stats.unmonitored), coll.Updater.XXXArrAPI.GetURL())
+	ch <- prometheus.MustNewConstMetric(radarrVersionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.Updater.API.GetURL())
+	ch <- prometheus.MustNewConstMetric(radarrCalendarMetric, prometheus.GaugeValue, float64(stats.calendar), coll.Updater.API.GetURL())
+	ch <- prometheus.MustNewConstMetric(radarrQueuedMetric, prometheus.GaugeValue, float64(stats.queued), coll.Updater.API.GetURL())
+	ch <- prometheus.MustNewConstMetric(radarrMonitoredMetric, prometheus.GaugeValue, float64(stats.monitored), coll.Updater.API.GetURL())
+	ch <- prometheus.MustNewConstMetric(radarrUnmonitoredMetric, prometheus.GaugeValue, float64(stats.unmonitored), coll.Updater.API.GetURL())
 }

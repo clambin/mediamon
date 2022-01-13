@@ -1,8 +1,9 @@
-package mediaclient_test
+package transmission_test
 
 import (
 	"context"
-	"github.com/clambin/mediamon/pkg/mediaclient"
+	metrics2 "github.com/clambin/mediamon/pkg/mediaclient/metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	io_prometheus_client "github.com/prometheus/client_model/go"
@@ -19,7 +20,7 @@ func TestTransmissionClient_GetVersion(t *testing.T) {
 	testServer := s.start()
 	defer testServer.Close()
 
-	client := &mediaclient.TransmissionClient{
+	client := &transmission.Client{
 		Client: &http.Client{},
 		URL:    testServer.URL,
 	}
@@ -34,7 +35,7 @@ func TestTransmissionClient_GetStats(t *testing.T) {
 	testServer := s.start()
 	defer testServer.Close()
 
-	client := &mediaclient.TransmissionClient{
+	client := &transmission.Client{
 		Client: &http.Client{},
 		URL:    testServer.URL,
 	}
@@ -51,7 +52,7 @@ func TestTransmissionClient_Failures(t *testing.T) {
 	s := server{sessionID: "1234", invalid: true}
 	testServer := s.start()
 
-	client := &mediaclient.TransmissionClient{
+	client := &transmission.Client{
 		Client: &http.Client{},
 		URL:    testServer.URL,
 	}
@@ -76,7 +77,7 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 	testServer := s.start()
 	defer testServer.Close()
 
-	client := &mediaclient.TransmissionClient{
+	client := &transmission.Client{
 		Client: &http.Client{},
 		URL:    testServer.URL,
 	}
@@ -101,18 +102,25 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 func TestTransmissionClient_WithMetrics(t *testing.T) {
 	s := server{sessionID: "1234"}
 	testServer := s.start()
-	defer testServer.Close()
 
-	requestDuration := promauto.NewSummaryVec(prometheus.SummaryOpts{
+	duration := promauto.NewSummaryVec(prometheus.SummaryOpts{
 		Name: "transmission_request_duration_seconds",
 		Help: "Duration of API requests.",
 	}, []string{"application", "request"})
 
-	client := &mediaclient.TransmissionClient{
+	errorMetric := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "transmission_request_errors",
+		Help: "Duration of API requests.",
+	}, []string{"application", "request"})
+
+	client := &transmission.Client{
 		Client: &http.Client{},
 		URL:    testServer.URL,
-		Options: mediaclient.TransmissionOpts{
-			PrometheusSummary: requestDuration,
+		Options: transmission.Options{
+			PrometheusMetrics: metrics2.PrometheusMetrics{
+				Latency: duration,
+				Errors:  errorMetric,
+			},
 		},
 	}
 
@@ -121,13 +129,27 @@ func TestTransmissionClient_WithMetrics(t *testing.T) {
 
 	// validate that a metric was recorded
 	ch := make(chan prometheus.Metric)
-	go requestDuration.Collect(ch)
+	go duration.Collect(ch)
 
 	desc := <-ch
 	var m io_prometheus_client.Metric
 	err = desc.Write(&m)
 	require.NoError(t, err)
 	assert.Equal(t, uint64(2), *m.Summary.SampleCount)
+
+	// shut down the server
+	testServer.Close()
+
+	_, err = client.GetVersion(context.Background())
+	require.Error(t, err)
+
+	ch = make(chan prometheus.Metric)
+	go errorMetric.Collect(ch)
+
+	desc = <-ch
+	err = desc.Write(&m)
+	require.NoError(t, err)
+	assert.Equal(t, float64(1), m.Counter.GetValue())
 }
 
 // Server handlers

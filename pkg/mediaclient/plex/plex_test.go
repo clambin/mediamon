@@ -3,6 +3,7 @@ package plex_test
 import (
 	"context"
 	"errors"
+	"github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -86,10 +87,14 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
 	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
-	defer testServer.Close()
 
-	requestDuration := promauto.NewSummaryVec(prometheus.SummaryOpts{
+	latencyMetric := promauto.NewSummaryVec(prometheus.SummaryOpts{
 		Name: "plex_request_duration_seconds",
+		Help: "Duration of API requests.",
+	}, []string{"application", "request"})
+
+	errorMetric := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "plex_request_errors",
 		Help: "Duration of API requests.",
 	}, []string{"application", "request"})
 
@@ -100,7 +105,10 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 		UserName: "user@example.com",
 		Password: "somepassword",
 		Options: plex.Options{
-			PrometheusSummary: requestDuration,
+			PrometheusMetrics: metrics.PrometheusMetrics{
+				Latency: latencyMetric,
+				Errors:  errorMetric,
+			},
 		},
 	}
 
@@ -109,14 +117,29 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 
 	// validate that the metrics were recorded
 	ch := make(chan prometheus.Metric)
-	go requestDuration.Collect(ch)
+	go latencyMetric.Collect(ch)
 
 	desc := <-ch
 	var m io_prometheus_client.Metric
 	err = desc.Write(&m)
 	require.NoError(t, err)
 	// TODO: why isn't this 2 (one for auth, one for API call)?
-	assert.Equal(t, uint64(1), *m.Summary.SampleCount)
+	assert.Equal(t, uint64(1), m.Summary.GetSampleCount())
+
+	// shut down the server
+	testServer.Close()
+
+	_, err = client.GetVersion(context.Background())
+	require.Error(t, err)
+
+	ch = make(chan prometheus.Metric)
+	go errorMetric.Collect(ch)
+
+	desc = <-ch
+	err = desc.Write(&m)
+	require.NoError(t, err)
+	// TODO: why isn't this 2 (one for auth, one for API call)?
+	assert.Equal(t, float64(1), m.Counter.GetValue())
 }
 
 func TestClient_Failures(t *testing.T) {

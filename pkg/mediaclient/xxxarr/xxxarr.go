@@ -1,15 +1,15 @@
-package mediaclient
+package xxxarr
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"net/http"
 )
 
-// XXXArrAPI interface
-type XXXArrAPI interface {
+// API interface
+type API interface {
 	GetVersion(ctx context.Context) (string, error)
 	GetCalendar(ctx context.Context) (int, error)
 	GetQueue(ctx context.Context) (int, error)
@@ -18,34 +18,34 @@ type XXXArrAPI interface {
 	GetURL() string
 }
 
-// XXXArrClient calls the Sonarr/Radarr APIs.  Application specifies whether this is a
-// Sonarr ("sonarr") or Radarr ("radarr") server.  XXXArrClient will panic if Application
+// Client calls the Sonarr/Radarr APIs.  Application specifies whether this is a
+// Sonarr ("sonarr") or Radarr ("radarr") server.  Client will panic if Application
 // contains any other values.
-type XXXArrClient struct {
+type Client struct {
 	Client      *http.Client
 	URL         string
 	APIKey      string
 	Application string
-	Options     XXXArrOpts
+	Options     Options
 }
 
-// XXXArrOpts contains options to alter XXXArrClient behaviour
-type XXXArrOpts struct {
-	PrometheusSummary *prometheus.SummaryVec
+// Options contains options to alter Client behaviour
+type Options struct {
+	PrometheusMetrics metrics.PrometheusMetrics
 }
 
 // GetApplication returns the client's configured application
-func (client *XXXArrClient) GetApplication() string {
+func (client *Client) GetApplication() string {
 	return client.Application
 }
 
 // GetURL returns the server URL
-func (client *XXXArrClient) GetURL() string {
+func (client *Client) GetURL() string {
 	return client.URL
 }
 
 // GetVersion retrieves the version of the Sonarr/Radarr server
-func (client *XXXArrClient) GetVersion(ctx context.Context) (version string, err error) {
+func (client *Client) GetVersion(ctx context.Context) (version string, err error) {
 	var stats struct {
 		Version string
 	}
@@ -58,7 +58,7 @@ func (client *XXXArrClient) GetVersion(ctx context.Context) (version string, err
 }
 
 // GetCalendar retrieves the number of upcoming movies/series airing today and tomorrow
-func (client *XXXArrClient) GetCalendar(ctx context.Context) (calendar int, err error) {
+func (client *Client) GetCalendar(ctx context.Context) (calendar int, err error) {
 	var stats []struct {
 		HasFile bool
 	}
@@ -75,7 +75,7 @@ func (client *XXXArrClient) GetCalendar(ctx context.Context) (calendar int, err 
 }
 
 // GetQueue retrieves how many movies/series are currently downloading
-func (client *XXXArrClient) GetQueue(ctx context.Context) (queue int, err error) {
+func (client *Client) GetQueue(ctx context.Context) (queue int, err error) {
 	var stats struct {
 		TotalRecords int
 	}
@@ -88,7 +88,7 @@ func (client *XXXArrClient) GetQueue(ctx context.Context) (queue int, err error)
 }
 
 // GetMonitored retrieves how many moves/series are being monitored & unmonitored
-func (client *XXXArrClient) GetMonitored(ctx context.Context) (monitored int, unmonitored int, err error) {
+func (client *Client) GetMonitored(ctx context.Context) (monitored int, unmonitored int, err error) {
 	var endpoint string
 	if client.Application == "sonarr" {
 		endpoint = "/api/v3/series"
@@ -116,14 +116,15 @@ func (client *XXXArrClient) GetMonitored(ctx context.Context) (monitored int, un
 }
 
 // call the specified Sonarr/Radarr API endpoint
-func (client *XXXArrClient) call(ctx context.Context, endpoint string, response interface{}) (err error) {
+func (client *Client) call(ctx context.Context, endpoint string, response interface{}) (err error) {
+	defer func() {
+		client.Options.PrometheusMetrics.ReportErrors(err, client.Application, endpoint)
+	}()
+
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+endpoint, nil)
 	req.Header.Add("X-Api-Key", client.APIKey)
 
-	var timer *prometheus.Timer
-	if client.Options.PrometheusSummary != nil {
-		timer = prometheus.NewTimer(client.Options.PrometheusSummary.WithLabelValues(client.Application, endpoint))
-	}
+	timer := client.Options.PrometheusMetrics.MakeLatencyTimer(client.Application, endpoint)
 
 	var resp *http.Response
 	resp, err = client.Client.Do(req)

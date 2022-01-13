@@ -30,7 +30,7 @@ func TestCollector_Describe(t *testing.T) {
 
 func TestCollector_Collect(t *testing.T) {
 	c := transmission.NewCollector("", time.Minute)
-	c.(*transmission.Collector).TransmissionAPI = &server{}
+	c.(*transmission.Collector).API = &server{}
 
 	ch := make(chan prometheus.Metric)
 	go c.Collect(ch)
@@ -48,7 +48,7 @@ func TestCollector_Collect(t *testing.T) {
 
 func TestCollector_Collect_Fail(t *testing.T) {
 	c := transmission.NewCollector("", time.Minute)
-	c.(*transmission.Collector).TransmissionAPI = &server{fail: true}
+	c.(*transmission.Collector).API = &server{fail: true}
 
 	ch := make(chan prometheus.Metric)
 	go c.Collect(ch)

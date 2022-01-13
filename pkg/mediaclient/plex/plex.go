@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"github.com/clambin/mediamon/version"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -32,7 +33,7 @@ type Client struct {
 
 // Options contains options to alter Client behaviour
 type Options struct {
-	PrometheusSummary *prometheus.SummaryVec
+	PrometheusMetrics metrics.PrometheusMetrics
 }
 
 // GetVersion retrieves the version of the Plex server
@@ -76,6 +77,10 @@ func (client *Client) GetSessions(ctx context.Context) (sessions []Session, err 
 
 // call the specified Plex API endpoint
 func (client *Client) call(ctx context.Context, endpoint string, response interface{}) (err error) {
+	defer func() {
+		client.Options.PrometheusMetrics.ReportErrors(err, "plex", endpoint)
+	}()
+
 	client.authToken, err = client.authenticate(ctx)
 
 	if err != nil {
@@ -87,8 +92,8 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 	req.Header.Add("X-Plex-Token", client.authToken)
 
 	var timer *prometheus.Timer
-	if client.Options.PrometheusSummary != nil {
-		timer = prometheus.NewTimer(client.Options.PrometheusSummary.WithLabelValues("plex", endpoint))
+	if client.Options.PrometheusMetrics.Latency != nil {
+		timer = prometheus.NewTimer(client.Options.PrometheusMetrics.Latency.WithLabelValues("plex", endpoint))
 	}
 
 	var resp *http.Response
@@ -118,6 +123,10 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 // authenticate logs in to plex.tv and gets an authentication token
 // to be used for calls to the Plex server APIs
 func (client *Client) authenticate(ctx context.Context) (authToken string, err error) {
+	defer func() {
+		client.Options.PrometheusMetrics.ReportErrors(err, "plex", "auth")
+	}()
+
 	if authToken = client.authToken; authToken != "" {
 		return
 	}
@@ -137,10 +146,7 @@ func (client *Client) authenticate(ctx context.Context) (authToken string, err e
 	req.Header.Add("X-Plex-Version", version.BuildVersion)
 	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
 
-	var timer *prometheus.Timer
-	if client.Options.PrometheusSummary != nil {
-		timer = prometheus.NewTimer(client.Options.PrometheusSummary.WithLabelValues("plex", "auth"))
-	}
+	timer := client.Options.PrometheusMetrics.MakeLatencyTimer("plex", "auth")
 
 	var resp *http.Response
 	resp, err = client.Client.Do(req)

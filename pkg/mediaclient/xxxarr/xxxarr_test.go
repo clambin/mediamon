@@ -1,9 +1,10 @@
-package mediaclient_test
+package xxxarr_test
 
 import (
 	"context"
 	"errors"
-	"github.com/clambin/mediamon/pkg/mediaclient"
+	"github.com/clambin/mediamon/pkg/mediaclient/metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	io_prometheus_client "github.com/prometheus/client_model/go"
@@ -16,7 +17,7 @@ import (
 )
 
 func TestXXXArrClient_GetApplication(t *testing.T) {
-	client := mediaclient.XXXArrClient{
+	client := xxxarr.Client{
 		Client:      &http.Client{},
 		URL:         "",
 		APIKey:      "",
@@ -27,7 +28,7 @@ func TestXXXArrClient_GetApplication(t *testing.T) {
 }
 
 func TestXXXArrClient_GetURL(t *testing.T) {
-	client := mediaclient.XXXArrClient{
+	client := xxxarr.Client{
 		Client:      &http.Client{},
 		URL:         "https://localhost:4321",
 		APIKey:      "",
@@ -81,7 +82,7 @@ func TestXXXArrClient_GetVersion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &mediaclient.XXXArrClient{
+			client := &xxxarr.Client{
 				Client:      &http.Client{},
 				URL:         testServer.URL,
 				APIKey:      tt.fields.APIKey,
@@ -135,7 +136,7 @@ func TestXXXArrClient_GetCalendar(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &mediaclient.XXXArrClient{
+			client := &xxxarr.Client{
 				Client:      &http.Client{},
 				URL:         testServer.URL,
 				APIKey:      tt.fields.APIKey,
@@ -189,7 +190,7 @@ func TestXXXArrClient_GetQueue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &mediaclient.XXXArrClient{
+			client := &xxxarr.Client{
 				Client:      &http.Client{},
 				URL:         testServer.URL,
 				APIKey:      tt.fields.APIKey,
@@ -246,7 +247,7 @@ func TestXXXArrClient_GetMonitored(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &mediaclient.XXXArrClient{
+			client := &xxxarr.Client{
 				Client:      &http.Client{},
 				URL:         testServer.URL,
 				APIKey:      tt.fields.APIKey,
@@ -271,7 +272,7 @@ func TestXXXArrClient_GetMonitored_Panic(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(xxxArrHandler))
 	defer testServer.Close()
 
-	client := &mediaclient.XXXArrClient{
+	client := &xxxarr.Client{
 		Client:      &http.Client{},
 		URL:         testServer.URL,
 		APIKey:      "",
@@ -284,7 +285,7 @@ func TestXXXArrClient_GetMonitored_Panic(t *testing.T) {
 func TestXXXArrClient_ServerDown(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(xxxArrDownHandler))
 
-	client := &mediaclient.XXXArrClient{
+	client := &xxxarr.Client{
 		Client:      &http.Client{},
 		URL:         testServer.URL,
 		APIKey:      "",
@@ -305,18 +306,26 @@ func TestXXXArrClient_WithMetrics(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(xxxArrHandler))
 	defer testServer.Close()
 
-	requestDuration := promauto.NewSummaryVec(prometheus.SummaryOpts{
+	latencyMetric := promauto.NewSummaryVec(prometheus.SummaryOpts{
 		Name: "xxxarr_request_duration_seconds",
 		Help: "Duration of API requests.",
 	}, []string{"application", "request"})
 
-	client := &mediaclient.XXXArrClient{
+	errorMetric := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "xxxarr_request_errors",
+		Help: "Duration of API requests.",
+	}, []string{"application", "request"})
+
+	client := &xxxarr.Client{
 		Client:      &http.Client{},
 		URL:         testServer.URL,
 		APIKey:      "1234",
 		Application: "sonarr",
-		Options: mediaclient.XXXArrOpts{
-			PrometheusSummary: requestDuration,
+		Options: xxxarr.Options{
+			PrometheusMetrics: metrics.PrometheusMetrics{
+				Latency: latencyMetric,
+				Errors:  errorMetric,
+			},
 		},
 	}
 
@@ -325,13 +334,27 @@ func TestXXXArrClient_WithMetrics(t *testing.T) {
 
 	// validate that a metric was recorded
 	ch := make(chan prometheus.Metric)
-	go requestDuration.Collect(ch)
+	go latencyMetric.Collect(ch)
 
 	desc := <-ch
 	var m io_prometheus_client.Metric
 	err = desc.Write(&m)
 	require.NoError(t, err)
 	assert.Equal(t, uint64(1), *m.Summary.SampleCount)
+
+	// shut down the server
+	testServer.Close()
+
+	_, err = client.GetVersion(context.Background())
+	require.Error(t, err)
+
+	ch = make(chan prometheus.Metric)
+	go errorMetric.Collect(ch)
+
+	desc = <-ch
+	err = desc.Write(&m)
+	require.NoError(t, err)
+	assert.Equal(t, float64(1), m.Counter.GetValue())
 }
 
 // Responses

@@ -1,35 +1,35 @@
-package mediaclient
+package transmission
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"net/http"
 )
 
-// TransmissionAPI interface
-type TransmissionAPI interface {
+// API interface
+type API interface {
 	GetVersion(context.Context) (string, error)
 	GetStats(context.Context) (int, int, int, int, error)
 }
 
-// TransmissionClient calls the Transmission APIs
-type TransmissionClient struct {
+// Client calls the Transmission APIs
+type Client struct {
 	Client    *http.Client
 	URL       string
 	SessionID string
-	Options   TransmissionOpts
+	Options   Options
 }
 
-// TransmissionOpts contains options to alter TransmissionClient behaviour
-type TransmissionOpts struct {
-	PrometheusSummary *prometheus.SummaryVec
+// Options contains options to alter Client behaviour
+type Options struct {
+	PrometheusMetrics metrics.PrometheusMetrics
 }
 
 // GetVersion determines the version of the Transmission server
-func (client *TransmissionClient) GetVersion(ctx context.Context) (version string, err error) {
+func (client *Client) GetVersion(ctx context.Context) (version string, err error) {
 	var stats struct {
 		Arguments struct {
 			Version string
@@ -51,7 +51,7 @@ func (client *TransmissionClient) GetVersion(ctx context.Context) (version strin
 //   - total download speed
 //   - total upload speed
 //   - encountered error
-func (client *TransmissionClient) GetStats(ctx context.Context) (active int, paused int, download int, upload int, err error) {
+func (client *Client) GetStats(ctx context.Context) (active int, paused int, download int, upload int, err error) {
 	var stats struct {
 		Arguments struct {
 			ActiveTorrentCount int
@@ -73,7 +73,11 @@ func (client *TransmissionClient) GetStats(ctx context.Context) (active int, pau
 }
 
 // call the specified Transmission API endpoint
-func (client *TransmissionClient) call(ctx context.Context, method string, response interface{}) (err error) {
+func (client *Client) call(ctx context.Context, method string, response interface{}) (err error) {
+	defer func() {
+		client.Options.PrometheusMetrics.ReportErrors(err, "transmission", method)
+	}()
+
 	var answer bool
 	for answer == false && err == nil {
 
@@ -81,10 +85,7 @@ func (client *TransmissionClient) call(ctx context.Context, method string, respo
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
-		var timer *prometheus.Timer
-		if client.Options.PrometheusSummary != nil {
-			timer = prometheus.NewTimer(client.Options.PrometheusSummary.WithLabelValues("transmission", method))
-		}
+		timer := client.Options.PrometheusMetrics.MakeLatencyTimer("transmission", method)
 
 		var resp *http.Response
 		resp, err = client.Client.Do(req)
