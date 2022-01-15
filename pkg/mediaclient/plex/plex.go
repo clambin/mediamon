@@ -6,11 +6,10 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"github.com/clambin/mediamon/version"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/clambin/metrics"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -33,7 +32,7 @@ type Client struct {
 
 // Options contains options to alter Client behaviour
 type Options struct {
-	PrometheusMetrics metrics.PrometheusMetrics
+	PrometheusMetrics metrics.APIClientMetrics
 }
 
 // GetVersion retrieves the version of the Plex server
@@ -91,10 +90,7 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-Plex-Token", client.authToken)
 
-	var timer *prometheus.Timer
-	if client.Options.PrometheusMetrics.Latency != nil {
-		timer = prometheus.NewTimer(client.Options.PrometheusMetrics.Latency.WithLabelValues("plex", endpoint))
-	}
+	timer := client.Options.PrometheusMetrics.MakeLatencyTimer("plex", endpoint)
 
 	var resp *http.Response
 	resp, err = client.Client.Do(req)
@@ -155,23 +151,28 @@ func (client *Client) authenticate(ctx context.Context) (authToken string, err e
 		timer.ObserveDuration()
 	}
 
-	if err == nil {
-		if resp.StatusCode == http.StatusCreated {
-			// TODO: there's three different places in the response where the authToken appears.
-			// Which is the officially supported version?
-			var authResponse struct {
-				XMLName             xml.Name `xml:"user"`
-				AuthenticationToken string   `xml:"authenticationToken,attr"`
-			}
+	if err != nil {
+		return
+	}
 
-			body, _ := ioutil.ReadAll(resp.Body)
-			if err = xml.Unmarshal(body, &authResponse); err == nil {
-				authToken = authResponse.AuthenticationToken
-			}
-		} else {
-			err = fmt.Errorf("%s", resp.Status)
-		}
+	defer func() {
 		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusCreated {
+		return "", fmt.Errorf("%s", resp.Status)
+	}
+
+	// TODO: there's three different places in the response where the authToken appears.
+	// Which is the officially supported version?
+	var authResponse struct {
+		XMLName             xml.Name `xml:"user"`
+		AuthenticationToken string   `xml:"authenticationToken,attr"`
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	if err = xml.Unmarshal(body, &authResponse); err == nil {
+		authToken = authResponse.AuthenticationToken
 	}
 
 	log.WithFields(log.Fields{

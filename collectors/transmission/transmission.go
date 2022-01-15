@@ -3,8 +3,8 @@ package transmission
 import (
 	"context"
 	"github.com/clambin/mediamon/metrics"
-	metrics2 "github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
+	metrics2 "github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -69,7 +69,7 @@ func NewCollector(url string, _ time.Duration) prometheus.Collector {
 			Client: &http.Client{},
 			URL:    url,
 			Options: transmission.Options{
-				PrometheusMetrics: metrics2.PrometheusMetrics{
+				PrometheusMetrics: metrics2.APIClientMetrics{
 					Latency: metrics.Latency,
 					Errors:  metrics.Errors,
 				},

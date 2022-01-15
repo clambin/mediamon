@@ -3,8 +3,8 @@ package xxxarr
 import (
 	"github.com/clambin/mediamon/cache"
 	"github.com/clambin/mediamon/metrics"
-	metrics2 "github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
+	metrics2 "github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"time"
@@ -63,7 +63,7 @@ func NewRadarrCollector(url, apiKey string, interval time.Duration) prometheus.C
 				APIKey:      apiKey,
 				Application: "radarr",
 				Options: xxxarr.Options{
-					PrometheusMetrics: metrics2.PrometheusMetrics{
+					PrometheusMetrics: metrics2.APIClientMetrics{
 						Latency: metrics.Latency,
 						Errors:  metrics.Errors,
 					},

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/mediamon/pkg/mediaclient/metrics"
+	"github.com/clambin/metrics"
 	"net/http"
 )
 
@@ -31,7 +31,7 @@ type Client struct {
 
 // Options contains options to alter Client behaviour
 type Options struct {
-	PrometheusMetrics metrics.PrometheusMetrics
+	PrometheusMetrics metrics.APIClientMetrics
 }
 
 // GetApplication returns the client's configured application

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/clambin/gotools/metrics"
 	"github.com/clambin/mediamon/collectors/bandwidth"
 	"github.com/clambin/mediamon/collectors/connectivity"
 	"github.com/clambin/mediamon/collectors/plex"
@@ -9,6 +8,7 @@ import (
 	"github.com/clambin/mediamon/collectors/xxxarr"
 	"github.com/clambin/mediamon/services"
 	"github.com/clambin/mediamon/version"
+	"github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/xonvanetta/shutdown/pkg/shutdown"

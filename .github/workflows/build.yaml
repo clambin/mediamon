@@ -5,7 +5,7 @@ on:
     branches:
       - master
       - refactor
-      - request_errors
+      - metrics
 jobs:
   test:
     runs-on: ubuntu-latest

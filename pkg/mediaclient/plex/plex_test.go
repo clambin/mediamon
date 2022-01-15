@@ -3,11 +3,10 @@ package plex_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
+	"github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
@@ -83,6 +82,23 @@ func TestPlexClient_Authentication(t *testing.T) {
 	assert.Equal(t, "403 Forbidden", err.Error())
 }
 
+func TestPlexClient_Authentication_Failure(t *testing.T) {
+	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	authServer.Close()
+
+	client := &plex.Client{
+		Client:   &http.Client{},
+		URL:      "",
+		AuthURL:  authServer.URL,
+		UserName: "user@example.com",
+		Password: "badpassword",
+	}
+
+	_, err := client.GetVersion(context.Background())
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, unix.ECONNREFUSED))
+}
+
 func TestPlexClient_WithMetrics(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
@@ -105,7 +121,7 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 		UserName: "user@example.com",
 		Password: "somepassword",
 		Options: plex.Options{
-			PrometheusMetrics: metrics.PrometheusMetrics{
+			PrometheusMetrics: metrics.APIClientMetrics{
 				Latency: latencyMetric,
 				Errors:  errorMetric,
 			},
@@ -119,12 +135,17 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 	ch := make(chan prometheus.Metric)
 	go latencyMetric.Collect(ch)
 
-	desc := <-ch
-	var m io_prometheus_client.Metric
-	err = desc.Write(&m)
-	require.NoError(t, err)
-	// TODO: why isn't this 2 (one for auth, one for API call)?
-	assert.Equal(t, uint64(1), m.Summary.GetSampleCount())
+	expected := map[string]uint64{
+		"auth":      1,
+		"/identity": 1,
+	}
+	for i := 0; i < len(expected); i++ {
+		desc := <-ch
+		assert.Equal(t, "plex", metrics.MetricLabel(desc, "application"))
+		value, ok := expected[metrics.MetricLabel(desc, "request")]
+		require.True(t, ok)
+		assert.Equal(t, value, metrics.MetricValue(desc).GetSummary().GetSampleCount())
+	}
 
 	// shut down the server
 	testServer.Close()
@@ -135,11 +156,17 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 	ch = make(chan prometheus.Metric)
 	go errorMetric.Collect(ch)
 
-	desc = <-ch
-	err = desc.Write(&m)
-	require.NoError(t, err)
-	// TODO: why isn't this 2 (one for auth, one for API call)?
-	assert.Equal(t, float64(1), m.Counter.GetValue())
+	expected2 := map[string]float64{
+		"auth":      0,
+		"/identity": 1,
+	}
+	for i := 0; i < len(expected2); i++ {
+		desc := <-ch
+		assert.Equal(t, "plex", metrics.MetricLabel(desc, "application"))
+		value, ok := expected2[metrics.MetricLabel(desc, "request")]
+		require.True(t, ok)
+		assert.Equal(t, value, metrics.MetricValue(desc).GetCounter().GetValue())
+	}
 }
 
 func TestClient_Failures(t *testing.T) {

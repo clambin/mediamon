@@ -2,11 +2,10 @@ package transmission_test
 
 import (
 	"context"
-	metrics2 "github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
+	metrics2 "github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -117,7 +116,7 @@ func TestTransmissionClient_WithMetrics(t *testing.T) {
 		Client: &http.Client{},
 		URL:    testServer.URL,
 		Options: transmission.Options{
-			PrometheusMetrics: metrics2.PrometheusMetrics{
+			PrometheusMetrics: metrics2.APIClientMetrics{
 				Latency: duration,
 				Errors:  errorMetric,
 			},
@@ -132,10 +131,7 @@ func TestTransmissionClient_WithMetrics(t *testing.T) {
 	go duration.Collect(ch)
 
 	desc := <-ch
-	var m io_prometheus_client.Metric
-	err = desc.Write(&m)
-	require.NoError(t, err)
-	assert.Equal(t, uint64(2), *m.Summary.SampleCount)
+	assert.Equal(t, uint64(2), metrics2.MetricValue(desc).GetSummary().GetSampleCount())
 
 	// shut down the server
 	testServer.Close()
@@ -147,9 +143,7 @@ func TestTransmissionClient_WithMetrics(t *testing.T) {
 	go errorMetric.Collect(ch)
 
 	desc = <-ch
-	err = desc.Write(&m)
-	require.NoError(t, err)
-	assert.Equal(t, float64(1), m.Counter.GetValue())
+	assert.Equal(t, 1.0, metrics2.MetricValue(desc).GetCounter().GetValue())
 }
 
 // Server handlers

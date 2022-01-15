@@ -3,7 +3,7 @@ package xxxarr_test
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/gotools/metrics"
+	"github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"testing"

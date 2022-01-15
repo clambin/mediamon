@@ -3,9 +3,9 @@ package plex_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/gotools/metrics"
 	"github.com/clambin/mediamon/collectors/plex"
 	plexAPI "github.com/clambin/mediamon/pkg/mediaclient/plex"
+	"github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"testing"

@@ -3,11 +3,10 @@ package xxxarr_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/mediamon/pkg/mediaclient/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
+	"github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
@@ -322,7 +321,7 @@ func TestXXXArrClient_WithMetrics(t *testing.T) {
 		APIKey:      "1234",
 		Application: "sonarr",
 		Options: xxxarr.Options{
-			PrometheusMetrics: metrics.PrometheusMetrics{
+			PrometheusMetrics: metrics.APIClientMetrics{
 				Latency: latencyMetric,
 				Errors:  errorMetric,
 			},
@@ -337,10 +336,7 @@ func TestXXXArrClient_WithMetrics(t *testing.T) {
 	go latencyMetric.Collect(ch)
 
 	desc := <-ch
-	var m io_prometheus_client.Metric
-	err = desc.Write(&m)
-	require.NoError(t, err)
-	assert.Equal(t, uint64(1), *m.Summary.SampleCount)
+	assert.Equal(t, uint64(1), metrics.MetricValue(desc).GetSummary().GetSampleCount())
 
 	// shut down the server
 	testServer.Close()
@@ -352,9 +348,7 @@ func TestXXXArrClient_WithMetrics(t *testing.T) {
 	go errorMetric.Collect(ch)
 
 	desc = <-ch
-	err = desc.Write(&m)
-	require.NoError(t, err)
-	assert.Equal(t, float64(1), m.Counter.GetValue())
+	assert.Equal(t, 1.0, metrics.MetricValue(desc).GetCounter().GetValue())
 }
 
 // Responses
