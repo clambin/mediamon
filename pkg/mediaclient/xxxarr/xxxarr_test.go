@@ -3,8 +3,8 @@ package xxxarr_test
 import (
 	"context"
 	"errors"
+	"github.com/clambin/go-metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
-	"github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/stretchr/testify/assert"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/metrics"
+	"github.com/clambin/go-metrics"
 	"net/http"
 )
 

@@ -1,8 +1,8 @@
 package bandwidth_test
 
 import (
+	"github.com/clambin/go-metrics"
 	"github.com/clambin/mediamon/collectors/bandwidth"
-	"github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"

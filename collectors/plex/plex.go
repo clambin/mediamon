@@ -2,9 +2,9 @@ package plex
 
 import (
 	"context"
+	metrics2 "github.com/clambin/go-metrics"
 	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
-	metrics2 "github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"net/http"

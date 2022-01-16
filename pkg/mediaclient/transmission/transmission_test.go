@@ -2,8 +2,8 @@ package transmission_test
 
 import (
 	"context"
+	metrics2 "github.com/clambin/go-metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
-	metrics2 "github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/stretchr/testify/assert"

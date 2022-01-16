@@ -1,10 +1,10 @@
 package xxxarr
 
 import (
+	metrics2 "github.com/clambin/go-metrics"
 	"github.com/clambin/mediamon/cache"
 	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
-	metrics2 "github.com/clambin/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"time"
