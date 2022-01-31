@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/clambin/go-metrics v0.2.1
-	github.com/prometheus/client_golang v1.12.0
+	github.com/prometheus/client_golang v1.12.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/xonvanetta/shutdown v0.0.3
