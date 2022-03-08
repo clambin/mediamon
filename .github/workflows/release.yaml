@@ -7,15 +7,15 @@ on:
 
 jobs:
   test:
-    uses: clambin/workflows/.github/workflows/test.yaml@v2
+    uses: clambin/workflows/.github/workflows/test.yaml@main
   build:
     needs:
       - test
-    uses: clambin/workflows/.github/workflows/build.yaml@v2
+    uses: clambin/workflows/.github/workflows/build.yaml@main
     with:
       target: mediamon
   release:
     needs:
       - build
-    uses: clambin/workflows/.github/workflows/release.yaml@v2
+    uses: clambin/workflows/.github/workflows/release.yaml@main
 

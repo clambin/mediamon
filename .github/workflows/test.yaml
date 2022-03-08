@@ -9,6 +9,6 @@ on:
 
 jobs:
   test:
-    uses: clambin/workflows/.github/workflows/test.yaml@v2
+    uses: clambin/workflows/.github/workflows/test.yaml@main
     with:
       all-tests: true
