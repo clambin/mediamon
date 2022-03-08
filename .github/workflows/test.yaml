@@ -4,12 +4,11 @@ on:
   push:
     branches-ignore:
       - master
-      - refactor
-      - metrics
+      - workflows
   pull_request_target:
 
 jobs:
   test:
-    uses: clambin/workflows/.github/workflows/test.yaml@main
+    uses: clambin/workflows/.github/workflows/test.yaml@v2
     with:
-      go-version: 1.17
+      all-tests: true
