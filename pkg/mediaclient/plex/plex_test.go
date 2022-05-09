@@ -16,7 +16,7 @@ import (
 	"testing"
 )
 
-func TestPlexClient_GetVersion(t *testing.T) {
+func TestPlexClient_GetIdentity(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
 	defer testServer.Close()
 
@@ -31,13 +31,9 @@ func TestPlexClient_GetVersion(t *testing.T) {
 		Password: "somepassword",
 	}
 
-	version, err := client.GetVersion(context.Background())
+	identity, err := client.GetIdentity(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "SomeVersion", version)
-
-	version, err = client.GetVersion(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, "SomeVersion", version)
+	assert.Equal(t, "SomeVersion", identity.MediaContainer.Version)
 }
 
 func TestPlexClient_GetStats(t *testing.T) {
@@ -57,12 +53,31 @@ func TestPlexClient_GetStats(t *testing.T) {
 
 	sessions, err := client.GetSessions(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, []plex.Session{
-		{Title: "", User: "foo", Local: true, Transcode: false, Throttled: false, Speed: 0},
-		{Title: "", User: "bar", Local: false, Transcode: false, Throttled: false, Speed: 2.1},
-		{Title: "", User: "snafu", Local: true, Transcode: true, Throttled: true, Speed: 3.1},
-		{Title: "", User: "snafu", Local: true, Transcode: true, Throttled: true, Speed: 4.1},
-	}, sessions)
+
+	titles := []string{"pilot", "movie 1", "movie 2", "movie 3"}
+	locations := []string{"lan", "wan", "lan", "lan"}
+	require.Len(t, sessions.MediaContainer.Metadata, len(titles))
+
+	for index, title := range titles {
+		assert.Equal(t, title, sessions.MediaContainer.Metadata[index].Title)
+		assert.Equal(t, "Plex Web", sessions.MediaContainer.Metadata[index].Player.Product)
+		assert.Equal(t, locations[index], sessions.MediaContainer.Metadata[index].Session.Location)
+
+		if sessions.MediaContainer.Metadata[index].TranscodeSession.VideoDecision == "transcode" {
+			assert.NotZero(t, sessions.MediaContainer.Metadata[index].TranscodeSession.Speed)
+		} else {
+			assert.Zero(t, sessions.MediaContainer.Metadata[index].TranscodeSession.Speed)
+		}
+	}
+
+	/*
+			{Title: "series - season 1 - pilot", User: "foo", Location: "lan", Player: "Plex Web", Transcode: false, Throttled: false, Speed: 0},
+			{Title: "movie 1", User: "bar", Location: "wan", Player: "Plex Web", Transcode: false, Throttled: false, Speed: 2.1},
+			{Title: "movie 2", User: "snafu", Location: "lan", Player: "Plex Web", Transcode: true, Throttled: true, Speed: 3.1},
+			{Title: "movie 3", User: "snafu", Location: "lan", Player: "Plex Web", Transcode: true, Throttled: true, Speed: 4.1},
+		}, sessions)
+
+	*/
 }
 
 func TestPlexClient_Authentication(t *testing.T) {
@@ -77,9 +92,9 @@ func TestPlexClient_Authentication(t *testing.T) {
 		Password: "badpassword",
 	}
 
-	_, err := client.GetVersion(context.Background())
+	_, err := client.GetIdentity(context.Background())
 	require.Error(t, err)
-	assert.Equal(t, "403 Forbidden", err.Error())
+	assert.Contains(t, err.Error(), "403 Forbidden")
 }
 
 func TestPlexClient_Authentication_Failure(t *testing.T) {
@@ -94,7 +109,7 @@ func TestPlexClient_Authentication_Failure(t *testing.T) {
 		Password: "badpassword",
 	}
 
-	_, err := client.GetVersion(context.Background())
+	_, err := client.GetIdentity(context.Background())
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, unix.ECONNREFUSED))
 }
@@ -128,7 +143,7 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 		},
 	}
 
-	_, err := client.GetVersion(context.Background())
+	_, err := client.GetIdentity(context.Background())
 	require.NoError(t, err)
 
 	// validate that the metrics were recorded
@@ -150,7 +165,7 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 	// shut down the server
 	testServer.Close()
 
-	_, err = client.GetVersion(context.Background())
+	_, err = client.GetIdentity(context.Background())
 	require.Error(t, err)
 
 	ch = make(chan prometheus.Metric)
@@ -182,12 +197,12 @@ func TestClient_Failures(t *testing.T) {
 		Password: "somepassword",
 	}
 
-	_, err := client.GetVersion(context.Background())
+	_, err := client.GetIdentity(context.Background())
 	require.Error(t, err)
 	assert.Equal(t, "500 Internal Server Error", err.Error())
 
 	testServer.Close()
-	_, err = client.GetVersion(context.Background())
+	_, err = client.GetIdentity(context.Background())
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, unix.ECONNREFUSED))
 }
@@ -244,10 +259,10 @@ var plexResponses = map[string]string{
 	"/status/sessions": `{ "MediaContainer": {
 		"size": 2,
 		"Metadata": [
-			{ "User": { "title": "foo" }, "Player": { "local": true }},
-			{ "User": { "title": "bar" },  "Player": { "local": false }, "TranscodeSession": { "throttled": false, "speed": 2.1, "videoDecision": "copy" } },
-			{ "User": { "title": "snafu" }, "Player": { "local": true }, "TranscodeSession": { "throttled": true, "speed": 3.1, "videoDecision": "transcode" } },
-			{ "User": { "title": "snafu" }, "Player": { "local": true }, "TranscodeSession": { "throttled": true, "speed": 4.1, "videoDecision": "transcode" } }
+			{ "User": { "title": "foo" },   "Player": { "product": "Plex Web" }, "Session": { "location": "lan"}, "grandparentTitle": "series", "parentTitle": "season 1", "title": "pilot", "type": "episode"},
+			{ "User": { "title": "bar" },   "Player": { "product": "Plex Web" }, "Session": { "location": "wan"}, "TranscodeSession": { "throttled": false, "videoDecision": "copy" }, "title": "movie 1" },
+			{ "User": { "title": "snafu" }, "Player": { "product": "Plex Web" }, "Session": { "location": "lan"}, "TranscodeSession": { "throttled": true, "speed": 3.1, "videoDecision": "transcode" }, "title": "movie 2" },
+			{ "User": { "title": "snafu" }, "Player": { "product": "Plex Web" }, "Session": { "location": "lan"}, "TranscodeSession": { "throttled": true, "speed": 4.1, "videoDecision": "transcode" }, "title": "movie 3" }
 		]
 	}}`,
 }

@@ -7,22 +7,20 @@ import (
 
 // A Cache prevents too many API calls to expensive servers. It stores the latest update, and
 // if subsequent calls to Update come before Duration, it returns the cached status update instead.
-//
-// Set LastStats to an initial value with the type returned by the Updater. Cache panics if the types do not match.
-type Cache struct {
+type Cache[T any] struct {
 	Duration  time.Duration // how long to cache data
-	LastStats interface{}   // holds the latest update (and the initial one).
-	Updater   UpdateFunc    // returns the next update
+	Updater   UpdateFunc[T] // returns the next update
+	lastStats T             // holds the latest update (and the initial one).
 	expiry    time.Time
 	lock      sync.Mutex
 }
 
 // UpdateFunc is the signature of the updater function
-type UpdateFunc func() (interface{}, error)
+type UpdateFunc[T any] func() (T, error)
 
 // Update is called to get the next update. If the latest update is more recent than Duration, the cached update is
 // returned. Otherwise, the Updater function is called.
-func (cache *Cache) Update() interface{} {
+func (cache *Cache[T]) Update() T {
 	cache.lock.Lock()
 	defer cache.lock.Unlock()
 
@@ -30,11 +28,11 @@ func (cache *Cache) Update() interface{} {
 		stats, err := cache.Updater()
 
 		if err == nil {
-			cache.LastStats = stats
+			cache.lastStats = stats
 			cache.expiry = time.Now().Add(cache.Duration)
 		}
 
 	}
 
-	return cache.LastStats
+	return cache.lastStats
 }

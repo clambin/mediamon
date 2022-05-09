@@ -118,9 +118,11 @@ mediamon_transmission_download_speed:       Transmission download speed in bytes
 mediamon_transmission_paused_torrent_count: Number of paused torrents
 mediamon_transmission_upload_speed:         Transmission upload speed in bytes / sec
 mediamon_transmission_version:              version info
-mediamon_xxxarr_calendar_count:             Number of upcoming episodes / movies
+mediamon_xxxarr_calendar:                   Upcoming episodes / movies ("title" label contains the title)
 mediamon_xxxarr_monitored_count:            Number of monitored series / movies
 mediamon_xxxarr_queued_count:               Number of episodes / movies being downloaded
+mediamon_xxxarr_queued_total_bytes:         Size of an episode / movie being downloaded ("title" label contains the title)
+mediamon_xxxarr_queued_downloaded_bytes:    Downloaded size of an episode / movie being downloaded ("title" label contains the title)
 mediamon_xxxarr_unmonitored_count:          Number of unmonitored series / movies
 mediamon_xxxarr_version:                    version info
 openvpn_client_status:                      OpenVPN client status

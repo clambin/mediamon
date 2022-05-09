@@ -2,8 +2,10 @@ package plex
 
 import (
 	"context"
+	"fmt"
 	metrics2 "github.com/clambin/go-metrics"
 	"github.com/clambin/mediamon/metrics"
+	"github.com/clambin/mediamon/pkg/iplocator"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -11,53 +13,10 @@ import (
 	"time"
 )
 
-var (
-	versionMetric = prometheus.NewDesc(
-		prometheus.BuildFQName("mediamon", "plex", "version"),
-		"version info",
-		[]string{"version", "url"},
-		nil,
-	)
-
-	transcodersMetric = prometheus.NewDesc(
-		prometheus.BuildFQName("mediamon", "plex", "transcoder_total_count"),
-		"Number of transcode sessions",
-		[]string{"url"},
-		nil,
-	)
-
-	transcodingMetric = prometheus.NewDesc(
-		prometheus.BuildFQName("mediamon", "plex", "transcoder_active_count"),
-		"Number of active transcode sessions",
-		[]string{"url"},
-		nil,
-	)
-
-	speedMetric = prometheus.NewDesc(
-		prometheus.BuildFQName("mediamon", "plex", "transcoder_speed_total"),
-		"Total speed of active transcoders",
-		[]string{"url"},
-		nil,
-	)
-
-	locationMetric = prometheus.NewDesc(
-		prometheus.BuildFQName("mediamon", "plex", "session_location_count"),
-		"Active plex sessions by location",
-		[]string{"location", "url"},
-		nil,
-	)
-
-	usersMetric = prometheus.NewDesc(
-		prometheus.BuildFQName("mediamon", "plex", "session_user_count"),
-		"Active Plex sessions by location",
-		[]string{"user", "url"},
-		nil,
-	)
-)
-
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
 	plex.API
+	iplocator.Locator
 	url string
 }
 
@@ -76,18 +35,17 @@ func NewCollector(url, username, password string, _ time.Duration) prometheus.Co
 				},
 			},
 		},
-		url: url,
+		Locator: &iplocator.Client{},
+		url:     url,
 	}
 }
 
 // Describe implements the prometheus.Collector interface
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- versionMetric
+	ch <- sessionMetric
 	ch <- transcodersMetric
-	ch <- transcodingMetric
 	ch <- speedMetric
-	ch <- locationMetric
-	ch <- usersMetric
 }
 
 // Collect implements the prometheus.Collector interface
@@ -97,7 +55,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {
-	version, err := coll.GetVersion(context.Background())
+	identity, err := coll.GetIdentity(context.Background())
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(
 			prometheus.NewDesc("mediamon_error",
@@ -107,7 +65,7 @@ func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), version, coll.url)
+	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), identity.MediaContainer.Version, coll.url)
 }
 
 func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
@@ -121,38 +79,82 @@ func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	users := map[string]int{}
-	transcoders := 0.0
-	transcoding := 0.0
-	speed := 0.0
-	lan := 0.0
-	wan := 0.0
+	var active, throttled, speed float64
 
-	for _, session := range sessions {
-		if session.Transcode {
-			transcoders++
-			if session.Throttled == false {
-				transcoding++
+	for id, stats := range parseSessions(sessions) {
+		var lon, lat string
+		if stats.location != "lan" {
+			lon, lat = coll.locateAddress(stats.address)
+		}
+
+		ch <- prometheus.MustNewConstMetric(sessionMetric, prometheus.GaugeValue, 1.0,
+			coll.url, id, stats.user, stats.player, stats.title, stats.location, stats.address, lon, lat,
+		)
+
+		if stats.transcode {
+			if stats.throttled {
+				throttled++
+			} else {
+				active++
 			}
-			speed += session.Speed
+			speed += stats.speed
 		}
-		if session.Local {
-			lan++
+	}
+	if active+throttled > 0 {
+		ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, active,
+			coll.url, "transcoding",
+		)
+		ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, throttled,
+			coll.url, "throttled",
+		)
+		ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, speed,
+			coll.url,
+		)
+	}
+}
+
+func (coll Collector) locateAddress(address string) (lonAsString, latAsString string) {
+	lon, lat, err := coll.Locator.Locate(address)
+
+	if err == nil {
+		lonAsString = fmt.Sprintf("%.2f", lon)
+		latAsString = fmt.Sprintf("%.2f", lat)
+	}
+	return
+}
+
+type plexSession struct {
+	user      string
+	player    string
+	location  string
+	title     string
+	address   string
+	transcode bool
+	throttled bool
+	speed     float64
+}
+
+func parseSessions(input plex.SessionsResponse) (output map[string]plexSession) {
+	output = make(map[string]plexSession)
+
+	for _, session := range input.MediaContainer.Metadata {
+		var title string
+		if session.Type == "episode" {
+			title = session.GrandparentTitle + " - " + session.ParentTitle + " - " + session.Title
 		} else {
-			wan++
+			title = session.Title
 		}
-		count, _ := users[session.User]
-		count++
-		users[session.User] = count
-	}
 
-	ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, transcoders, coll.url)
-	ch <- prometheus.MustNewConstMetric(transcodingMetric, prometheus.GaugeValue, transcoding, coll.url)
-	ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, speed, coll.url)
-	ch <- prometheus.MustNewConstMetric(locationMetric, prometheus.GaugeValue, lan, "lan", coll.url)
-	ch <- prometheus.MustNewConstMetric(locationMetric, prometheus.GaugeValue, wan, "wan", coll.url)
-
-	for user, count := range users {
-		ch <- prometheus.MustNewConstMetric(usersMetric, prometheus.GaugeValue, float64(count), user, coll.url)
+		output[session.Session.ID] = plexSession{
+			user:      session.User.Title,
+			player:    session.Player.Product,
+			location:  session.Session.Location,
+			title:     title,
+			address:   session.Player.Address,
+			transcode: session.TranscodeSession.VideoDecision == "transcode",
+			throttled: session.TranscodeSession.Throttled,
+			speed:     session.TranscodeSession.Speed,
+		}
 	}
+	return
 }

@@ -8,15 +8,15 @@ import (
 	"fmt"
 	"github.com/clambin/go-metrics"
 	"github.com/clambin/mediamon/version"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 )
 
 // API interface
+//go:generate mockery --name API
 type API interface {
-	GetVersion(context.Context) (string, error)
-	GetSessions(ctx context.Context) (sessions []Session, err error)
+	GetIdentity(context.Context) (identity IdentityResponse, err error)
+	GetSessions(ctx context.Context) (sessions SessionsResponse, err error)
 }
 
 // Client calls the Plex APIs
@@ -30,47 +30,22 @@ type Client struct {
 	authToken string
 }
 
+var _ API = &Client{}
+
 // Options contains options to alter Client behaviour
 type Options struct {
 	PrometheusMetrics metrics.APIClientMetrics
 }
 
-// GetVersion retrieves the version of the Plex server
-func (client *Client) GetVersion(ctx context.Context) (version string, err error) {
-	var stats identityStats
-	err = client.call(ctx, "/identity", &stats)
-	if err == nil {
-		version = stats.MediaContainer.Version
-	}
+// GetIdentity calls Plex' /identity endpoint. Mainly useful to get the server's version.
+func (client *Client) GetIdentity(ctx context.Context) (identity IdentityResponse, err error) {
+	err = client.call(ctx, "/identity", &identity)
 	return
 }
 
-// Session represents a user watching a stream on Plex
-type Session struct {
-	Title     string  // title of the movie, tv show
-	User      string  // Name of user
-	Local     bool    // Is the user local (LAN) or not (WAN)?
-	Transcode bool    // Does the session transcode the video?
-	Throttled bool    // Is transcoding currently throttled?
-	Speed     float64 // Current transcoding speed
-}
-
 // GetSessions retrieves session information from the server.
-func (client *Client) GetSessions(ctx context.Context) (sessions []Session, err error) {
-	var stats sessionStats
-	err = client.call(ctx, "/status/sessions", &stats)
-	if err == nil {
-		for _, entry := range stats.MediaContainer.Metadata {
-			sessions = append(sessions, Session{
-				Title:     entry.GrandparentTitle,
-				User:      entry.User.Title,
-				Local:     entry.Player.Local,
-				Transcode: entry.TranscodeSession.VideoDecision == "transcode",
-				Throttled: entry.TranscodeSession.Throttled,
-				Speed:     entry.TranscodeSession.Speed,
-			})
-		}
-	}
+func (client *Client) GetSessions(ctx context.Context) (sessions SessionsResponse, err error) {
+	err = client.call(ctx, "/status/sessions", &sessions)
 	return
 }
 
@@ -80,7 +55,7 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 		client.Options.PrometheusMetrics.ReportErrors(err, "plex", endpoint)
 	}()
 
-	client.authToken, err = client.authenticate(ctx)
+	err = client.authenticate(ctx)
 
 	if err != nil {
 		return
@@ -102,6 +77,7 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 	if err != nil {
 		return
 	}
+
 	defer func() {
 		_ = resp.Body.Close()
 	}()
@@ -110,22 +86,19 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 		return fmt.Errorf("%s", resp.Status)
 	}
 
-	decoder := json.NewDecoder(resp.Body)
-	err = decoder.Decode(&response)
-
-	return
+	return json.NewDecoder(resp.Body).Decode(&response)
 }
 
 // authenticate logs in to plex.tv and gets an authentication token
 // to be used for calls to the Plex server APIs
-func (client *Client) authenticate(ctx context.Context) (authToken string, err error) {
+func (client *Client) authenticate(ctx context.Context) (err error) {
+	if client.authToken != "" {
+		return
+	}
+
 	defer func() {
 		client.Options.PrometheusMetrics.ReportErrors(err, "plex", "auth")
 	}()
-
-	if authToken = client.authToken; authToken != "" {
-		return
-	}
 
 	authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s",
 		client.UserName,
@@ -160,7 +133,7 @@ func (client *Client) authenticate(ctx context.Context) (authToken string, err e
 	}()
 
 	if resp.StatusCode != http.StatusCreated {
-		return "", fmt.Errorf("%s", resp.Status)
+		return fmt.Errorf("plex auth failed: %s", resp.Status)
 	}
 
 	// TODO: there's three different places in the response where the authToken appears.
@@ -172,13 +145,8 @@ func (client *Client) authenticate(ctx context.Context) (authToken string, err e
 
 	body, _ := io.ReadAll(resp.Body)
 	if err = xml.Unmarshal(body, &authResponse); err == nil {
-		authToken = authResponse.AuthenticationToken
+		client.authToken = authResponse.AuthenticationToken
 	}
-
-	log.WithFields(log.Fields{
-		"err":       err,
-		"authToken": authToken,
-	}).Debug("plex authenticate")
 
 	return
 }

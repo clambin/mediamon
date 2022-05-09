@@ -18,7 +18,7 @@ func main() {
 		Password: os.Getenv("PLEX_PASSWORD"),
 	}
 
-	_, err := client.GetVersion(context.Background())
+	_, err := client.GetIdentity(context.Background())
 	if err != nil {
 		panic(err)
 	}
@@ -28,12 +28,12 @@ func main() {
 		panic(err)
 	}
 
-	for _, session := range sessions {
-		fmt.Printf("user: %s. transcode: %v (speed: %.1f, throttled: %v). media: %s. local: %v\n",
+	for _, session := range sessions.MediaContainer.Metadata {
+		fmt.Printf("user: %s. transcode: %v (speed: %.1f, throttled: %v). media: %s. location: %s\n",
 			session.User,
-			session.Transcode, session.Speed, session.Throttled,
+			session.TranscodeSession.VideoDecision, session.TranscodeSession.Speed, session.TranscodeSession.Throttled,
 			session.Title,
-			session.Local,
+			session.Session.Location,
 		)
 	}
 }

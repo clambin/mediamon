@@ -13,45 +13,43 @@ type stats struct {
 	fail bool
 }
 
-func (s *stats) update() (interface{}, error) {
+func (s *stats) update() (int, error) {
 	if s.fail {
-		return nil, fmt.Errorf("failure")
+		return -1, fmt.Errorf("failure")
 	}
 	return s.next, nil
 }
 
 func TestCache_Update(t *testing.T) {
 	s := &stats{next: 1}
-	c := cache.Cache{
-		Duration:  time.Hour,
-		LastStats: 0,
-		Updater:   s.update,
+	c := cache.Cache[int]{
+		Duration: time.Hour,
+		Updater:  s.update,
 	}
 
-	updated := c.Update().(int)
+	updated := c.Update()
 	assert.Equal(t, 1, updated)
 
 	s.next = 2
-	updated = c.Update().(int)
+	updated = c.Update()
 	assert.Equal(t, 1, updated)
 
 	s.fail = true
-	updated = c.Update().(int)
+	updated = c.Update()
 	assert.Equal(t, 1, updated)
 }
 
 func TestCache_Expiry(t *testing.T) {
 	s := &stats{next: 1}
-	c := cache.Cache{
-		Duration:  0,
-		LastStats: 0,
-		Updater:   s.update,
+	c := cache.Cache[int]{
+		Duration: 0,
+		Updater:  s.update,
 	}
 
-	updated := c.Update().(int)
+	updated := c.Update()
 	assert.Equal(t, 1, updated)
 
 	s.next = 2
-	updated = c.Update().(int)
+	updated = c.Update()
 	assert.Equal(t, 2, updated)
 }
