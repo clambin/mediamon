@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/clambin/go-metrics"
 	"github.com/clambin/mediamon/collectors/transmission"
+	transmission2 "github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -63,16 +64,23 @@ type server struct {
 	fail bool
 }
 
-func (server *server) GetVersion(_ context.Context) (string, error) {
+func (server server) GetSessionParameters(_ context.Context) (response transmission2.SessionParameters, err error) {
 	if server.fail {
-		return "", fmt.Errorf("failed")
+		err = fmt.Errorf("failed")
+		return
 	}
-	return "foo", nil
+	response.Arguments.Version = "foo"
+	return
 }
 
-func (server *server) GetStats(_ context.Context) (int, int, int, int, error) {
+func (server server) GetSessionStatistics(_ context.Context) (stats transmission2.SessionStats, err error) {
 	if server.fail {
-		return 0, 0, 0, 0, fmt.Errorf("failed")
+		err = fmt.Errorf("failed")
+		return
 	}
-	return 1, 2, 100, 25, nil
+	stats.Arguments.ActiveTorrentCount = 1
+	stats.Arguments.PausedTorrentCount = 2
+	stats.Arguments.UploadSpeed = 25
+	stats.Arguments.DownloadSpeed = 100
+	return
 }

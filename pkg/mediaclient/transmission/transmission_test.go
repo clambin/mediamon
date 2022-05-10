@@ -14,7 +14,7 @@ import (
 	"testing"
 )
 
-func TestTransmissionClient_GetVersion(t *testing.T) {
+func TestTransmissionClient_GetSessionParameters(t *testing.T) {
 	s := server{sessionID: "1234"}
 	testServer := s.start()
 	defer testServer.Close()
@@ -24,12 +24,12 @@ func TestTransmissionClient_GetVersion(t *testing.T) {
 		URL:    testServer.URL,
 	}
 
-	version, err := client.GetVersion(context.Background())
+	params, err := client.GetSessionParameters(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "2.94 (d8e60ee44f)", version)
+	assert.Equal(t, "2.94 (d8e60ee44f)", params.Arguments.Version)
 }
 
-func TestTransmissionClient_GetStats(t *testing.T) {
+func TestTransmissionClient_GetSessionStats(t *testing.T) {
 	s := server{sessionID: "1234"}
 	testServer := s.start()
 	defer testServer.Close()
@@ -39,12 +39,12 @@ func TestTransmissionClient_GetStats(t *testing.T) {
 		URL:    testServer.URL,
 	}
 
-	active, paused, download, upload, err := client.GetStats(context.Background())
+	stats, err := client.GetSessionStatistics(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, 1, active)
-	assert.Equal(t, 2, paused)
-	assert.Equal(t, 100, download)
-	assert.Equal(t, 25, upload)
+	assert.Equal(t, 1, stats.Arguments.ActiveTorrentCount)
+	assert.Equal(t, 2, stats.Arguments.PausedTorrentCount)
+	assert.Equal(t, 100, stats.Arguments.DownloadSpeed)
+	assert.Equal(t, 25, stats.Arguments.UploadSpeed)
 }
 
 func TestTransmissionClient_Failures(t *testing.T) {
@@ -55,19 +55,19 @@ func TestTransmissionClient_Failures(t *testing.T) {
 		Client: &http.Client{},
 		URL:    testServer.URL,
 	}
-	_, _, _, _, err := client.GetStats(context.Background())
+	_, err := client.GetSessionParameters(context.Background())
 	require.Error(t, err)
 
 	s.invalid = false
-	_, _, _, _, err = client.GetStats(context.Background())
+	_, err = client.GetSessionParameters(context.Background())
 	require.NoError(t, err)
 
 	s.fail = true
-	_, _, _, _, err = client.GetStats(context.Background())
+	_, err = client.GetSessionParameters(context.Background())
 	require.Error(t, err)
 
 	testServer.Close()
-	_, _, _, _, err = client.GetStats(context.Background())
+	_, err = client.GetSessionParameters(context.Background())
 	require.Error(t, err)
 }
 
@@ -81,21 +81,21 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 		URL:    testServer.URL,
 	}
 
-	oldVersion, err := client.GetVersion(context.Background())
+	oldParams, err := client.GetSessionParameters(context.Background())
 	require.NoError(t, err)
 
 	// simulate the session key expiring
 	client.SessionID = "4321"
 
-	var newVersion string
-	newVersion, err = client.GetVersion(context.Background())
+	var newParams transmission.SessionParameters
+	newParams, err = client.GetSessionParameters(context.Background())
 
 	// call succeeded
 	require.NoError(t, err)
 	// and the next SessionID has been set
 	assert.Equal(t, "1234", client.SessionID)
 	// and the call worked
-	assert.Equal(t, oldVersion, newVersion)
+	assert.Equal(t, oldParams.Arguments.Version, newParams.Arguments.Version)
 }
 
 func TestTransmissionClient_WithMetrics(t *testing.T) {
@@ -123,7 +123,7 @@ func TestTransmissionClient_WithMetrics(t *testing.T) {
 		},
 	}
 
-	_, err := client.GetVersion(context.Background())
+	_, err := client.GetSessionParameters(context.Background())
 	require.NoError(t, err)
 
 	// validate that a metric was recorded
@@ -136,7 +136,7 @@ func TestTransmissionClient_WithMetrics(t *testing.T) {
 	// shut down the server
 	testServer.Close()
 
-	_, err = client.GetVersion(context.Background())
+	_, err = client.GetSessionParameters(context.Background())
 	require.Error(t, err)
 
 	ch = make(chan prometheus.Metric)

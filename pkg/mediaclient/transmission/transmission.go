@@ -10,9 +10,10 @@ import (
 )
 
 // API interface
+//go:generate mockery --name API
 type API interface {
-	GetVersion(context.Context) (string, error)
-	GetStats(context.Context) (int, int, int, int, error)
+	GetSessionParameters(ctx context.Context) (SessionParameters, error)
+	GetSessionStatistics(ctx context.Context) (stats SessionStats, err error)
 }
 
 // Client calls the Transmission APIs
@@ -23,52 +24,28 @@ type Client struct {
 	Options   Options
 }
 
+var _ API = &Client{}
+
 // Options contains options to alter Client behaviour
 type Options struct {
 	PrometheusMetrics metrics.APIClientMetrics
 }
 
-// GetVersion determines the version of the Transmission server
-func (client *Client) GetVersion(ctx context.Context) (version string, err error) {
-	var stats struct {
-		Arguments struct {
-			Version string
-		}
+// GetSessionParameters calls Transmission's "session-get" method. It returns the Transmission instance's configuration parameters
+func (client *Client) GetSessionParameters(ctx context.Context) (params SessionParameters, err error) {
+	err = client.call(ctx, "session-get", &params)
+	if err == nil && params.Result != "success" {
+		err = fmt.Errorf("session-get failed: %s", params.Result)
 	}
-
-	if err = client.call(ctx, "session-get", &stats); err == nil {
-		version = stats.Arguments.Version
-	}
-
 	return
 }
 
-// GetStats gets torrent & up/download stats from Transmission.
-//
-// Returns:
-//   - active torrents
-//   - paused torrents
-//   - total download speed
-//   - total upload speed
-//   - encountered error
-func (client *Client) GetStats(ctx context.Context) (active int, paused int, download int, upload int, err error) {
-	var stats struct {
-		Arguments struct {
-			ActiveTorrentCount int
-			PausedTorrentCount int
-			UploadSpeed        int
-			DownloadSpeed      int
-		}
-		Result string
+// GetSessionStatistics calls Transmission's "session-stats" method. It returns the Transmission instance's session statistics
+func (client *Client) GetSessionStatistics(ctx context.Context) (stats SessionStats, err error) {
+	err = client.call(ctx, "session-stats", &stats)
+	if err == nil && stats.Result != "success" {
+		err = fmt.Errorf("session-stats failed: %s", stats.Result)
 	}
-
-	if err = client.call(ctx, "session-stats", &stats); err == nil {
-		active = stats.Arguments.ActiveTorrentCount
-		paused = stats.Arguments.PausedTorrentCount
-		download = stats.Arguments.DownloadSpeed
-		upload = stats.Arguments.UploadSpeed
-	}
-
 	return
 }
 

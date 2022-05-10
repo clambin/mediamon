@@ -105,11 +105,32 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 func (coll *Collector) getStats() (stats transmissionStats, err error) {
 	ctx := context.Background()
 
-	stats.version, err = coll.GetVersion(ctx)
+	stats.version, err = coll.getVersion(ctx)
 
 	if err == nil {
-		stats.active, stats.paused, stats.download, stats.upload, err = coll.GetStats(ctx)
+		stats.active, stats.paused, stats.download, stats.upload, err = coll.getSessionStats(ctx)
 	}
 
 	return stats, err
+}
+
+func (coll *Collector) getVersion(ctx context.Context) (version string, err error) {
+	var params transmission.SessionParameters
+	params, err = coll.API.GetSessionParameters(ctx)
+	if err == nil {
+		version = params.Arguments.Version
+	}
+	return
+}
+
+func (coll *Collector) getSessionStats(ctx context.Context) (active int, paused int, download int, upload int, err error) {
+	var stats transmission.SessionStats
+	stats, err = coll.API.GetSessionStatistics(ctx)
+	if err == nil {
+		active = stats.Arguments.ActiveTorrentCount
+		paused = stats.Arguments.PausedTorrentCount
+		download = stats.Arguments.DownloadSpeed
+		upload = stats.Arguments.UploadSpeed
+	}
+	return
 }
