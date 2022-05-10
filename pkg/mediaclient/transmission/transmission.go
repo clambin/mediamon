@@ -56,7 +56,7 @@ func (client *Client) call(ctx context.Context, method string, response interfac
 	}()
 
 	var answer bool
-	for answer == false && err == nil {
+	for !answer && err == nil {
 
 		req, _ := http.NewRequestWithContext(ctx, http.MethodPost, client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
 		req.Header.Add("Content-Type", "application/json")

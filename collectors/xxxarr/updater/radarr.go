@@ -47,7 +47,7 @@ func (ru RadarrUpdater) getCalendar(ctx context.Context) (entries []string, err 
 	}
 
 	for _, entry := range calendar {
-		if entry.HasFile == false {
+		if !entry.HasFile {
 			entries = append(entries, entry.Title)
 		}
 	}

@@ -63,7 +63,7 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	value := 0.0
-	if coll.Update() == true {
+	if coll.Update() {
 		value = 1.0
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)

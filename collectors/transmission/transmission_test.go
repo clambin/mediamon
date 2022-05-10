@@ -55,7 +55,7 @@ func TestCollector_Collect_Fail(t *testing.T) {
 	go c.Collect(ch)
 
 	assert.Never(t, func() bool {
-		_ = <-ch
+		<-ch
 		return true
 	}, 100*time.Millisecond, 10*time.Millisecond)
 }

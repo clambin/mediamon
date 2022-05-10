@@ -112,18 +112,12 @@ func handler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	endpoint := req.URL.Path
-	if req.URL.RawQuery != "" {
-		endpoint += "?" + req.URL.RawQuery
-	}
-
 	response := testStruct{
 		Name: "bar",
 		Age:  42,
 	}
 
-	e := json.NewEncoder(w)
-	err := e.Encode(response)
+	err := json.NewEncoder(w).Encode(response)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
