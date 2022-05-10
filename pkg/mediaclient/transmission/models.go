@@ -1,5 +1,6 @@
 package transmission
 
+// SessionParameters contains the response to Transmission's "session-get" method. It contains all configuration parameters of the Transmission instance.
 type SessionParameters struct {
 	Arguments struct {
 		AltSpeedDown              int     `json:"alt-speed-down"`
@@ -11,7 +12,7 @@ type SessionParameters struct {
 		AltSpeedUp                int     `json:"alt-speed-up"`
 		BlocklistEnabled          bool    `json:"blocklist-enabled"`
 		BlocklistSize             int     `json:"blocklist-size"`
-		BlocklistUrl              string  `json:"blocklist-url"`
+		BlocklistURL              string  `json:"blocklist-url"`
 		CacheSizeMb               int     `json:"cache-size-mb"`
 		ConfigDir                 string  `json:"config-dir"`
 		DhtEnabled                bool    `json:"dht-enabled"`
@@ -34,8 +35,8 @@ type SessionParameters struct {
 		QueueStalledEnabled       bool    `json:"queue-stalled-enabled"`
 		QueueStalledMinutes       int     `json:"queue-stalled-minutes"`
 		RenamePartialFiles        bool    `json:"rename-partial-files"`
-		RpcVersion                int     `json:"rpc-version"`
-		RpcVersionMinimum         int     `json:"rpc-version-minimum"`
+		RPCVersion                int     `json:"rpc-version"`
+		RPCVersionMinimum         int     `json:"rpc-version-minimum"`
 		ScriptTorrentDoneEnabled  bool    `json:"script-torrent-done-enabled"`
 		ScriptTorrentDoneFilename string  `json:"script-torrent-done-filename"`
 		SeedQueueEnabled          bool    `json:"seed-queue-enabled"`
@@ -62,6 +63,7 @@ type SessionParameters struct {
 	Result string `json:"result"`
 }
 
+// SessionStats contains the response to Transmission's "session-stats" method. It contains statistics of the Transmission instance.
 type SessionStats struct {
 	Arguments struct {
 		ActiveTorrentCount int `json:"activeTorrentCount"`
