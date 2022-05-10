@@ -4,8 +4,8 @@ import (
 	"errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"time"
 )
 
@@ -52,7 +52,7 @@ func ParseConfigFile(fileName string) (*Config, error) {
 		content []byte
 		config  *Config
 	)
-	if content, err = ioutil.ReadFile(fileName); err == nil {
+	if content, err = os.ReadFile(fileName); err == nil {
 		config, err = ParseConfig(content)
 	}
 	return config, err

@@ -5,7 +5,8 @@ import (
 	"github.com/clambin/mediamon/collectors/bandwidth"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
+	"github.com/stretchr/testify/require"
+	"os"
 	"testing"
 	"time"
 )
@@ -58,27 +59,29 @@ END`),
 	// valid/invalid file content
 
 	for _, testCase := range testCases {
-		if filename, err := tempFile(testCase.content); assert.Nil(t, err, testCase.name) {
-			c := bandwidth.NewCollector(filename, 5*time.Minute)
-			ch := make(chan prometheus.Metric)
-			go c.Collect(ch)
+		filename, err := tempFile(testCase.content)
+		require.NoError(t, err)
 
-			if testCase.pass {
-				read := <-ch
-				assert.Equal(t, testCase.read, metrics.MetricValue(read).GetGauge().GetValue())
-				write := <-ch
-				assert.Equal(t, testCase.write, metrics.MetricValue(write).GetGauge().GetValue())
-			} else {
-				metric := <-ch
-				assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`, metric.Desc().String())
-			}
+		c := bandwidth.NewCollector(filename, 5*time.Minute)
+		ch := make(chan prometheus.Metric)
+		go c.Collect(ch)
+
+		if testCase.pass {
+			read := <-ch
+			assert.Equal(t, testCase.read, metrics.MetricValue(read).GetGauge().GetValue())
+			write := <-ch
+			assert.Equal(t, testCase.write, metrics.MetricValue(write).GetGauge().GetValue())
+		} else {
+			metric := <-ch
+			assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`, metric.Desc().String())
 		}
+		_ = os.Remove(filename)
 	}
 }
 
 func tempFile(content []byte) (string, error) {
 	filename := ""
-	file, err := ioutil.TempFile("", "openvpn_")
+	file, err := os.CreateTemp("", "openvpn_")
 	if err == nil {
 		filename = file.Name()
 		_, _ = file.Write(content)

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -69,15 +69,6 @@ func TestPlexClient_GetStats(t *testing.T) {
 			assert.Zero(t, sessions.MediaContainer.Metadata[index].TranscodeSession.Speed)
 		}
 	}
-
-	/*
-			{Title: "series - season 1 - pilot", User: "foo", Location: "lan", Player: "Plex Web", Transcode: false, Throttled: false, Speed: 0},
-			{Title: "movie 1", User: "bar", Location: "wan", Player: "Plex Web", Transcode: false, Throttled: false, Speed: 2.1},
-			{Title: "movie 2", User: "snafu", Location: "lan", Player: "Plex Web", Transcode: true, Throttled: true, Speed: 3.1},
-			{Title: "movie 3", User: "snafu", Location: "lan", Player: "Plex Web", Transcode: true, Throttled: true, Speed: 4.1},
-		}, sessions)
-
-	*/
 }
 
 func TestPlexClient_Authentication(t *testing.T) {
@@ -213,7 +204,7 @@ func plexAuthHandler(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		_ = req.Body.Close()
 	}()
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 
 	if err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)

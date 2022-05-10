@@ -4,7 +4,6 @@ import (
 	"github.com/clambin/mediamon/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -21,7 +20,7 @@ plex:
   interval: '1m'
 `)
 
-	f, err := ioutil.TempFile("", "tmp")
+	f, err := os.CreateTemp("", "tmp")
 	require.NoError(t, err)
 
 	defer func(name string) {

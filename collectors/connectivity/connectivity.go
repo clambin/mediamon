@@ -7,7 +7,7 @@ import (
 	"github.com/clambin/mediamon/cache"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -106,7 +106,7 @@ func (coll *Collector) ping() (err error) {
 
 		if resp.StatusCode == http.StatusOK {
 			var body []byte
-			body, err = ioutil.ReadAll(resp.Body)
+			body, err = io.ReadAll(resp.Body)
 
 			if err == nil {
 				decoder := json.NewDecoder(bytes.NewReader(body))
