@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -21,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 486,
+  "id": 1050,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -95,7 +98,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -105,7 +109,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "avg by (application, request) (\n    rate (mediamon_request_duration_seconds_sum[5m]) / rate (mediamon_request_duration_seconds_count[5m])\n)",
+          "expr": "avg by (application, request) (\n    rate (mediamon_request_duration_seconds_sum[$__rate_interval]) / rate (mediamon_request_duration_seconds_count[$__rate_interval])\n)",
           "interval": "",
           "legendFormat": "{{application}} - {{request}}",
           "refId": "A"
@@ -184,7 +188,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -194,7 +199,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "avg by (application, request) (\n    rate (mediamon_request_duration_seconds_count[5m])\n)",
+          "expr": "avg by (application, request) (\n    rate (mediamon_request_duration_seconds_count[$__rate_interval])\n)",
           "interval": "",
           "legendFormat": "{{application}} - {{request}}",
           "refId": "A"
@@ -273,7 +278,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -283,7 +289,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "avg by (application, request) (increase(mediamon_request_errors_total[5m]))",
+          "expr": "avg by (application, request) (increase(mediamon_request_errors_total[$__rate_interval]))",
           "interval": "",
           "legendFormat": "{{application}} - {{request}}",
           "refId": "A"
@@ -293,7 +299,8 @@
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 34,
+  "refresh": "30s",
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -307,6 +314,6 @@
   "timezone": "",
   "title": "mediamon - internal",
   "uid": "TFkbKcJ7z",
-  "version": 1,
+  "version": 3,
   "weekStart": ""
 }

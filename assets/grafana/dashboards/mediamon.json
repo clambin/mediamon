@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1021,
+  "id": 1058,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -185,15 +185,23 @@
       "pluginVersion": "8.0.6",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "avg(rate(openvpn_client_tcp_udp_read_bytes_total[5m]))",
+          "expr": "avg(rate(openvpn_client_tcp_udp_read_bytes_total[$__rate_interval]))",
           "interval": "",
           "legendFormat": "In",
           "refId": "B"
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "-avg(rate(openvpn_client_tcp_udp_write_bytes_total[5m]))",
+          "expr": "-avg(rate(openvpn_client_tcp_udp_write_bytes_total[$__rate_interval]))",
           "interval": "",
           "legendFormat": "Out",
           "refId": "A"
@@ -972,6 +980,7 @@
           },
           "decimals": 0,
           "mappings": [],
+          "max": 1,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -1022,7 +1031,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Value"
+          }
+        ]
       },
       "pluginVersion": "8.5.0",
       "targets": [
@@ -1342,15 +1357,23 @@
       "pluginVersion": "8.0.6",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "sum(rate(container_network_transmit_bytes_total{pod=~\"plex-.*\"}[5m]))",
+          "expr": "sum(rate(container_network_transmit_bytes_total{pod=~\"plex-.*\"}[$__rate_interval]))",
           "interval": "",
           "legendFormat": "Transmit",
           "refId": "A"
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "-sum(rate(container_network_receive_bytes_total{pod=~\"plex-.*\"}[5m]))",
+          "expr": "-sum(rate(container_network_receive_bytes_total{pod=~\"plex-.*\"}[$__rate_interval]))",
           "interval": "",
           "legendFormat": "Receive",
           "refId": "B"
@@ -1372,7 +1395,7 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "drawStyle": "bars",
             "fillOpacity": 100,
             "gradientMode": "none",
@@ -1559,15 +1582,23 @@
       "pluginVersion": "8.0.6",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "sum(rate(container_cpu_user_seconds_total{container=\"plex\"}[2m]))",
+          "expr": "sum(rate(container_cpu_user_seconds_total{container=\"plex\"}[$__rate_interval]))",
           "interval": "",
           "legendFormat": "system",
           "refId": "A"
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "exemplar": true,
-          "expr": "sum(rate(container_cpu_system_seconds_total{container=\"plex\"}[2m]))",
+          "expr": "sum(rate(container_cpu_system_seconds_total{container=\"plex\"}[$__rate_interval]))",
           "hide": false,
           "interval": "",
           "legendFormat": "user",
@@ -1632,7 +1663,32 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "Value"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -1913,7 +1969,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": false,
+  "refresh": "30s",
   "schemaVersion": 36,
   "style": "dark",
   "tags": [],
@@ -1921,7 +1977,7 @@
     "list": []
   },
   "time": {
-    "from": "now-24h",
+    "from": "now-12h",
     "to": "now"
   },
   "timepicker": {
@@ -1941,6 +1997,6 @@
   "timezone": "",
   "title": "Media Server",
   "uid": "8C0N81WRl",
-  "version": 13,
+  "version": 5,
   "weekStart": ""
 }
