@@ -3,6 +3,7 @@ package xxxarr
 import (
 	"context"
 	"fmt"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"net/http"
 )
 
@@ -21,25 +22,27 @@ type SonarrAPI interface {
 
 // SonarrClient calls Sonarr endpoints
 type SonarrClient struct {
-	apiClient
+	APICaller
 }
 
 var _ SonarrAPI = &SonarrClient{}
 
-// NewSonarrClient creates a new SonarrClient
-func NewSonarrClient(apiKey, url string, options Options) *SonarrClient {
-	return &SonarrClient{apiClient{
+// NewSonarrClient creates a new SonarrClient, using http.DefaultClient as http.Client
+func NewSonarrClient(apiKey, url string, options caller.Options) *SonarrClient {
+	return NewSonarrClientWithCaller(apiKey, url, &caller.Client{
 		HTTPClient:  http.DefaultClient,
-		URL:         url,
-		APIKey:      apiKey,
-		options:     options,
-		application: "sonarr",
-	}}
+		Options:     options,
+		Application: "sonarr",
+	})
 }
 
-// GetURL returns the configured URL of the Sonarr instance
-func (sc SonarrClient) GetURL() string {
-	return sc.URL
+// NewSonarrClientWithCaller creates a new SonarrClient with a specified Caller
+func NewSonarrClientWithCaller(apiKey, url string, caller caller.Caller) *SonarrClient {
+	return &SonarrClient{APICaller: &APIClient{
+		Caller: caller,
+		URL:    url,
+		APIKey: apiKey,
+	}}
 }
 
 // GetSystemStatus calls Sonarr's /api/v3/system/status endpoint. It returns the system status of the Sonarr instance

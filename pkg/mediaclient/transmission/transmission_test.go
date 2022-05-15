@@ -2,10 +2,8 @@ package transmission_test
 
 import (
 	"context"
-	metrics2 "github.com/clambin/go-metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -20,8 +18,11 @@ func TestTransmissionClient_GetSessionParameters(t *testing.T) {
 	defer testServer.Close()
 
 	client := &transmission.Client{
-		Client: &http.Client{},
-		URL:    testServer.URL,
+		Caller: &caller.Client{
+			HTTPClient:  http.DefaultClient,
+			Application: "transmission",
+		},
+		URL: testServer.URL,
 	}
 
 	params, err := client.GetSessionParameters(context.Background())
@@ -35,8 +36,11 @@ func TestTransmissionClient_GetSessionStats(t *testing.T) {
 	defer testServer.Close()
 
 	client := &transmission.Client{
-		Client: &http.Client{},
-		URL:    testServer.URL,
+		Caller: &caller.Client{
+			HTTPClient:  http.DefaultClient,
+			Application: "transmission",
+		},
+		URL: testServer.URL,
 	}
 
 	stats, err := client.GetSessionStatistics(context.Background())
@@ -52,23 +56,35 @@ func TestTransmissionClient_Failures(t *testing.T) {
 	testServer := s.start()
 
 	client := &transmission.Client{
-		Client: &http.Client{},
-		URL:    testServer.URL,
+		Caller: &caller.Client{
+			HTTPClient:  http.DefaultClient,
+			Application: "transmission",
+		},
+		URL: testServer.URL,
 	}
-	_, err := client.GetSessionParameters(context.Background())
-	require.Error(t, err)
+
+	ctx := context.Background()
+
+	_, err := client.GetSessionParameters(ctx)
+	assert.Error(t, err)
 
 	s.invalid = false
-	_, err = client.GetSessionParameters(context.Background())
-	require.NoError(t, err)
+	_, err = client.GetSessionParameters(ctx)
+	assert.NoError(t, err)
+
+	s.notSuccess = true
+	_, err = client.GetSessionParameters(ctx)
+	assert.Error(t, err)
+	_, err = client.GetSessionStatistics(ctx)
+	assert.Error(t, err)
 
 	s.fail = true
-	_, err = client.GetSessionParameters(context.Background())
-	require.Error(t, err)
+	_, err = client.GetSessionParameters(ctx)
+	assert.Error(t, err)
 
 	testServer.Close()
-	_, err = client.GetSessionParameters(context.Background())
-	require.Error(t, err)
+	_, err = client.GetSessionParameters(ctx)
+	assert.Error(t, err)
 }
 
 func TestTransmissionClient_Authentication(t *testing.T) {
@@ -77,8 +93,11 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 	defer testServer.Close()
 
 	client := &transmission.Client{
-		Client: &http.Client{},
-		URL:    testServer.URL,
+		Caller: &caller.Client{
+			HTTPClient:  http.DefaultClient,
+			Application: "transmission",
+		},
+		URL: testServer.URL,
 	}
 
 	oldParams, err := client.GetSessionParameters(context.Background())
@@ -98,60 +117,13 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 	assert.Equal(t, oldParams.Arguments.Version, newParams.Arguments.Version)
 }
 
-func TestTransmissionClient_WithMetrics(t *testing.T) {
-	s := server{sessionID: "1234"}
-	testServer := s.start()
-
-	duration := promauto.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "transmission_request_duration_seconds",
-		Help: "Duration of API requests.",
-	}, []string{"application", "request"})
-
-	errorMetric := promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "transmission_request_errors",
-		Help: "Duration of API requests.",
-	}, []string{"application", "request"})
-
-	client := &transmission.Client{
-		Client: &http.Client{},
-		URL:    testServer.URL,
-		Options: transmission.Options{
-			PrometheusMetrics: metrics2.APIClientMetrics{
-				Latency: duration,
-				Errors:  errorMetric,
-			},
-		},
-	}
-
-	_, err := client.GetSessionParameters(context.Background())
-	require.NoError(t, err)
-
-	// validate that a metric was recorded
-	ch := make(chan prometheus.Metric)
-	go duration.Collect(ch)
-
-	desc := <-ch
-	assert.Equal(t, uint64(2), metrics2.MetricValue(desc).GetSummary().GetSampleCount())
-
-	// shut down the server
-	testServer.Close()
-
-	_, err = client.GetSessionParameters(context.Background())
-	require.Error(t, err)
-
-	ch = make(chan prometheus.Metric)
-	go errorMetric.Collect(ch)
-
-	desc = <-ch
-	assert.Equal(t, 1.0, metrics2.MetricValue(desc).GetCounter().GetValue())
-}
-
 // Server handlers
 
 type server struct {
-	sessionID string
-	fail      bool
-	invalid   bool
+	sessionID  string
+	fail       bool
+	invalid    bool
+	notSuccess bool
 }
 
 func (s *server) start() *httptest.Server {
@@ -176,6 +148,11 @@ func (s *server) handler(w http.ResponseWriter, req *http.Request) {
 
 	if s.invalid {
 		_, _ = w.Write([]byte(`invalid content`))
+		return
+	}
+
+	if s.notSuccess {
+		_, _ = w.Write([]byte(`{ "result": "failed" }`))
 		return
 	}
 

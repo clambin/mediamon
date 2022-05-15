@@ -8,11 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
-	"time"
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := bandwidth.NewCollector("", 5*time.Minute)
+	c := bandwidth.NewCollector("")
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -62,7 +61,7 @@ END`),
 		filename, err := tempFile(testCase.content)
 		require.NoError(t, err)
 
-		c := bandwidth.NewCollector(filename, 5*time.Minute)
+		c := bandwidth.NewCollector(filename)
 		ch := make(chan prometheus.Metric)
 		go c.Collect(ch)
 
@@ -91,7 +90,7 @@ func tempFile(content []byte) (string, error) {
 }
 
 func TestCollector_Collect_Failure(t *testing.T) {
-	c := bandwidth.NewCollector("invalid file", 5*time.Minute)
+	c := bandwidth.NewCollector("invalid file")
 	ch := make(chan prometheus.Metric)
 
 	go c.Collect(ch)

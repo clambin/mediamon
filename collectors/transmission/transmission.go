@@ -4,11 +4,11 @@ import (
 	"context"
 	metrics2 "github.com/clambin/go-metrics"
 	"github.com/clambin/mediamon/metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"time"
 )
 
 var (
@@ -63,17 +63,18 @@ type transmissionStats struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(url string, _ time.Duration) prometheus.Collector {
+func NewCollector(url string) prometheus.Collector {
 	return &Collector{
 		API: &transmission.Client{
-			Client: &http.Client{},
-			URL:    url,
-			Options: transmission.Options{
-				PrometheusMetrics: metrics2.APIClientMetrics{
+			Caller: &caller.Client{
+				HTTPClient:  http.DefaultClient,
+				Application: "transmission",
+				Options: caller.Options{PrometheusMetrics: metrics2.APIClientMetrics{
 					Latency: metrics.Latency,
 					Errors:  metrics.Errors,
-				},
+				}},
 			},
+			URL: url,
 		},
 		url: url,
 	}

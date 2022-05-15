@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"github.com/clambin/mediamon/version"
 	"io"
 	"net/http"
@@ -21,9 +21,8 @@ type API interface {
 
 // Client calls the Plex APIs
 type Client struct {
-	Client    *http.Client
+	caller.Caller
 	URL       string
-	Options   Options
 	AuthURL   string
 	UserName  string
 	Password  string
@@ -31,11 +30,6 @@ type Client struct {
 }
 
 var _ API = &Client{}
-
-// Options contains options to alter Client behaviour
-type Options struct {
-	PrometheusMetrics metrics.APIClientMetrics
-}
 
 // GetIdentity calls Plex' /identity endpoint. Mainly useful to get the server's version.
 func (client *Client) GetIdentity(ctx context.Context) (identity IdentityResponse, err error) {
@@ -51,10 +45,6 @@ func (client *Client) GetSessions(ctx context.Context) (sessions SessionsRespons
 
 // call the specified Plex API endpoint
 func (client *Client) call(ctx context.Context, endpoint string, response interface{}) (err error) {
-	defer func() {
-		client.Options.PrometheusMetrics.ReportErrors(err, "plex", endpoint)
-	}()
-
 	err = client.authenticate(ctx)
 
 	if err != nil {
@@ -65,14 +55,8 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-Plex-Token", client.authToken)
 
-	timer := client.Options.PrometheusMetrics.MakeLatencyTimer("plex", endpoint)
-
 	var resp *http.Response
-	resp, err = client.Client.Do(req)
-
-	if timer != nil {
-		timer.ObserveDuration()
-	}
+	resp, err = client.Caller.Do(req)
 
 	if err != nil {
 		return
@@ -96,15 +80,10 @@ func (client *Client) authenticate(ctx context.Context) (err error) {
 		return
 	}
 
-	defer func() {
-		client.Options.PrometheusMetrics.ReportErrors(err, "plex", "auth")
-	}()
-
 	authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s",
 		client.UserName,
 		client.Password,
 	)
-
 	authURL := "https://plex.tv/users/sign_in.xml"
 	if client.AuthURL != "" {
 		authURL = client.AuthURL
@@ -115,14 +94,8 @@ func (client *Client) authenticate(ctx context.Context) (err error) {
 	req.Header.Add("X-Plex-Version", version.BuildVersion)
 	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
 
-	timer := client.Options.PrometheusMetrics.MakeLatencyTimer("plex", "auth")
-
 	var resp *http.Response
-	resp, err = client.Client.Do(req)
-
-	if timer != nil {
-		timer.ObserveDuration()
-	}
+	resp, err = client.Caller.Do(req)
 
 	if err != nil {
 		return

@@ -13,7 +13,7 @@ import (
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := transmission.NewCollector("http://localhost:8888", 5*time.Minute)
+	c := transmission.NewCollector("http://localhost:8888")
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -30,7 +30,7 @@ func TestCollector_Describe(t *testing.T) {
 }
 
 func TestCollector_Collect(t *testing.T) {
-	c := transmission.NewCollector("", time.Minute)
+	c := transmission.NewCollector("")
 	c.(*transmission.Collector).API = &server{}
 
 	ch := make(chan prometheus.Metric)
@@ -48,7 +48,7 @@ func TestCollector_Collect(t *testing.T) {
 }
 
 func TestCollector_Collect_Fail(t *testing.T) {
-	c := transmission.NewCollector("", time.Minute)
+	c := transmission.NewCollector("")
 	c.(*transmission.Collector).API = &server{fail: true}
 
 	ch := make(chan prometheus.Metric)

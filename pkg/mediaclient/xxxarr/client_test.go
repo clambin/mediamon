@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/clambin/go-metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/stretchr/testify/assert"
@@ -30,17 +31,19 @@ func TestApiClient_WithMetrics(t *testing.T) {
 	}, []string{"application", "request"})
 
 	s := httptest.NewServer(http.HandlerFunc(handler))
-	c := apiClient{
-		HTTPClient:  http.DefaultClient,
-		URL:         s.URL,
-		APIKey:      "1234",
-		application: "foo",
-		options: Options{
-			PrometheusMetrics: metrics.APIClientMetrics{
-				Latency: latencyMetric,
-				Errors:  errorMetric,
+	c := APIClient{
+		Caller: &caller.Client{
+			HTTPClient:  http.DefaultClient,
+			Application: "foo",
+			Options: caller.Options{
+				PrometheusMetrics: metrics.APIClientMetrics{
+					Latency: latencyMetric,
+					Errors:  errorMetric,
+				},
 			},
 		},
+		URL:    s.URL,
+		APIKey: "1234",
 	}
 
 	var response testStruct
@@ -71,11 +74,14 @@ func TestApiClient_WithMetrics(t *testing.T) {
 
 func TestApiClient_Failures(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handler))
-	c := apiClient{
-		HTTPClient:  http.DefaultClient,
-		URL:         s.URL,
-		APIKey:      "4321",
-		application: "foo",
+	c := APIClient{
+		Caller: &caller.Client{
+			HTTPClient:  http.DefaultClient,
+			Options:     caller.Options{},
+			Application: "foo",
+		},
+		URL:    s.URL,
+		APIKey: "4321",
 	}
 
 	ctx := context.Background()

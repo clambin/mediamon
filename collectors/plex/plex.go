@@ -6,11 +6,11 @@ import (
 	metrics2 "github.com/clambin/go-metrics"
 	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/iplocator"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"time"
 )
 
 // Collector presents Plex statistics as Prometheus metrics
@@ -21,21 +21,22 @@ type Collector struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(url, username, password string, _ time.Duration) prometheus.Collector {
+func NewCollector(url, username, password string) prometheus.Collector {
 	return &Collector{
 		API: &plex.Client{
-			Client:   &http.Client{},
+			Caller: &caller.Client{
+				HTTPClient:  http.DefaultClient,
+				Application: "plex",
+				Options: caller.Options{PrometheusMetrics: metrics2.APIClientMetrics{
+					Latency: metrics.Latency,
+					Errors:  metrics.Errors,
+				}},
+			},
 			URL:      url,
 			UserName: username,
 			Password: password,
-			Options: plex.Options{
-				PrometheusMetrics: metrics2.APIClientMetrics{
-					Latency: metrics.Latency,
-					Errors:  metrics.Errors,
-				},
-			},
 		},
-		Locator: &iplocator.Client{},
+		Locator: iplocator.New(),
 		url:     url,
 	}
 }

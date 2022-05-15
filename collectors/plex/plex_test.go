@@ -12,11 +12,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
-	"time"
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := plex.NewCollector("http://localhost:8888", "username", "password", 5*time.Minute)
+	c := plex.NewCollector("http://localhost:8888", "username", "password")
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -32,7 +31,7 @@ func TestCollector_Describe(t *testing.T) {
 }
 
 func TestCollector_Collect(t *testing.T) {
-	c := plex.NewCollector("", "", "", time.Minute)
+	c := plex.NewCollector("", "", "")
 	l := &mocks.Locator{}
 	m := &plexMock.API{}
 	c.(*plex.Collector).API = m
@@ -123,7 +122,7 @@ func TestCollector_Collect(t *testing.T) {
 }
 
 func TestCollector_Collect_Fail(t *testing.T) {
-	c := plex.NewCollector("", "", "", time.Minute)
+	c := plex.NewCollector("", "", "")
 	m := &plexMock.API{}
 	c.(*plex.Collector).API = m
 

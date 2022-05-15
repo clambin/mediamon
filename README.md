@@ -49,27 +49,21 @@ transmission:
   # Transmission RPC URL, e.g. "http://192.168.0.1:9101/transmission/rpc"
   # If not set, Transmission won't be monitored
   url: <url>
-  # How frequently to scrape transmission
-  interval: <duration>
 
 sonarr:
   # Sonarr URL. If not set, Sonarr won't be monitored
   url: <url>
-  # How frequently to scrape Sonarr
-  interval: <duration>
   # Sonarr API Key. See Sonarr / Settings / Security
   apikey: <key>
 
 radarr:
   # All these are equivalent to sonarr
   url: <url>
-  interval: <duration>
   apikey: <key>
 
 plex:
   # Plex URL, e.g. http://192.168.0.11:32400 
   url: <url> 
-  interval: <duration>
   # Your plex.tv user name and password
   username: <username>
   password: <password>
@@ -82,12 +76,12 @@ openvpn:
     proxy: <url>
     # Token supplied by ipinfo.io. You will need to register to obtain this
     token: <token>
+    # interval limits how often connectivity is checked 
     interval: <duration>
   bandwidth:
     # mediamon uses the OpenVPN status will to measure up/download bandwidth
     # filename contains the full path name of the client.status file. If not set, bandwidth won't be monitored
     filename: <file path>
-    interval: <duration>>
 ```
 
 ### Prometheus

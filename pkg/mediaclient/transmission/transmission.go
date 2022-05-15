@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"net/http"
 )
 
@@ -18,18 +18,12 @@ type API interface {
 
 // Client calls the Transmission APIs
 type Client struct {
-	Client    *http.Client
+	Caller    caller.Caller
 	URL       string
 	SessionID string
-	Options   Options
 }
 
 var _ API = &Client{}
-
-// Options contains options to alter Client behaviour
-type Options struct {
-	PrometheusMetrics metrics.APIClientMetrics
-}
 
 // GetSessionParameters calls Transmission's "session-get" method. It returns the Transmission instance's configuration parameters
 func (client *Client) GetSessionParameters(ctx context.Context) (params SessionParameters, err error) {
@@ -51,10 +45,6 @@ func (client *Client) GetSessionStatistics(ctx context.Context) (stats SessionSt
 
 // call the specified Transmission API endpoint
 func (client *Client) call(ctx context.Context, method string, response interface{}) (err error) {
-	defer func() {
-		client.Options.PrometheusMetrics.ReportErrors(err, "transmission", method)
-	}()
-
 	var answer bool
 	for !answer && err == nil {
 
@@ -62,14 +52,8 @@ func (client *Client) call(ctx context.Context, method string, response interfac
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
-		timer := client.Options.PrometheusMetrics.MakeLatencyTimer("transmission", method)
-
 		var resp *http.Response
-		resp, err = client.Client.Do(req)
-
-		if timer != nil {
-			timer.ObserveDuration()
-		}
+		resp, err = client.Caller.Do(req)
 
 		if err != nil {
 			break

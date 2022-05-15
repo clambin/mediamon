@@ -1,7 +1,7 @@
-package updater_test
+package scraper_test
 
 import (
-	"github.com/clambin/mediamon/collectors/xxxarr/updater"
+	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr/mocks"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +12,7 @@ import (
 
 func TestRadarrUpdater_GetStats(t *testing.T) {
 	c := &mocks.RadarrAPI{}
-	u := updater.RadarrUpdater{Client: c}
+	u := scraper.RadarrScraper{Client: c}
 
 	c.On("GetURL").Return("http://localhost:8080")
 	c.On("GetSystemStatus", mock.AnythingOfType("*context.emptyCtx")).Return(radarrSystemStatus, nil)
@@ -20,23 +20,25 @@ func TestRadarrUpdater_GetStats(t *testing.T) {
 	c.On("GetQueue", mock.AnythingOfType("*context.emptyCtx")).Return(radarrQueue, nil)
 	c.On("GetMovies", mock.AnythingOfType("*context.emptyCtx")).Return(radarrMovies, nil)
 	for id, entry := range radarrMoviesByID {
-		c.On("GetMovieByID", mock.AnythingOfType("*context.emptyCtx"), id).Return(entry, nil)
+		c.On("GetMovieByID", mock.AnythingOfType("*context.emptyCtx"), id).Return(entry, nil).Once()
 
 	}
 
-	stats, err := u.GetStats()
+	stats, err := u.Scrape()
 	require.NoError(t, err)
 
 	assert.Equal(t, "http://localhost:8080", stats.URL)
 	assert.Equal(t, "1.2.3.4444", stats.Version)
 	assert.Equal(t, []string{"movie 1", "movie 2"}, stats.Calendar)
-	assert.Equal(t, []updater.QueuedFile{
+	assert.Equal(t, []scraper.QueuedFile{
 		{Name: "movie 1", TotalBytes: 100, DownloadedBytes: 50},
 		{Name: "movie 3", TotalBytes: 100, DownloadedBytes: 100},
 		{Name: "movie 4", TotalBytes: 100, DownloadedBytes: 75},
 	}, stats.Queued)
 	assert.Equal(t, 3, stats.Monitored)
 	assert.Equal(t, 1, stats.Unmonitored)
+
+	c.AssertExpectations(t)
 }
 
 var (

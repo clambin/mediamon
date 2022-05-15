@@ -3,7 +3,9 @@ package iplocator
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/clambin/cache"
 	"net/http"
+	"time"
 )
 
 // Locator finds the geographic coordinates of an IP address
@@ -15,7 +17,15 @@ type Locator interface {
 // Client finds the geographic coordinates of an IP address.  It uses https://ip-api.com to look an IP address' location.
 type Client struct {
 	URL     string
-	ipCache cache
+	ipCache cache.Cacher[string, ipAPIResponse]
+}
+
+// New creates a new Client
+func New() *Client {
+	return &Client{
+		URL:     ipAPIURL,
+		ipCache: cache.New[string, ipAPIResponse](24*time.Hour, 36*time.Hour),
+	}
 }
 
 var _ Locator = &Client{}
@@ -48,10 +58,6 @@ func (c *Client) Locate(ipAddress string) (lon, lat float64, err error) {
 }
 
 func (c *Client) lookup(ipAddress string) (response ipAPIResponse, err error) {
-	if c.URL == "" {
-		c.URL = ipAPIURL
-	}
-
 	var resp *http.Response
 	resp, err = http.Get(c.URL + "/json/" + ipAddress)
 	if err != nil {

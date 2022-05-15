@@ -2,38 +2,55 @@ package xxxarr
 
 import (
 	metrics2 "github.com/clambin/go-metrics"
-	"github.com/clambin/mediamon/cache"
-	"github.com/clambin/mediamon/collectors/xxxarr/updater"
+	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"time"
 )
 
 // Collector presents Sonarr/Radarr statistics as Prometheus metrics
 type Collector struct {
-	updater.StatsGetter
-	cache.Cache[updater.Stats]
+	scraper.Scraper
 	application string
 	metrics     map[string]*prometheus.Desc
 }
 
-// NewRadarrCollector creates a new RadarrCollector
-func NewRadarrCollector(url, apiKey string, interval time.Duration) prometheus.Collector {
-	getter := updater.RadarrUpdater{
-		Client: xxxarr.NewRadarrClient(apiKey, url, xxxarr.Options{
-			PrometheusMetrics: metrics2.APIClientMetrics{
-				Latency: metrics.Latency,
-				Errors:  metrics.Errors,
-			},
-		}),
+var (
+	radarrCacheTable = []caller.CacheTableEntry{
+		{Endpoint: `/api/v3/system/status`, Expiry: time.Minute},
+		{Endpoint: `/api/v3/calendar`, Expiry: time.Minute},
+		{Endpoint: `/api/v3/movie`},
+		{Endpoint: `/api/v3/movie/[\d+]`, IsRegExp: true},
 	}
 
+	sonarrCacheTable = []caller.CacheTableEntry{
+		{Endpoint: `/api/v3/system/status`, Expiry: time.Minute},
+		{Endpoint: `/api/v3/calendar`, Expiry: time.Minute},
+		{Endpoint: `/api/v3/series`},
+		{Endpoint: `/api/v3/series/[\d+]`, IsRegExp: true},
+		{Endpoint: `/api/v3/episode/[\d+]`, IsRegExp: true},
+	}
+)
+
+const (
+	cacheExpiry     = 15 * time.Minute
+	cleanupInterval = 5 * time.Minute
+)
+
+// NewRadarrCollector creates a new RadarrCollector
+func NewRadarrCollector(url, apiKey string) prometheus.Collector {
+	options := caller.Options{PrometheusMetrics: metrics2.APIClientMetrics{
+		Latency: metrics.Latency,
+		Errors:  metrics.Errors,
+	}}
+	c := caller.NewCacher(nil, "radarr", options, radarrCacheTable, cacheExpiry, cleanupInterval)
+
 	return &Collector{
-		StatsGetter: getter,
-		Cache: cache.Cache[updater.Stats]{
-			Duration: interval,
-			Updater:  getter.GetStats,
+		Scraper: &scraper.RadarrScraper{
+			Client: xxxarr.NewRadarrClientWithCaller(apiKey, url, c),
 		},
 		application: "radarr",
 		metrics:     createMetrics("radarr"),
@@ -41,21 +58,15 @@ func NewRadarrCollector(url, apiKey string, interval time.Duration) prometheus.C
 }
 
 // NewSonarrCollector creates a new SonarrCollector
-func NewSonarrCollector(url, apiKey string, interval time.Duration) prometheus.Collector {
-	getter := &updater.SonarrUpdater{
-		Client: xxxarr.NewSonarrClient(apiKey, url, xxxarr.Options{
-			PrometheusMetrics: metrics2.APIClientMetrics{
-				Latency: metrics.Latency,
-				Errors:  metrics.Errors,
-			},
-		}),
-	}
-
+func NewSonarrCollector(url, apiKey string) prometheus.Collector {
+	options := caller.Options{PrometheusMetrics: metrics2.APIClientMetrics{
+		Latency: metrics.Latency,
+		Errors:  metrics.Errors,
+	}}
+	c := caller.NewCacher(nil, "sonarr", options, sonarrCacheTable, cacheExpiry, cleanupInterval)
 	return &Collector{
-		StatsGetter: getter,
-		Cache: cache.Cache[updater.Stats]{
-			Duration: interval,
-			Updater:  getter.GetStats,
+		Scraper: &scraper.SonarrScraper{
+			Client: xxxarr.NewSonarrClientWithCaller(apiKey, url, c),
 		},
 		application: "sonarr",
 		metrics:     createMetrics("sonarr"),
@@ -71,7 +82,15 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
-	stats := coll.Cache.Update()
+	stats, err := coll.Scrape()
+	if err != nil {
+		ch <- prometheus.NewInvalidMetric(
+			prometheus.NewDesc("mediamon_error",
+				"Error getting "+coll.application+" metrics", nil, nil),
+			err)
+		log.WithError(err).Warningf("failed to collect `%s` metrics", coll.application)
+		return
+	}
 
 	ch <- prometheus.MustNewConstMetric(coll.metrics["version"], prometheus.GaugeValue, float64(1), stats.Version, stats.URL)
 	for _, title := range stats.Calendar {

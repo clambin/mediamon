@@ -1,7 +1,7 @@
-package updater_test
+package scraper_test
 
 import (
-	"github.com/clambin/mediamon/collectors/xxxarr/updater"
+	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr/mocks"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +12,7 @@ import (
 
 func TestSonarrUpdater_GetStats(t *testing.T) {
 	c := &mocks.SonarrAPI{}
-	u := updater.SonarrUpdater{Client: c}
+	u := scraper.SonarrScraper{Client: c}
 
 	c.On("GetURL").Return("http://localhost:8080")
 	c.On("GetSystemStatus", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrSystemStatus, nil)
@@ -24,19 +24,21 @@ func TestSonarrUpdater_GetStats(t *testing.T) {
 		c.On("GetEpisodeByID", mock.AnythingOfType("*context.emptyCtx"), id).Return(entry, nil)
 	}
 
-	stats, err := u.GetStats()
+	stats, err := u.Scrape()
 	require.NoError(t, err)
 
 	assert.Equal(t, "http://localhost:8080", stats.URL)
 	assert.Equal(t, "1.2.3.4444", stats.Version)
 	assert.Equal(t, []string{"Series 11 - S01E02 - bar", "Series 11 - S01E03 - snafu"}, stats.Calendar)
-	assert.Equal(t, []updater.QueuedFile{
+	assert.Equal(t, []scraper.QueuedFile{
 		{Name: "series - S01E01 - Pilot", TotalBytes: 100, DownloadedBytes: 50},
 		{Name: "series - S01E02 - Seconds", TotalBytes: 100, DownloadedBytes: 100},
 		{Name: "series - S01E03 - End", TotalBytes: 100, DownloadedBytes: 75},
 	}, stats.Queued)
 	assert.Equal(t, 3, stats.Monitored)
 	assert.Equal(t, 1, stats.Unmonitored)
+
+	c.AssertExpectations(t)
 }
 
 var (

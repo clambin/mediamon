@@ -61,7 +61,6 @@ func main() {
 		log.WithField("url", cfg.Services.Transmission.URL).Info("monitoring Transmission")
 		prometheus.DefaultRegisterer.MustRegister(transmission.NewCollector(
 			cfg.Services.Transmission.URL,
-			cfg.Services.Transmission.Interval,
 		))
 	}
 
@@ -71,7 +70,6 @@ func main() {
 		prometheus.DefaultRegisterer.MustRegister(xxxarr.NewSonarrCollector(
 			cfg.Services.Sonarr.URL,
 			cfg.Services.Sonarr.APIKey,
-			cfg.Services.Sonarr.Interval,
 		))
 	}
 
@@ -81,7 +79,6 @@ func main() {
 		prometheus.DefaultRegisterer.MustRegister(xxxarr.NewRadarrCollector(
 			cfg.Services.Radarr.URL,
 			cfg.Services.Radarr.APIKey,
-			cfg.Services.Radarr.Interval,
 		))
 	}
 
@@ -92,7 +89,6 @@ func main() {
 			cfg.Services.Plex.URL,
 			cfg.Services.Plex.UserName,
 			cfg.Services.Plex.Password,
-			cfg.Services.Plex.Interval,
 		))
 	}
 
@@ -101,12 +97,11 @@ func main() {
 		log.WithField("filename", cfg.Services.OpenVPN.Bandwidth.FileName).Info("monitoring OpenVPN Bandwidth usage")
 		prometheus.DefaultRegisterer.MustRegister(bandwidth.NewCollector(
 			cfg.Services.OpenVPN.Bandwidth.FileName,
-			cfg.Services.OpenVPN.Bandwidth.Interval,
 		))
 	}
 
 	// Connectivity Probe
-	if cfg.Services.OpenVPN.Connectivity.ProxyURL != nil {
+	if cfg.Services.OpenVPN.Connectivity.Token != "" {
 		log.WithField("proxyURL", cfg.Services.OpenVPN.Connectivity.ProxyURL).Info("monitoring OpenVPN connectivity")
 		prometheus.DefaultRegisterer.MustRegister(connectivity.NewCollector(
 			cfg.Services.OpenVPN.Connectivity.Token,

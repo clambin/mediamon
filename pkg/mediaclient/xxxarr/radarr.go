@@ -3,6 +3,7 @@ package xxxarr
 import (
 	"context"
 	"fmt"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"net/http"
 )
 
@@ -20,25 +21,27 @@ type RadarrAPI interface {
 
 // RadarrClient calls Radarr endpoints
 type RadarrClient struct {
-	apiClient
+	APICaller
 }
 
 var _ RadarrAPI = &RadarrClient{}
 
-// NewRadarrClient creates a new RadarrClient
-func NewRadarrClient(apiKey, url string, options Options) *RadarrClient {
-	return &RadarrClient{apiClient{
+// NewRadarrClient creates a new RadarrClient, using http.DefaultClient as http.Client
+func NewRadarrClient(apiKey, url string, options caller.Options) *RadarrClient {
+	return NewRadarrClientWithCaller(apiKey, url, &caller.Client{
 		HTTPClient:  http.DefaultClient,
-		URL:         url,
-		APIKey:      apiKey,
-		options:     options,
-		application: "radarr",
-	}}
+		Options:     options,
+		Application: "radarr",
+	})
 }
 
-// GetURL returns the configured URL of the Radarr instance
-func (rc RadarrClient) GetURL() string {
-	return rc.URL
+// NewRadarrClientWithCaller creates a new RadarrClient with a specified caller
+func NewRadarrClientWithCaller(apiKey, url string, caller caller.Caller) *RadarrClient {
+	return &RadarrClient{APICaller: &APIClient{
+		Caller: caller,
+		URL:    url,
+		APIKey: apiKey,
+	}}
 }
 
 // GetSystemStatus calls Radarr's  /api/v3/system/status endpoint. It returns the system status of the Radarr instance

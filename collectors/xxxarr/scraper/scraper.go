@@ -1,6 +1,6 @@
-package updater
+package scraper
 
-// Stats contains the statistics returned by a StatsGetter
+// Stats contains the statistics returned by a Scraper
 type Stats struct {
 	URL         string
 	Version     string
@@ -17,7 +17,8 @@ type QueuedFile struct {
 	DownloadedBytes float64
 }
 
-// StatsGetter provides a generic means of getting stats from Sonarr or Radarr
-type StatsGetter interface {
-	GetStats() (Stats, error)
+// Scraper provides a generic means of getting stats from Sonarr or Radarr
+//go:generate mockery --name Scraper
+type Scraper interface {
+	Scrape() (Stats, error)
 }

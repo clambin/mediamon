@@ -2,6 +2,7 @@ package xxxarr_test
 
 import (
 	"context"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,7 @@ var sonarrResponses = Responses{
 }
 
 func TestNewSonarrClient_GetURL(t *testing.T) {
-	c := xxxarr.NewSonarrClient("1234", "foo", xxxarr.Options{})
+	c := xxxarr.NewSonarrClient("1234", "foo", caller.Options{})
 	assert.Equal(t, "foo", c.GetURL())
 }
 
@@ -31,7 +32,7 @@ func TestSonarrClient_GetSystemStatus(t *testing.T) {
 	s := NewTestServer(sonarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.NewSonarrClient("1234", s.server.URL, xxxarr.Options{})
+	c := xxxarr.NewSonarrClient("1234", s.server.URL, caller.Options{})
 
 	response, err := c.GetSystemStatus(context.Background())
 	require.NoError(t, err)
@@ -42,7 +43,7 @@ func TestSonarrClient_GetCalendar(t *testing.T) {
 	s := NewTestServer(sonarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.NewSonarrClient("1234", s.server.URL, xxxarr.Options{})
+	c := xxxarr.NewSonarrClient("1234", s.server.URL, caller.Options{})
 	calendar, err := c.GetCalendar(context.Background())
 	require.NoError(t, err)
 	require.Len(t, calendar, 3)
@@ -55,7 +56,7 @@ func TestSonarrClient_GetQueue(t *testing.T) {
 	s := NewTestServer(sonarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.NewSonarrClient("1234", s.server.URL, xxxarr.Options{})
+	c := xxxarr.NewSonarrClient("1234", s.server.URL, caller.Options{})
 	queue, err := c.GetQueue(context.Background())
 	require.NoError(t, err)
 	require.Len(t, queue.Records, 2)
@@ -66,7 +67,7 @@ func TestSonarrClient_GetQueuePage(t *testing.T) {
 	s := NewTestServer(sonarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.NewSonarrClient("1234", s.server.URL, xxxarr.Options{})
+	c := xxxarr.NewSonarrClient("1234", s.server.URL, caller.Options{})
 	queue, err := c.GetQueuePage(context.Background(), 2)
 	require.NoError(t, err)
 	require.Len(t, queue.Records, 1)
@@ -77,7 +78,7 @@ func TestSonarrClient_GetSeries(t *testing.T) {
 	s := NewTestServer(sonarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.NewSonarrClient("1234", s.server.URL, xxxarr.Options{})
+	c := xxxarr.NewSonarrClient("1234", s.server.URL, caller.Options{})
 	series, err := c.GetSeries(context.Background())
 	require.NoError(t, err)
 	require.Len(t, series, 2)
@@ -90,7 +91,7 @@ func TestSonarrClient_GetSeriesByID(t *testing.T) {
 	s := NewTestServer(sonarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.NewSonarrClient("1234", s.server.URL, xxxarr.Options{})
+	c := xxxarr.NewSonarrClient("1234", s.server.URL, caller.Options{})
 	series, err := c.GetSeriesByID(context.Background(), 11)
 	require.NoError(t, err)
 	assert.Equal(t, "Foo", series.Title)
@@ -100,7 +101,7 @@ func TestSonarrClient_GetEpisodeByID(t *testing.T) {
 	s := NewTestServer(sonarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.NewSonarrClient("1234", s.server.URL, xxxarr.Options{})
+	c := xxxarr.NewSonarrClient("1234", s.server.URL, caller.Options{})
 	episode, err := c.GetEpisodeByID(context.Background(), 11)
 	require.NoError(t, err)
 	assert.Equal(t, "Foo", episode.Title)

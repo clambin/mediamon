@@ -8,7 +8,6 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"time"
 )
 
 var (
@@ -37,7 +36,7 @@ type bandwidthStats struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(filename string, _ time.Duration) prometheus.Collector {
+func NewCollector(filename string) prometheus.Collector {
 	return &Collector{filename: filename}
 }
 

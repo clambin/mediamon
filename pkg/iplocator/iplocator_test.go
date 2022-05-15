@@ -24,7 +24,8 @@ func TestClient_Locate(t *testing.T) {
 		},
 	}
 	ts := httptest.NewServer(http.HandlerFunc(s.handle))
-	c := Client{URL: ts.URL}
+	c := New()
+	c.URL = ts.URL
 
 	lon, lat, err := c.Locate("8.8.8.8")
 	require.NoError(t, err)

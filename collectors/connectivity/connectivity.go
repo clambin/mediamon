@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/mediamon/cache"
+	metrics2 "github.com/clambin/go-metrics"
+	"github.com/clambin/mediamon/metrics"
+	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"net/url"
@@ -25,34 +26,37 @@ var (
 // Collector tests VPN connectivity by checking connection to https://ipinfo.io through a
 // configured proxy
 type Collector struct {
-	cache.Cache[bool]
 	URL    string
 	token  string
-	client *http.Client
+	Caller caller.Caller
 }
 
 const httpTimeout = 10 * time.Second
 
 // NewCollector creates a new Collector
 func NewCollector(token string, proxyURL *url.URL, interval time.Duration) prometheus.Collector {
-	transport := &http.Transport{}
+	var httpClient *http.Client
 	if proxyURL != nil {
-		transport.Proxy = http.ProxyURL(proxyURL)
+		httpClient = &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			},
+			Timeout: httpTimeout,
+		}
 	}
 
-	c := &Collector{
+	return &Collector{
 		token: token,
-		client: &http.Client{
-			Transport: transport,
-			Timeout:   httpTimeout,
-		},
+		Caller: caller.NewCacher(
+			httpClient, "ipInfo",
+			caller.Options{PrometheusMetrics: metrics2.APIClientMetrics{
+				Latency: metrics.Latency,
+				Errors:  metrics.Errors,
+			}},
+			[]caller.CacheTableEntry{},
+			interval, 0,
+		),
 	}
-	c.Cache = cache.Cache[bool]{
-		Duration: interval,
-		Updater:  c.getState,
-	}
-
-	return c
 }
 
 // Describe implements the prometheus.Collector interface
@@ -62,18 +66,13 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+	err := coll.ping()
+
 	value := 0.0
-	if coll.Update() {
+	if err == nil {
 		value = 1.0
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
-}
-
-func (coll *Collector) getState() (state bool, err error) {
-	err = coll.ping()
-	up := err == nil
-
-	return up, nil
 }
 
 func (coll *Collector) ping() (err error) {
@@ -89,35 +88,40 @@ func (coll *Collector) ping() (err error) {
 	req.URL.RawQuery = q.Encode()
 
 	var resp *http.Response
-	resp, err = coll.client.Do(req)
+	resp, err = coll.Caller.Do(req)
 
-	if err == nil {
-		var response struct {
-			IP       string
-			Hostname string
-			City     string
-			Region   string
-			Country  string
-			Loc      string
-			Org      string
-			Postal   string
-			Timezone string
-		}
-
-		if resp.StatusCode == http.StatusOK {
-			var body []byte
-			body, err = io.ReadAll(resp.Body)
-
-			if err == nil {
-				decoder := json.NewDecoder(bytes.NewReader(body))
-				err = decoder.Decode(&response)
-			}
-		} else {
-			err = fmt.Errorf("%s", resp.Status)
-		}
+	if err != nil {
+		return
 	}
 
-	log.WithError(err).Debug("ping")
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("%s", resp.Status)
+	}
+
+	var response struct {
+		IP       string
+		Hostname string
+		City     string
+		Region   string
+		Country  string
+		Loc      string
+		Org      string
+		Postal   string
+		Timezone string
+	}
+
+	var body []byte
+	body, err = io.ReadAll(resp.Body)
+
+	if err != nil {
+		return fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	err = json.NewDecoder(bytes.NewReader(body)).Decode(&response)
 
 	return
 }
