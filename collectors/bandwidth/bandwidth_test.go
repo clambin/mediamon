@@ -1,7 +1,7 @@
 package bandwidth_test
 
 import (
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/tools"
 	"github.com/clambin/mediamon/collectors/bandwidth"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -67,9 +67,9 @@ END`),
 
 		if testCase.pass {
 			read := <-ch
-			assert.Equal(t, testCase.read, metrics.MetricValue(read).GetGauge().GetValue())
+			assert.Equal(t, testCase.read, tools.MetricValue(read).GetGauge().GetValue())
 			write := <-ch
-			assert.Equal(t, testCase.write, metrics.MetricValue(write).GetGauge().GetValue())
+			assert.Equal(t, testCase.write, tools.MetricValue(write).GetGauge().GetValue())
 		} else {
 			metric := <-ch
 			assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`, metric.Desc().String())

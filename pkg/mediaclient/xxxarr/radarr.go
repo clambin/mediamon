@@ -3,7 +3,7 @@ package xxxarr
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/mediamon/pkg/mediaclient/caller"
+	"github.com/clambin/go-metrics/caller"
 	"net/http"
 )
 
@@ -26,10 +26,10 @@ type RadarrClient struct {
 
 var _ RadarrAPI = &RadarrClient{}
 
-// NewRadarrClient creates a new RadarrClient, using http.DefaultClient as http.Client
+// NewRadarrClient creates a new RadarrClient, using http.DefaultClient as http.InstrumentedClient
 func NewRadarrClient(apiKey, url string, options caller.Options) *RadarrClient {
-	return NewRadarrClientWithCaller(apiKey, url, &caller.Client{
-		HTTPClient:  http.DefaultClient,
+	return NewRadarrClientWithCaller(apiKey, url, &caller.InstrumentedClient{
+		BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
 		Options:     options,
 		Application: "radarr",
 	})

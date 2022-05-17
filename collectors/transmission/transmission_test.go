@@ -3,7 +3,7 @@ package transmission_test
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/tools"
 	"github.com/clambin/mediamon/collectors/transmission"
 	transmission2 "github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
@@ -37,12 +37,12 @@ func TestCollector_Collect(t *testing.T) {
 	go c.Collect(ch)
 
 	metric := <-ch
-	assert.Equal(t, 1.0, metrics.MetricValue(metric).GetGauge().GetValue())
-	assert.Equal(t, "foo", metrics.MetricLabel(metric, "version"))
+	assert.Equal(t, 1.0, tools.MetricValue(metric).GetGauge().GetValue())
+	assert.Equal(t, "foo", tools.MetricLabel(metric, "version"))
 
 	for _, value := range []float64{1, 2, 100, 25} {
 		metric = <-ch
-		assert.Equal(t, value, metrics.MetricValue(metric).GetGauge().GetValue())
+		assert.Equal(t, value, tools.MetricValue(metric).GetGauge().GetValue())
 
 	}
 }

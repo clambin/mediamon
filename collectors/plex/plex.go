@@ -3,10 +3,9 @@ package plex
 import (
 	"context"
 	"fmt"
-	metrics2 "github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/iplocator"
-	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -24,10 +23,10 @@ type Collector struct {
 func NewCollector(url, username, password string) prometheus.Collector {
 	return &Collector{
 		API: &plex.Client{
-			Caller: &caller.Client{
-				HTTPClient:  http.DefaultClient,
+			Caller: &caller.InstrumentedClient{
+				BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
 				Application: "plex",
-				Options: caller.Options{PrometheusMetrics: metrics2.APIClientMetrics{
+				Options: caller.Options{PrometheusMetrics: caller.ClientMetrics{
 					Latency: metrics.Latency,
 					Errors:  metrics.Errors,
 				}},
@@ -56,7 +55,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {
-	identity, err := coll.GetIdentity(context.Background())
+	identity, err := coll.API.GetIdentity(context.Background())
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(
 			prometheus.NewDesc("mediamon_error",
@@ -70,7 +69,7 @@ func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {
 }
 
 func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
-	sessions, err := coll.GetSessions(context.Background())
+	sessions, err := coll.API.GetSessions(context.Background())
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(
 			prometheus.NewDesc("mediamon_error",
@@ -81,9 +80,9 @@ func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 	}
 
 	var active, throttled, speed float64
+	var lon, lat string
 
 	for id, stats := range parseSessions(sessions) {
-		var lon, lat string
 		if stats.location != "lan" {
 			lon, lat = coll.locateAddress(stats.address)
 		}

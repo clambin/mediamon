@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - cache
+      - cacher
   pull_request_target:
 
 jobs:

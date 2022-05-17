@@ -2,7 +2,7 @@ package plex_test
 
 import (
 	"fmt"
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/tools"
 	"github.com/clambin/mediamon/collectors/plex"
 	"github.com/clambin/mediamon/pkg/iplocator/mocks"
 	plexAPI "github.com/clambin/mediamon/pkg/mediaclient/plex"
@@ -79,46 +79,46 @@ func TestCollector_Collect(t *testing.T) {
 	go c.Collect(ch)
 
 	version := <-ch
-	assert.Equal(t, 1.0, metrics.MetricValue(version).GetGauge().GetValue())
-	assert.Equal(t, "foo", metrics.MetricLabel(version, "version"))
+	assert.Equal(t, 1.0, tools.MetricValue(version).GetGauge().GetValue())
+	assert.Equal(t, "foo", tools.MetricLabel(version, "version"))
 
 	for i := 0; i < 3; i++ {
 		session := <-ch
 
 		require.Contains(t, session.Desc().String(), "mediamon_plex_session_count", i)
-		assert.Equal(t, "bar", metrics.MetricLabel(session, "user"), i)
-		assert.Equal(t, "Plex Web", metrics.MetricLabel(session, "player"), i)
-		assert.Equal(t, "foo", metrics.MetricLabel(session, "title"), i)
-		assert.Equal(t, 1.0, metrics.MetricValue(session).GetGauge().GetValue())
+		assert.Equal(t, "bar", tools.MetricLabel(session, "user"), i)
+		assert.Equal(t, "Plex Web", tools.MetricLabel(session, "player"), i)
+		assert.Equal(t, "foo", tools.MetricLabel(session, "title"), i)
+		assert.Equal(t, 1.0, tools.MetricValue(session).GetGauge().GetValue())
 
 		var location string
-		if metrics.MetricLabel(session, "id") == "1" {
+		if tools.MetricLabel(session, "id") == "1" {
 			location = "lan"
 		} else {
 			location = "wan"
 		}
-		assert.Equal(t, location, metrics.MetricLabel(session, "location"))
+		assert.Equal(t, location, tools.MetricLabel(session, "location"))
 		if location == "lan" {
-			assert.Equal(t, "192.168.0.1", metrics.MetricLabel(session, "address"))
-			assert.Empty(t, metrics.MetricLabel(session, "lon"))
-			assert.Empty(t, metrics.MetricLabel(session, "lat"))
+			assert.Equal(t, "192.168.0.1", tools.MetricLabel(session, "address"))
+			assert.Empty(t, tools.MetricLabel(session, "lon"))
+			assert.Empty(t, tools.MetricLabel(session, "lat"))
 		} else {
-			assert.Equal(t, "1.2.3.4", metrics.MetricLabel(session, "address"))
-			assert.Equal(t, "10.00", metrics.MetricLabel(session, "lon"))
-			assert.Equal(t, "20.00", metrics.MetricLabel(session, "lat"))
+			assert.Equal(t, "1.2.3.4", tools.MetricLabel(session, "address"))
+			assert.Equal(t, "10.00", tools.MetricLabel(session, "lon"))
+			assert.Equal(t, "20.00", tools.MetricLabel(session, "lat"))
 		}
 	}
 
 	for i := 0; i < 2; i++ {
 		transcoder := <-ch
 		require.Contains(t, transcoder.Desc().String(), "mediamon_plex_transcoder_count", i)
-		assert.Equal(t, []string{"transcoding", "throttled"}[i], metrics.MetricLabel(transcoder, "state"))
-		assert.Equal(t, 1.0, metrics.MetricValue(transcoder).GetGauge().GetValue())
+		assert.Equal(t, []string{"transcoding", "throttled"}[i], tools.MetricLabel(transcoder, "state"))
+		assert.Equal(t, 1.0, tools.MetricValue(transcoder).GetGauge().GetValue())
 	}
 
 	speed := <-ch
 	require.Contains(t, speed.Desc().String(), "mediamon_plex_transcoder_speed")
-	assert.Equal(t, 21.0, metrics.MetricValue(speed).GetGauge().GetValue())
+	assert.Equal(t, 21.0, tools.MetricValue(speed).GetGauge().GetValue())
 }
 
 func TestCollector_Collect_Fail(t *testing.T) {

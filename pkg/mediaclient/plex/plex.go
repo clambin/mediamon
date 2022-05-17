@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/clambin/mediamon/pkg/mediaclient/caller"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/mediamon/version"
 	"io"
 	"net/http"

@@ -1,10 +1,9 @@
 package xxxarr
 
 import (
-	metrics2 "github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/metrics"
-	"github.com/clambin/mediamon/pkg/mediaclient/caller"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -42,7 +41,7 @@ const (
 
 // NewRadarrCollector creates a new RadarrCollector
 func NewRadarrCollector(url, apiKey string) prometheus.Collector {
-	options := caller.Options{PrometheusMetrics: metrics2.APIClientMetrics{
+	options := caller.Options{PrometheusMetrics: caller.ClientMetrics{
 		Latency: metrics.Latency,
 		Errors:  metrics.Errors,
 	}}
@@ -59,7 +58,7 @@ func NewRadarrCollector(url, apiKey string) prometheus.Collector {
 
 // NewSonarrCollector creates a new SonarrCollector
 func NewSonarrCollector(url, apiKey string) prometheus.Collector {
-	options := caller.Options{PrometheusMetrics: metrics2.APIClientMetrics{
+	options := caller.Options{PrometheusMetrics: caller.ClientMetrics{
 		Latency: metrics.Latency,
 		Errors:  metrics.Errors,
 	}}
@@ -82,7 +81,7 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
-	stats, err := coll.Scrape()
+	stats, err := coll.Scraper.Scrape()
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(
 			prometheus.NewDesc("mediamon_error",

@@ -2,7 +2,7 @@ package xxxarr_test
 
 import (
 	"context"
-	"github.com/clambin/mediamon/pkg/mediaclient/caller"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

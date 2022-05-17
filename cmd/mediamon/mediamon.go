@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/server"
 	"github.com/clambin/mediamon/collectors/bandwidth"
 	"github.com/clambin/mediamon/collectors/connectivity"
 	"github.com/clambin/mediamon/collectors/plex"
@@ -56,6 +56,25 @@ func main() {
 
 	log.WithField("version", version.BuildVersion).Info("media monitor starting")
 
+	startCollectors(&cfg)
+
+	s := server.New(cfg.Port)
+	go func() {
+		err = s.Run()
+		if err != http.ErrServerClosed {
+			log.WithField("err", err).Error("Failed to start Prometheus http handler")
+		}
+	}()
+	log.Info("mediamon started")
+
+	<-shutdown.Chan()
+
+	_ = s.Shutdown(30 * time.Second)
+
+	log.Info("mediamon exiting")
+}
+
+func startCollectors(cfg *configuration) {
 	// Transmission Collector
 	if cfg.Services.Transmission.URL != "" {
 		log.WithField("url", cfg.Services.Transmission.URL).Info("monitoring Transmission")
@@ -109,19 +128,4 @@ func main() {
 			cfg.Services.OpenVPN.Connectivity.Interval,
 		))
 	}
-
-	server := metrics.NewServer(cfg.Port)
-	go func() {
-		err = server.Run()
-		if err != http.ErrServerClosed {
-			log.WithField("err", err).Error("Failed to start Prometheus http handler")
-		}
-	}()
-	log.Info("mediamon started")
-
-	<-shutdown.Chan()
-
-	_ = server.Shutdown(30 * time.Second)
-
-	log.Info("mediamon exiting")
 }

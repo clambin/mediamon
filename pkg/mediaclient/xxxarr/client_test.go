@@ -3,8 +3,8 @@ package xxxarr
 import (
 	"context"
 	"encoding/json"
-	"github.com/clambin/go-metrics"
-	"github.com/clambin/mediamon/pkg/mediaclient/caller"
+	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/tools"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/stretchr/testify/assert"
@@ -32,11 +32,11 @@ func TestApiClient_WithMetrics(t *testing.T) {
 
 	s := httptest.NewServer(http.HandlerFunc(handler))
 	c := APIClient{
-		Caller: &caller.Client{
-			HTTPClient:  http.DefaultClient,
+		Caller: &caller.InstrumentedClient{
+			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "foo",
 			Options: caller.Options{
-				PrometheusMetrics: metrics.APIClientMetrics{
+				PrometheusMetrics: caller.ClientMetrics{
 					Latency: latencyMetric,
 					Errors:  errorMetric,
 				},
@@ -57,7 +57,7 @@ func TestApiClient_WithMetrics(t *testing.T) {
 	go latencyMetric.Collect(ch)
 
 	desc := <-ch
-	assert.Equal(t, uint64(1), metrics.MetricValue(desc).GetSummary().GetSampleCount())
+	assert.Equal(t, uint64(1), tools.MetricValue(desc).GetSummary().GetSampleCount())
 
 	// shut down the server
 	s.Close()
@@ -69,14 +69,14 @@ func TestApiClient_WithMetrics(t *testing.T) {
 	go errorMetric.Collect(ch)
 
 	desc = <-ch
-	assert.Equal(t, 1.0, metrics.MetricValue(desc).GetCounter().GetValue())
+	assert.Equal(t, 1.0, tools.MetricValue(desc).GetCounter().GetValue())
 }
 
 func TestApiClient_Failures(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handler))
 	c := APIClient{
-		Caller: &caller.Client{
-			HTTPClient:  http.DefaultClient,
+		Caller: &caller.InstrumentedClient{
+			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
 			Options:     caller.Options{},
 			Application: "foo",
 		},

@@ -2,7 +2,7 @@ package xxxarr_test
 
 import (
 	"fmt"
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/tools"
 	"github.com/clambin/mediamon/collectors/xxxarr"
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	mocks2 "github.com/clambin/mediamon/collectors/xxxarr/scraper/mocks"
@@ -50,7 +50,7 @@ func TestCollector_Failure(t *testing.T) {
 	go c.Collect(ch)
 
 	metric := <-ch
-	assert.Equal(t, "mediamon_error", metrics.MetricName(metric))
+	assert.Equal(t, "mediamon_error", tools.MetricName(metric))
 	assert.Contains(t, metric.Desc().String(), "Error getting sonarr metrics")
 
 }
@@ -159,42 +159,42 @@ func testCollectorCollect(t *testing.T, collector prometheus.Collector, expected
 
 	// version
 	metric := <-ch
-	assert.Equal(t, 1.0, metrics.MetricValue(metric).GetGauge().GetValue())
-	assert.Equal(t, "foo", metrics.MetricLabel(metric, "version"))
+	assert.Equal(t, 1.0, tools.MetricValue(metric).GetGauge().GetValue())
+	assert.Equal(t, "foo", tools.MetricLabel(metric, "version"))
 
 	// calendar
 	for _, title := range expected.calendar {
 		metric = <-ch
-		assert.Equal(t, 1.0, metrics.MetricValue(metric).GetGauge().GetValue())
-		assert.Equal(t, expected.application, metrics.MetricLabel(metric, "application"))
-		assert.Equal(t, title, metrics.MetricLabel(metric, "title"))
+		assert.Equal(t, 1.0, tools.MetricValue(metric).GetGauge().GetValue())
+		assert.Equal(t, expected.application, tools.MetricLabel(metric, "application"))
+		assert.Equal(t, title, tools.MetricLabel(metric, "title"))
 
 	}
 
 	metric = <-ch
-	assert.Equal(t, float64(len(expected.queued)), metrics.MetricValue(metric).GetGauge().GetValue())
-	assert.Equal(t, expected.application, metrics.MetricLabel(metric, "application"))
+	assert.Equal(t, float64(len(expected.queued)), tools.MetricValue(metric).GetGauge().GetValue())
+	assert.Equal(t, expected.application, tools.MetricLabel(metric, "application"))
 
 	for _, entry := range expected.queued {
 		metric = <-ch
-		assert.Equal(t, entry.size, metrics.MetricValue(metric).GetGauge().GetValue())
-		assert.Equal(t, expected.application, metrics.MetricLabel(metric, "application"))
-		assert.Equal(t, entry.name, metrics.MetricLabel(metric, "title"))
+		assert.Equal(t, entry.size, tools.MetricValue(metric).GetGauge().GetValue())
+		assert.Equal(t, expected.application, tools.MetricLabel(metric, "application"))
+		assert.Equal(t, entry.name, tools.MetricLabel(metric, "title"))
 
 		metric = <-ch
-		assert.Equal(t, entry.downloaded, metrics.MetricValue(metric).GetGauge().GetValue())
-		assert.Equal(t, expected.application, metrics.MetricLabel(metric, "application"))
-		assert.Equal(t, entry.name, metrics.MetricLabel(metric, "title"))
+		assert.Equal(t, entry.downloaded, tools.MetricValue(metric).GetGauge().GetValue())
+		assert.Equal(t, expected.application, tools.MetricLabel(metric, "application"))
+		assert.Equal(t, entry.name, tools.MetricLabel(metric, "title"))
 	}
 
 	// monitored
 	metric = <-ch
-	assert.Equal(t, expected.monitored, metrics.MetricValue(metric).GetGauge().GetValue())
-	assert.Equal(t, expected.application, metrics.MetricLabel(metric, "application"))
+	assert.Equal(t, expected.monitored, tools.MetricValue(metric).GetGauge().GetValue())
+	assert.Equal(t, expected.application, tools.MetricLabel(metric, "application"))
 
 	// unmonitored
 	metric = <-ch
-	assert.Equal(t, expected.unmonitored, metrics.MetricValue(metric).GetGauge().GetValue())
-	assert.Equal(t, expected.application, metrics.MetricLabel(metric, "application"))
+	assert.Equal(t, expected.unmonitored, tools.MetricValue(metric).GetGauge().GetValue())
+	assert.Equal(t, expected.application, tools.MetricLabel(metric, "application"))
 
 }

@@ -1,7 +1,7 @@
 package connectivity_test
 
 import (
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/tools"
 	"github.com/clambin/mediamon/collectors/connectivity"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +34,7 @@ func TestCollector_Collect_Up(t *testing.T) {
 	go c.Collect(ch)
 
 	metric := <-ch
-	assert.Equal(t, 1.0, metrics.MetricValue(metric).GetGauge().GetValue())
+	assert.Equal(t, 1.0, tools.MetricValue(metric).GetGauge().GetValue())
 }
 
 func TestCollector_Collect_Down(t *testing.T) {
@@ -47,7 +47,7 @@ func TestCollector_Collect_Down(t *testing.T) {
 	go c.Collect(ch)
 
 	metric := <-ch
-	assert.Equal(t, 0.0, metrics.MetricValue(metric).GetGauge().GetValue())
+	assert.Equal(t, 0.0, tools.MetricValue(metric).GetGauge().GetValue())
 }
 
 func up(w http.ResponseWriter, _ *http.Request) {

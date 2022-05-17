@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/mediamon/pkg/mediaclient/caller"
+	"github.com/clambin/go-metrics/caller"
 	"net/http"
 )
 

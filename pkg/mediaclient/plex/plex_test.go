@@ -3,7 +3,7 @@ package plex_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/mediamon/pkg/mediaclient/caller"
+	"github.com/clambin/go-metrics/caller"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,8 +22,8 @@ func TestPlexClient_GetIdentity(t *testing.T) {
 	defer authServer.Close()
 
 	client := &plex.Client{
-		Caller: &caller.Client{
-			HTTPClient:  http.DefaultClient,
+		Caller: &caller.InstrumentedClient{
+			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      testServer.URL,
@@ -45,8 +45,8 @@ func TestPlexClient_GetStats(t *testing.T) {
 	defer authServer.Close()
 
 	client := &plex.Client{
-		Caller: &caller.Client{
-			HTTPClient:  http.DefaultClient,
+		Caller: &caller.InstrumentedClient{
+			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      testServer.URL,
@@ -80,8 +80,8 @@ func TestPlexClient_Authentication(t *testing.T) {
 	defer authServer.Close()
 
 	client := &plex.Client{
-		Caller: &caller.Client{
-			HTTPClient:  http.DefaultClient,
+		Caller: &caller.InstrumentedClient{
+			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      "",
@@ -100,8 +100,8 @@ func TestPlexClient_Authentication_Failure(t *testing.T) {
 	authServer.Close()
 
 	client := &plex.Client{
-		Caller: &caller.Client{
-			HTTPClient:  http.DefaultClient,
+		Caller: &caller.InstrumentedClient{
+			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      "",
@@ -132,7 +132,7 @@ func TestPlexClient_WithMetrics(t *testing.T) {
 	}, []string{"application", "request"})
 
 	client := &plex.Client{
-		Caller: &caller.Client{
+		Caller: &caller.InstrumentedClient{
 			HTTPClient:  http.DefaultClient,
 			Application: "plex",
 			Options: caller.Options{
@@ -196,8 +196,8 @@ func TestClient_Failures(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(plexBadHandler))
 
 	client := &plex.Client{
-		Caller: &caller.Client{
-			HTTPClient:  http.DefaultClient,
+		Caller: &caller.InstrumentedClient{
+			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      testServer.URL,
