@@ -100,7 +100,9 @@ func TestCollector_Collect(t *testing.T) {
 		assert.Equal(t, location, tools.MetricLabel(session, "location"))
 		if location == "lan" {
 			assert.Equal(t, "192.168.0.1", tools.MetricLabel(session, "address"))
-			assert.Empty(t, tools.MetricLabel(session, "lon"))
+			if !assert.Empty(t, tools.MetricLabel(session, "lon")) {
+				panic("ouch!!!")
+			}
 			assert.Empty(t, tools.MetricLabel(session, "lat"))
 		} else {
 			assert.Equal(t, "1.2.3.4", tools.MetricLabel(session, "address"))

@@ -80,9 +80,9 @@ func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 	}
 
 	var active, throttled, speed float64
-	var lon, lat string
 
 	for id, stats := range parseSessions(sessions) {
+		var lon, lat string
 		if stats.location != "lan" {
 			lon, lat = coll.locateAddress(stats.address)
 		}
