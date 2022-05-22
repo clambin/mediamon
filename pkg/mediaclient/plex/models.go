@@ -47,6 +47,7 @@ type SessionsResponseRecord struct {
 	ParentRatingKey       string  `json:"parentRatingKey"`
 	ParentThumb           string  `json:"parentThumb"`
 	ParentTitle           string  `json:"parentTitle"`
+	Rating                float64 `json:"rating"`
 	RatingKey             string  `json:"ratingKey"`
 	SessionKey            string  `json:"sessionKey"`
 	Summary               string  `json:"summary"`
@@ -123,7 +124,7 @@ type SessionsResponseRecord struct {
 		ID     string `json:"id"`
 		Tag    string `json:"tag"`
 	} `json:"Writer"`
-	Rating []struct {
+	Rating2 []struct {
 		Image string `json:"image"`
 		Type  string `json:"type"`
 		Value string `json:"value"`
