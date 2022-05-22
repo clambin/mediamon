@@ -1,7 +1,7 @@
 package xxxarr
 
 import (
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
@@ -18,14 +18,14 @@ type Collector struct {
 }
 
 var (
-	radarrCacheTable = []caller.CacheTableEntry{
+	radarrCacheTable = []client.CacheTableEntry{
 		{Endpoint: `/api/v3/system/status`, Expiry: time.Minute},
 		{Endpoint: `/api/v3/calendar`, Expiry: time.Minute},
 		{Endpoint: `/api/v3/movie`},
 		{Endpoint: `/api/v3/movie/[\d+]`, IsRegExp: true},
 	}
 
-	sonarrCacheTable = []caller.CacheTableEntry{
+	sonarrCacheTable = []client.CacheTableEntry{
 		{Endpoint: `/api/v3/system/status`, Expiry: time.Minute},
 		{Endpoint: `/api/v3/calendar`, Expiry: time.Minute},
 		{Endpoint: `/api/v3/series`},
@@ -41,11 +41,11 @@ const (
 
 // NewRadarrCollector creates a new RadarrCollector
 func NewRadarrCollector(url, apiKey string) prometheus.Collector {
-	options := caller.Options{PrometheusMetrics: caller.ClientMetrics{
+	options := client.Options{PrometheusMetrics: client.Metrics{
 		Latency: metrics.Latency,
 		Errors:  metrics.Errors,
 	}}
-	c := caller.NewCacher(nil, "radarr", options, radarrCacheTable, cacheExpiry, cleanupInterval)
+	c := client.NewCacher(nil, "radarr", options, radarrCacheTable, cacheExpiry, cleanupInterval)
 
 	return &Collector{
 		Scraper: &scraper.RadarrScraper{
@@ -58,11 +58,11 @@ func NewRadarrCollector(url, apiKey string) prometheus.Collector {
 
 // NewSonarrCollector creates a new SonarrCollector
 func NewSonarrCollector(url, apiKey string) prometheus.Collector {
-	options := caller.Options{PrometheusMetrics: caller.ClientMetrics{
+	options := client.Options{PrometheusMetrics: client.Metrics{
 		Latency: metrics.Latency,
 		Errors:  metrics.Errors,
 	}}
-	c := caller.NewCacher(nil, "sonarr", options, sonarrCacheTable, cacheExpiry, cleanupInterval)
+	c := client.NewCacher(nil, "sonarr", options, sonarrCacheTable, cacheExpiry, cleanupInterval)
 	return &Collector{
 		Scraper: &scraper.SonarrScraper{
 			Client: xxxarr.NewSonarrClientWithCaller(apiKey, url, c),

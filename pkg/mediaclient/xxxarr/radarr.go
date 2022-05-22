@@ -3,7 +3,7 @@ package xxxarr
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"net/http"
 )
 
@@ -27,16 +27,16 @@ type RadarrClient struct {
 var _ RadarrAPI = &RadarrClient{}
 
 // NewRadarrClient creates a new RadarrClient, using http.DefaultClient as http.InstrumentedClient
-func NewRadarrClient(apiKey, url string, options caller.Options) *RadarrClient {
-	return NewRadarrClientWithCaller(apiKey, url, &caller.InstrumentedClient{
-		BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+func NewRadarrClient(apiKey, url string, options client.Options) *RadarrClient {
+	return NewRadarrClientWithCaller(apiKey, url, &client.InstrumentedClient{
+		BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 		Options:     options,
 		Application: "radarr",
 	})
 }
 
-// NewRadarrClientWithCaller creates a new RadarrClient with a specified caller
-func NewRadarrClientWithCaller(apiKey, url string, caller caller.Caller) *RadarrClient {
+// NewRadarrClientWithCaller creates a new RadarrClient with a specified Caller
+func NewRadarrClientWithCaller(apiKey, url string, caller client.Caller) *RadarrClient {
 	return &RadarrClient{APICaller: &APIClient{
 		Caller: caller,
 		URL:    url,

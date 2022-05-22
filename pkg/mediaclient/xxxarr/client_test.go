@@ -3,7 +3,7 @@ package xxxarr
 import (
 	"context"
 	"encoding/json"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/go-metrics/tools"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -23,20 +23,20 @@ func TestApiClient_WithMetrics(t *testing.T) {
 	latencyMetric := promauto.NewSummaryVec(prometheus.SummaryOpts{
 		Name: "xxxarr_request_duration_seconds",
 		Help: "Duration of API requests.",
-	}, []string{"application", "request"})
+	}, []string{"application", "request", "method"})
 
 	errorMetric := promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "xxxarr_request_errors",
 		Help: "Duration of API requests.",
-	}, []string{"application", "request"})
+	}, []string{"application", "request", "method"})
 
 	s := httptest.NewServer(http.HandlerFunc(handler))
 	c := APIClient{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "foo",
-			Options: caller.Options{
-				PrometheusMetrics: caller.ClientMetrics{
+			Options: client.Options{
+				PrometheusMetrics: client.Metrics{
 					Latency: latencyMetric,
 					Errors:  errorMetric,
 				},
@@ -75,9 +75,9 @@ func TestApiClient_WithMetrics(t *testing.T) {
 func TestApiClient_Failures(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handler))
 	c := APIClient{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
-			Options:     caller.Options{},
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+			Options:     client.Options{},
 			Application: "foo",
 		},
 		URL:    s.URL,

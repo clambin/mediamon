@@ -2,7 +2,7 @@ package transmission
 
 import (
 	"context"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
@@ -65,10 +65,10 @@ type transmissionStats struct {
 func NewCollector(url string) prometheus.Collector {
 	return &Collector{
 		API: &transmission.Client{
-			Caller: &caller.InstrumentedClient{
-				BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+			Caller: &client.InstrumentedClient{
+				BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 				Application: "transmission",
-				Options: caller.Options{PrometheusMetrics: caller.ClientMetrics{
+				Options: client.Options{PrometheusMetrics: client.Metrics{
 					Latency: metrics.Latency,
 					Errors:  metrics.Errors,
 				}},

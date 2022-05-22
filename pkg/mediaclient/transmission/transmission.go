@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"net/http"
 )
 
@@ -18,7 +18,7 @@ type API interface {
 
 // Client calls the Transmission APIs
 type Client struct {
-	Caller    caller.Caller
+	Caller    client.Caller
 	URL       string
 	SessionID string
 }

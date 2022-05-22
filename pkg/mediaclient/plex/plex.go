@@ -6,9 +6,8 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/mediamon/version"
-	"io"
 	"net/http"
 )
 
@@ -21,7 +20,7 @@ type API interface {
 
 // Client calls the Plex APIs
 type Client struct {
-	caller.Caller
+	client.Caller
 	URL       string
 	AuthURL   string
 	UserName  string
@@ -116,8 +115,7 @@ func (client *Client) authenticate(ctx context.Context) (err error) {
 		AuthenticationToken string   `xml:"authenticationToken,attr"`
 	}
 
-	body, _ := io.ReadAll(resp.Body)
-	if err = xml.Unmarshal(body, &authResponse); err == nil {
+	if err = xml.NewDecoder(resp.Body).Decode(&authResponse); err == nil {
 		client.authToken = authResponse.AuthenticationToken
 	}
 

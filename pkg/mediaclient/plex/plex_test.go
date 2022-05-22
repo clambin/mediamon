@@ -3,7 +3,7 @@ package plex_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,9 +21,9 @@ func TestPlexClient_GetIdentity(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
 
-	client := &plex.Client{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := &plex.Client{
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      testServer.URL,
@@ -32,7 +32,7 @@ func TestPlexClient_GetIdentity(t *testing.T) {
 		Password: "somepassword",
 	}
 
-	identity, err := client.GetIdentity(context.Background())
+	identity, err := c.GetIdentity(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "SomeVersion", identity.MediaContainer.Version)
 }
@@ -44,9 +44,9 @@ func TestPlexClient_GetStats(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
 
-	client := &plex.Client{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := &plex.Client{
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      testServer.URL,
@@ -55,7 +55,7 @@ func TestPlexClient_GetStats(t *testing.T) {
 		Password: "somepassword",
 	}
 
-	sessions, err := client.GetSessions(context.Background())
+	sessions, err := c.GetSessions(context.Background())
 	require.NoError(t, err)
 
 	titles := []string{"pilot", "movie 1", "movie 2", "movie 3"}
@@ -79,9 +79,9 @@ func TestPlexClient_Authentication(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
 
-	client := &plex.Client{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := &plex.Client{
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      "",
@@ -90,7 +90,7 @@ func TestPlexClient_Authentication(t *testing.T) {
 		Password: "badpassword",
 	}
 
-	_, err := client.GetIdentity(context.Background())
+	_, err := c.GetIdentity(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "403 Forbidden")
 }
@@ -99,9 +99,9 @@ func TestPlexClient_Authentication_Failure(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	authServer.Close()
 
-	client := &plex.Client{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := &plex.Client{
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      "",
@@ -110,94 +110,19 @@ func TestPlexClient_Authentication_Failure(t *testing.T) {
 		Password: "badpassword",
 	}
 
-	_, err := client.GetIdentity(context.Background())
+	_, err := c.GetIdentity(context.Background())
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, unix.ECONNREFUSED))
 }
 
-/*
-func TestPlexClient_WithMetrics(t *testing.T) {
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
-	defer authServer.Close()
-	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
-
-	latencyMetric := promauto.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "plex_request_duration_seconds",
-		Help: "Duration of API requests.",
-	}, []string{"application", "request"})
-
-	errorMetric := promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "plex_request_errors",
-		Help: "Duration of API requests.",
-	}, []string{"application", "request"})
-
-	client := &plex.Client{
-		Caller: &caller.InstrumentedClient{
-			HTTPClient:  http.DefaultClient,
-			Application: "plex",
-			Options: caller.Options{
-				PrometheusMetrics: metrics.APIClientMetrics{
-					Latency: latencyMetric,
-					Errors:  errorMetric,
-				},
-			},
-		},
-		URL:      testServer.URL,
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "somepassword",
-	}
-
-	_, err := client.GetIdentity(context.Background())
-	require.NoError(t, err)
-
-	// validate that the metrics were recorded
-	ch := make(chan prometheus.Metric)
-	go latencyMetric.Collect(ch)
-
-	expected := map[string]uint64{
-		"auth":      1,
-		"/identity": 1,
-	}
-	for i := 0; i < len(expected); i++ {
-		desc := <-ch
-		assert.Equal(t, "plex", metrics.MetricLabel(desc, "application"))
-		req := metrics.MetricLabel(desc, "request")
-		value, _ := expected[req]
-		//require.True(t, ok)
-		assert.Equal(t, value, metrics.MetricValue(desc).GetSummary().GetSampleCount())
-	}
-
-	// shut down the server
-	testServer.Close()
-
-	_, err = client.GetIdentity(context.Background())
-	require.Error(t, err)
-
-	ch = make(chan prometheus.Metric)
-	go errorMetric.Collect(ch)
-
-	expected2 := map[string]float64{
-		"auth":      0,
-		"/identity": 1,
-	}
-	for i := 0; i < len(expected2); i++ {
-		desc := <-ch
-		assert.Equal(t, "plex", metrics.MetricLabel(desc, "application"))
-		value, ok := expected2[metrics.MetricLabel(desc, "request")]
-		require.True(t, ok)
-		assert.Equal(t, value, metrics.MetricValue(desc).GetCounter().GetValue())
-	}
-}
-*/
 func TestClient_Failures(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
 	testServer := httptest.NewServer(http.HandlerFunc(plexBadHandler))
 
-	client := &plex.Client{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := &plex.Client{
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      testServer.URL,
@@ -206,12 +131,12 @@ func TestClient_Failures(t *testing.T) {
 		Password: "somepassword",
 	}
 
-	_, err := client.GetIdentity(context.Background())
+	_, err := c.GetIdentity(context.Background())
 	require.Error(t, err)
 	assert.Equal(t, "500 Internal Server Error", err.Error())
 
 	testServer.Close()
-	_, err = client.GetIdentity(context.Background())
+	_, err = c.GetIdentity(context.Background())
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, unix.ECONNREFUSED))
 }

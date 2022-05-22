@@ -3,7 +3,7 @@ package plex
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/iplocator"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
@@ -23,10 +23,10 @@ type Collector struct {
 func NewCollector(url, username, password string) prometheus.Collector {
 	return &Collector{
 		API: &plex.Client{
-			Caller: &caller.InstrumentedClient{
-				BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+			Caller: &client.InstrumentedClient{
+				BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 				Application: "plex",
-				Options: caller.Options{PrometheusMetrics: caller.ClientMetrics{
+				Options: client.Options{PrometheusMetrics: client.Metrics{
 					Latency: metrics.Latency,
 					Errors:  metrics.Errors,
 				}},

@@ -2,7 +2,7 @@ package transmission_test
 
 import (
 	"context"
-	"github.com/clambin/go-metrics/caller"
+	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,15 +17,15 @@ func TestTransmissionClient_GetSessionParameters(t *testing.T) {
 	testServer := s.start()
 	defer testServer.Close()
 
-	client := &transmission.Client{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := &transmission.Client{
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "transmission",
 		},
 		URL: testServer.URL,
 	}
 
-	params, err := client.GetSessionParameters(context.Background())
+	params, err := c.GetSessionParameters(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "2.94 (d8e60ee44f)", params.Arguments.Version)
 }
@@ -35,15 +35,15 @@ func TestTransmissionClient_GetSessionStats(t *testing.T) {
 	testServer := s.start()
 	defer testServer.Close()
 
-	client := &transmission.Client{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := &transmission.Client{
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "transmission",
 		},
 		URL: testServer.URL,
 	}
 
-	stats, err := client.GetSessionStatistics(context.Background())
+	stats, err := c.GetSessionStatistics(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, 1, stats.Arguments.ActiveTorrentCount)
 	assert.Equal(t, 2, stats.Arguments.PausedTorrentCount)
@@ -55,9 +55,9 @@ func TestTransmissionClient_Failures(t *testing.T) {
 	s := server{sessionID: "1234", invalid: true}
 	testServer := s.start()
 
-	client := &transmission.Client{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := &transmission.Client{
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "transmission",
 		},
 		URL: testServer.URL,
@@ -65,25 +65,25 @@ func TestTransmissionClient_Failures(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := client.GetSessionParameters(ctx)
+	_, err := c.GetSessionParameters(ctx)
 	assert.Error(t, err)
 
 	s.invalid = false
-	_, err = client.GetSessionParameters(ctx)
+	_, err = c.GetSessionParameters(ctx)
 	assert.NoError(t, err)
 
 	s.notSuccess = true
-	_, err = client.GetSessionParameters(ctx)
+	_, err = c.GetSessionParameters(ctx)
 	assert.Error(t, err)
-	_, err = client.GetSessionStatistics(ctx)
+	_, err = c.GetSessionStatistics(ctx)
 	assert.Error(t, err)
 
 	s.fail = true
-	_, err = client.GetSessionParameters(ctx)
+	_, err = c.GetSessionParameters(ctx)
 	assert.Error(t, err)
 
 	testServer.Close()
-	_, err = client.GetSessionParameters(ctx)
+	_, err = c.GetSessionParameters(ctx)
 	assert.Error(t, err)
 }
 
@@ -92,27 +92,27 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 	testServer := s.start()
 	defer testServer.Close()
 
-	client := &transmission.Client{
-		Caller: &caller.InstrumentedClient{
-			BaseClient:  caller.BaseClient{HTTPClient: http.DefaultClient},
+	c := &transmission.Client{
+		Caller: &client.InstrumentedClient{
+			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "transmission",
 		},
 		URL: testServer.URL,
 	}
 
-	oldParams, err := client.GetSessionParameters(context.Background())
+	oldParams, err := c.GetSessionParameters(context.Background())
 	require.NoError(t, err)
 
 	// simulate the session key expiring
-	client.SessionID = "4321"
+	c.SessionID = "4321"
 
 	var newParams transmission.SessionParameters
-	newParams, err = client.GetSessionParameters(context.Background())
+	newParams, err = c.GetSessionParameters(context.Background())
 
 	// call succeeded
 	require.NoError(t, err)
 	// and the next SessionID has been set
-	assert.Equal(t, "1234", client.SessionID)
+	assert.Equal(t, "1234", c.SessionID)
 	// and the call worked
 	assert.Equal(t, oldParams.Arguments.Version, newParams.Arguments.Version)
 }
