@@ -108,10 +108,12 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "avg by (application, request) (\n    rate (mediamon_request_duration_seconds_sum[$__rate_interval]) / rate (mediamon_request_duration_seconds_count[$__rate_interval])\n)",
+          "expr": "avg by (application,endpoint) (\n    rate (mediamon_api_latency_sum[$__rate_interval]) / rate (mediamon_api_latency_count[$__rate_interval])\n)",
           "interval": "",
-          "legendFormat": "{{application}} - {{request}}",
+          "legendFormat": "{{application}} - {{endpoint}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -198,10 +200,12 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "avg by (application, request) (\n    rate (mediamon_request_duration_seconds_count[$__rate_interval])\n)",
+          "expr": "avg by (application, endpoint) (\n    rate (mediamon_api_latency_count[$__rate_interval])\n)",
           "interval": "",
-          "legendFormat": "{{application}} - {{request}}",
+          "legendFormat": "{{application}} - {{endpoint}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -288,10 +292,12 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "avg by (application, request) (increase(mediamon_request_errors_total[$__rate_interval]))",
+          "expr": "avg by (application, endpoint) (increase(mediamon_api_errors_total[$__rate_interval]))",
           "interval": "",
-          "legendFormat": "{{application}} - {{request}}",
+          "legendFormat": "{{application}} - {{endpoint}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -314,6 +320,6 @@
   "timezone": "",
   "title": "mediamon - internal",
   "uid": "TFkbKcJ7z",
-  "version": 3,
+  "version": 6,
   "weekStart": ""
 }
