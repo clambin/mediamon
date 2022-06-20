@@ -7,7 +7,7 @@ require (
 	github.com/clambin/go-metrics v0.5.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.7.3
 	github.com/xonvanetta/shutdown v0.0.3
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
@@ -27,7 +27,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/stretchr/objx v0.1.1 // indirect
+	github.com/stretchr/objx v0.4.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
