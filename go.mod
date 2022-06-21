@@ -7,7 +7,7 @@ require (
 	github.com/clambin/go-metrics v0.5.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.3
+	github.com/stretchr/testify v1.7.4
 	github.com/xonvanetta/shutdown v0.0.3
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
