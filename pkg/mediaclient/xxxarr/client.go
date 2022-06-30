@@ -45,13 +45,13 @@ func (c APIClient) Get(ctx context.Context, endpoint string, response interface{
 		return fmt.Errorf("call failed: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("call failed: %s", resp.Status)
-	}
-
 	defer func() {
 		_ = resp.Body.Close()
 	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("call failed: %s", resp.Status)
+	}
 
 	return json.NewDecoder(resp.Body).Decode(response)
 }

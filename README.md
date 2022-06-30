@@ -124,7 +124,7 @@ openvpn_client_tcp_udp_read_bytes_total:    OpenVPN client bytes read
 openvpn_client_tcp_udp_write_bytes_total:   OpenVPN client bytes written
 ```
 
-Additionally, the following metrics measure API metrics:
+Additionally, the following metrics provide API usage statistics:
 
 ```
 mediamon_request_duration_seconds Duration of API requests (summary metric)
