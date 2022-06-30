@@ -14,6 +14,7 @@ import (
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -50,8 +51,7 @@ func main() {
 	}
 
 	if cfg.Services, err = services.ParseConfigFile(servicesFilename); err != nil {
-		log.WithFields(log.Fields{"err": err, "filename": servicesFilename}).Warning("unable to parse Services file")
-		os.Exit(3)
+		log.WithError(err).WithField("filename", servicesFilename).Fatal("unable to parse Services file")
 	}
 
 	log.WithField("version", version.BuildVersion).Info("media monitor starting")
@@ -121,10 +121,12 @@ func startCollectors(cfg *configuration) {
 
 	// Connectivity Probe
 	if cfg.Services.OpenVPN.Connectivity.Token != "" {
-		log.WithField("proxyURL", cfg.Services.OpenVPN.Connectivity.ProxyURL).Info("monitoring OpenVPN connectivity")
+		// proxyURL has already been validated when we loaded the configuration
+		proxyURL, _ := url.Parse(cfg.Services.OpenVPN.Connectivity.Proxy)
+		log.WithField("proxyURL", proxyURL).Info("monitoring OpenVPN connectivity")
 		prometheus.DefaultRegisterer.MustRegister(connectivity.NewCollector(
 			cfg.Services.OpenVPN.Connectivity.Token,
-			cfg.Services.OpenVPN.Connectivity.ProxyURL,
+			proxyURL,
 			cfg.Services.OpenVPN.Connectivity.Interval,
 		))
 	}

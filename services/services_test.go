@@ -1,113 +1,55 @@
 package services_test
 
 import (
+	"flag"
 	"github.com/clambin/mediamon/services"
+	"github.com/gosimple/slug"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
-func TestParsePartialConfig(t *testing.T) {
-	var content = []byte(`
-transmission:
-  url: http://192.168.0.10:9091
-  interval: '10s'
-plex:
-  username: email@example.com
-  password: 'some-password'
-`)
+var update = flag.Bool("update", false, "update .golden files")
 
-	f, err := os.CreateTemp("", "tmp")
-	require.NoError(t, err)
+func TestParseConfigFile(t *testing.T) {
+	testCases := []struct {
+		filename string
+		pass     bool
+	}{
+		{filename: "testdata/complete.yaml", pass: true},
+		{filename: "testdata/partial.yaml", pass: true},
+		{filename: "testdata/invalid.yaml", pass: false},
+		{filename: "testdata/invalid_proxy.yaml", pass: false},
+	}
 
-	defer func(name string) {
-		err2 := os.Remove(name)
-		if err2 != nil {
-			t.Logf("failed to remove file: %v", err2)
+	for _, tt := range testCases {
+		cfg, err := services.ParseConfigFile(tt.filename)
+		if tt.pass == false {
+			assert.Error(t, err, tt.filename)
+			continue
 		}
-	}(f.Name())
-	_, _ = f.Write(content)
-	_ = f.Close()
+		require.NoError(t, err, tt.filename)
+		assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
 
-	cfg, err := services.ParseConfigFile(f.Name())
+		var body, golden []byte
+		body, err = yaml.Marshal(cfg)
 
-	require.NoError(t, err)
+		gp := filepath.Join("testdata", t.Name()+"-"+slug.Make(tt.filename)+".golden")
+		if *update {
+			require.NoError(t, err, tt.filename)
+			err = os.WriteFile(gp, body, 0644)
+			require.NoError(t, err, tt.filename)
 
-	assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
-	assert.Equal(t, "", cfg.Sonarr.URL)
-	assert.Equal(t, "", cfg.Sonarr.APIKey)
-	assert.Equal(t, "", cfg.Radarr.URL)
-	assert.Equal(t, "", cfg.Radarr.APIKey)
-	assert.Equal(t, "email@example.com", cfg.Plex.UserName)
-	assert.Equal(t, "some-password", cfg.Plex.Password)
-	assert.Equal(t, "", cfg.OpenVPN.Bandwidth.FileName)
-	assert.Equal(t, "", cfg.OpenVPN.Connectivity.Proxy)
-	assert.Equal(t, "", cfg.OpenVPN.Connectivity.Token)
-	assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
-}
+		}
 
-func TestParseConfig(t *testing.T) {
-	var content = []byte(`
-transmission:
-  url: http://192.168.0.10:9091
-  interval: '10s'
-sonarr:
-  url: http://192.168.0.10:8989
-  apikey: 'sonarr-api-key'
-radarr:
-  url: http://192.168.0.10:7878
-  apikey: 'radarr-api-key'
-plex:
-  url: http://192.168.0.10:32400
-  username: email@example.com
-  password: 'some-password'
-  interval: '1m'
-openvpn:
-  bandwidth:
-    filename: /foo/bar
-    interval: '30s'
-  connectivity:
-    proxy: http://localhost:8888
-    token: 'some-token'
-    interval: '5m'
-futurefeature:
-  foo: 'bar'
-`)
-
-	cfg, err := services.ParseConfig(content)
-	require.NoError(t, err)
-
-	assert.Equal(t, "http://192.168.0.10:9091", cfg.Transmission.URL)
-	assert.Equal(t, "http://192.168.0.10:8989", cfg.Sonarr.URL)
-	assert.Equal(t, "sonarr-api-key", cfg.Sonarr.APIKey)
-	assert.Equal(t, "http://192.168.0.10:7878", cfg.Radarr.URL)
-	assert.Equal(t, "radarr-api-key", cfg.Radarr.APIKey)
-	assert.Equal(t, "http://192.168.0.10:32400", cfg.Plex.URL)
-	assert.Equal(t, "email@example.com", cfg.Plex.UserName)
-	assert.Equal(t, "some-password", cfg.Plex.Password)
-	assert.Equal(t, "/foo/bar", cfg.OpenVPN.Bandwidth.FileName)
-	assert.Equal(t, "http://localhost:8888", cfg.OpenVPN.Connectivity.Proxy)
-	assert.Equal(t, "some-token", cfg.OpenVPN.Connectivity.Token)
-	assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
-}
-
-func TestParseInvalidProxy(t *testing.T) {
-	const invalidConfig = `openvpn:
-  connectivity:
-    proxy: invalidproxy
-    token: notatoken
-    interval: 1h
-`
-	_, err := services.ParseConfig([]byte(invalidConfig))
-	require.Error(t, err)
-}
-
-func TestParseInvalidConfig(t *testing.T) {
-	var content = []byte(`not a valid yaml file`)
-	_, err := services.ParseConfig(content)
-	require.Error(t, err)
+		golden, err = os.ReadFile(gp)
+		require.NoError(t, err, tt.filename)
+		assert.Equal(t, string(golden), string(body), tt.filename)
+	}
 }
 
 func TestParseMissingConfig(t *testing.T) {

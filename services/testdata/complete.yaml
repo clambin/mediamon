@@ -1,0 +1,21 @@
+transmission:
+  url: http://192.168.0.10:9091
+sonarr:
+  url: http://192.168.0.10:8989
+  apikey: 'sonarr-api-key'
+radarr:
+  url: http://192.168.0.10:7878
+  apikey: 'radarr-api-key'
+plex:
+  url: http://192.168.0.10:32400
+  username: email@example.com
+  password: 'some-password'
+openvpn:
+  bandwidth:
+    filename: /foo/bar
+  connectivity:
+    proxy: http://localhost:8888
+    token: 'some-token'
+    interval: '5m'
+futurefeature:
+  foo: 'bar'
