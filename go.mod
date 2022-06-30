@@ -11,7 +11,7 @@ require (
 	github.com/xonvanetta/shutdown v0.0.3
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
-	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -29,5 +29,4 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
