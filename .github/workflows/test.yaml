@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - metrics
+      - envvar
   pull_request_target:
 
 jobs:

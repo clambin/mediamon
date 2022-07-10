@@ -44,6 +44,8 @@ func ParseConfigFile(fileName string) (config *Config, err error) {
 	if cfg, err = os.ReadFile(fileName); err != nil {
 		return
 	}
+	cfg = []byte(os.ExpandEnv(string(cfg)))
+
 	config = &Config{}
 	config.OpenVPN.Connectivity.Interval = 5 * time.Minute
 	err = yaml.Unmarshal(cfg, config)
