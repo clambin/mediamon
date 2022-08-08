@@ -2,15 +2,16 @@ package plex_test
 
 import (
 	"fmt"
-	"github.com/clambin/go-metrics/tools"
 	"github.com/clambin/mediamon/collectors/plex"
 	"github.com/clambin/mediamon/pkg/iplocator/mocks"
 	plexAPI "github.com/clambin/mediamon/pkg/mediaclient/plex"
 	plexMock "github.com/clambin/mediamon/pkg/mediaclient/plex/mocks"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"strings"
 	"testing"
 )
 
@@ -75,52 +76,23 @@ func TestCollector_Collect(t *testing.T) {
 
 	m.On("GetSessions", mock.AnythingOfType("*context.emptyCtx")).Return(sessions, nil)
 
-	ch := make(chan prometheus.Metric)
-	go c.Collect(ch)
-
-	version := <-ch
-	assert.Equal(t, 1.0, tools.MetricValue(version).GetGauge().GetValue())
-	assert.Equal(t, "foo", tools.MetricLabel(version, "version"))
-
-	for i := 0; i < 3; i++ {
-		session := <-ch
-
-		require.Contains(t, session.Desc().String(), "mediamon_plex_session_count", i)
-		assert.Equal(t, "bar", tools.MetricLabel(session, "user"), i)
-		assert.Equal(t, "Plex Web", tools.MetricLabel(session, "player"), i)
-		assert.Equal(t, "foo", tools.MetricLabel(session, "title"), i)
-		assert.Equal(t, 1.0, tools.MetricValue(session).GetGauge().GetValue())
-
-		var location string
-		if tools.MetricLabel(session, "id") == "1" {
-			location = "lan"
-		} else {
-			location = "wan"
-		}
-		assert.Equal(t, location, tools.MetricLabel(session, "location"))
-		if location == "lan" {
-			assert.Equal(t, "192.168.0.1", tools.MetricLabel(session, "address"))
-			if !assert.Empty(t, tools.MetricLabel(session, "lon")) {
-				panic("ouch!!!")
-			}
-			assert.Empty(t, tools.MetricLabel(session, "lat"))
-		} else {
-			assert.Equal(t, "1.2.3.4", tools.MetricLabel(session, "address"))
-			assert.Equal(t, "10.00", tools.MetricLabel(session, "lon"))
-			assert.Equal(t, "20.00", tools.MetricLabel(session, "lat"))
-		}
-	}
-
-	for i := 0; i < 2; i++ {
-		transcoder := <-ch
-		require.Contains(t, transcoder.Desc().String(), "mediamon_plex_transcoder_count", i)
-		assert.Equal(t, []string{"transcoding", "throttled"}[i], tools.MetricLabel(transcoder, "state"))
-		assert.Equal(t, 1.0, tools.MetricValue(transcoder).GetGauge().GetValue())
-	}
-
-	speed := <-ch
-	require.Contains(t, speed.Desc().String(), "mediamon_plex_transcoder_speed")
-	assert.Equal(t, 21.0, tools.MetricValue(speed).GetGauge().GetValue())
+	e := strings.NewReader(`# HELP mediamon_plex_session_count Active Plex session
+# TYPE mediamon_plex_session_count gauge
+mediamon_plex_session_count{address="1.2.3.4",id="2",lat="20.00",location="wan",lon="10.00",player="Plex Web",title="foo",url="",user="bar"} 1
+mediamon_plex_session_count{address="1.2.3.4",id="3",lat="20.00",location="wan",lon="10.00",player="Plex Web",title="foo",url="",user="bar"} 1
+mediamon_plex_session_count{address="192.168.0.1",id="1",lat="",location="lan",lon="",player="Plex Web",title="foo",url="",user="bar"} 1
+# HELP mediamon_plex_transcoder_count Video transcode session
+# TYPE mediamon_plex_transcoder_count gauge
+mediamon_plex_transcoder_count{state="throttled",url=""} 1
+mediamon_plex_transcoder_count{state="transcoding",url=""} 1
+# HELP mediamon_plex_transcoder_speed Speed of active transcoder
+# TYPE mediamon_plex_transcoder_speed gauge
+mediamon_plex_transcoder_speed{url=""} 21
+# HELP mediamon_plex_version version info
+# TYPE mediamon_plex_version gauge
+mediamon_plex_version{url="",version="foo"} 1
+`)
+	assert.NoError(t, testutil.CollectAndCompare(c, e))
 }
 
 func TestCollector_Collect_Fail(t *testing.T) {
@@ -130,9 +102,8 @@ func TestCollector_Collect_Fail(t *testing.T) {
 
 	m.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(plexAPI.IdentityResponse{}, fmt.Errorf("failure"))
 	m.On("GetSessions", mock.AnythingOfType("*context.emptyCtx")).Return(plexAPI.SessionsResponse{}, fmt.Errorf("failure"))
-	ch := make(chan prometheus.Metric)
-	go c.Collect(ch)
 
-	metric := <-ch
-	assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting Plex version", constLabels: {}, variableLabels: []}`, metric.Desc().String())
+	err := testutil.CollectAndCompare(c, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `Desc{fqName: "mediamon_error", help: "Error getting Plex version", constLabels: {}, variableLabels: []}`)
 }

@@ -1,12 +1,13 @@
 package bandwidth_test
 
 import (
-	"github.com/clambin/go-metrics/tools"
 	"github.com/clambin/mediamon/collectors/bandwidth"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -23,10 +24,10 @@ func TestCollector_Describe(t *testing.T) {
 
 func TestCollector_Collect(t *testing.T) {
 	testCases := []struct {
-		name        string
-		content     []byte
-		pass        bool
-		read, write float64
+		name    string
+		content []byte
+		pass    bool
+		output  string
 	}{
 		{
 			name:    "empty",
@@ -40,9 +41,15 @@ Updated,Fri Dec 18 11:24:01 2020
 TCP/UDP read bytes,5624951995
 TCP/UDP write bytes,2048
 END`),
-			pass:  true,
-			read:  5624951995,
-			write: 2048,
+			pass: true,
+			output: `
+# HELP openvpn_client_tcp_udp_read_bytes_total OpenVPN client bytes read
+# TYPE openvpn_client_tcp_udp_read_bytes_total gauge
+openvpn_client_tcp_udp_read_bytes_total 5.624951995e+09
+# HELP openvpn_client_tcp_udp_write_bytes_total OpenVPN client bytes written
+# TYPE openvpn_client_tcp_udp_write_bytes_total gauge
+openvpn_client_tcp_udp_write_bytes_total 2048
+`,
 		},
 		{
 			name: "invalid",
@@ -62,17 +69,12 @@ END`),
 		require.NoError(t, err)
 
 		c := bandwidth.NewCollector(filename)
-		ch := make(chan prometheus.Metric)
-		go c.Collect(ch)
-
 		if testCase.pass {
-			read := <-ch
-			assert.Equal(t, testCase.read, tools.MetricValue(read).GetGauge().GetValue())
-			write := <-ch
-			assert.Equal(t, testCase.write, tools.MetricValue(write).GetGauge().GetValue())
+			assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCase.output)))
 		} else {
-			metric := <-ch
-			assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`, metric.Desc().String())
+			err = testutil.CollectAndCompare(c, nil)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`)
 		}
 		_ = os.Remove(filename)
 	}

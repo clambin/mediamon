@@ -1,13 +1,14 @@
 package connectivity_test
 
 import (
-	"github.com/clambin/go-metrics/tools"
 	"github.com/clambin/mediamon/collectors/connectivity"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 )
@@ -30,11 +31,12 @@ func TestCollector_Collect_Up(t *testing.T) {
 
 	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
 	c.(*connectivity.Collector).URL = testServer.URL
-	ch := make(chan prometheus.Metric)
-	go c.Collect(ch)
 
-	metric := <-ch
-	assert.Equal(t, 1.0, tools.MetricValue(metric).GetGauge().GetValue())
+	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
+# HELP openvpn_client_status OpenVPN client status
+# TYPE openvpn_client_status gauge
+openvpn_client_status 1
+`)))
 }
 
 func TestCollector_Collect_Down(t *testing.T) {
@@ -43,11 +45,11 @@ func TestCollector_Collect_Down(t *testing.T) {
 
 	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
 	c.(*connectivity.Collector).URL = testServer.URL
-	ch := make(chan prometheus.Metric)
-	go c.Collect(ch)
-
-	metric := <-ch
-	assert.Equal(t, 0.0, tools.MetricValue(metric).GetGauge().GetValue())
+	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
+# HELP openvpn_client_status OpenVPN client status
+# TYPE openvpn_client_status gauge
+openvpn_client_status 0
+`)))
 }
 
 func up(w http.ResponseWriter, _ *http.Request) {
