@@ -17,6 +17,12 @@ type Collector struct {
 	metrics     map[string]*prometheus.Desc
 }
 
+// Config to create a collector
+type Config struct {
+	URL    string
+	APIKey string
+}
+
 var (
 	radarrCacheTable = []client.CacheTableEntry{
 		{Endpoint: `/api/v3/system/status`, Expiry: time.Minute},
@@ -40,7 +46,7 @@ const (
 )
 
 // NewRadarrCollector creates a new RadarrCollector
-func NewRadarrCollector(url, apiKey string) prometheus.Collector {
+func NewRadarrCollector(url, apiKey string) *Collector {
 	options := client.Options{PrometheusMetrics: client.Metrics{
 		Latency: metrics.Latency,
 		Errors:  metrics.Errors,
@@ -57,7 +63,7 @@ func NewRadarrCollector(url, apiKey string) prometheus.Collector {
 }
 
 // NewSonarrCollector creates a new SonarrCollector
-func NewSonarrCollector(url, apiKey string) prometheus.Collector {
+func NewSonarrCollector(url, apiKey string) *Collector {
 	options := client.Options{PrometheusMetrics: client.Metrics{
 		Latency: metrics.Latency,
 		Errors:  metrics.Errors,

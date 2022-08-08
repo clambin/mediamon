@@ -27,7 +27,14 @@ var (
 
 // Collector reads an openvpn status file and provides Prometheus metrics
 type Collector struct {
-	filename string
+	Filename string
+}
+
+var _ prometheus.Collector = &Collector{}
+
+// Config to create a Collector
+type Config struct {
+	FileName string
 }
 
 type bandwidthStats struct {
@@ -36,8 +43,8 @@ type bandwidthStats struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(filename string) prometheus.Collector {
-	return &Collector{filename: filename}
+func NewCollector(filename string) *Collector {
+	return &Collector{Filename: filename}
 }
 
 // Describe implements the prometheus.Collector interface
@@ -63,7 +70,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 
 func (coll *Collector) getStats() (stats bandwidthStats, err error) {
 	var file *os.File
-	file, err = os.Open(coll.filename)
+	file, err = os.Open(coll.Filename)
 
 	if err != nil {
 		return
@@ -73,7 +80,8 @@ func (coll *Collector) getStats() (stats bandwidthStats, err error) {
 	r := regexp.MustCompile(`^(.+),(\d+)$`)
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		for _, match := range r.FindAllStringSubmatch(scanner.Text(), -1) {
+		line := scanner.Text()
+		for _, match := range r.FindAllStringSubmatch(line, -1) {
 			value, _ := strconv.ParseInt(match[2], 10, 64)
 			switch match[1] {
 			case "TCP/UDP read bytes":

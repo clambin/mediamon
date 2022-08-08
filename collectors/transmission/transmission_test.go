@@ -32,7 +32,7 @@ func TestCollector_Describe(t *testing.T) {
 
 func TestCollector_Collect(t *testing.T) {
 	c := transmission.NewCollector("")
-	c.(*transmission.Collector).API = &server{}
+	c.API = &server{}
 
 	e := strings.NewReader(`# HELP mediamon_transmission_active_torrent_count Number of active torrents
 # TYPE mediamon_transmission_active_torrent_count gauge
@@ -55,7 +55,7 @@ mediamon_transmission_version{url="",version="foo"} 1
 
 func TestCollector_Collect_Fail(t *testing.T) {
 	c := transmission.NewCollector("")
-	c.(*transmission.Collector).API = &server{fail: true}
+	c.API = &server{fail: true}
 
 	err := testutil.CollectAndCompare(c, strings.NewReader(``))
 	require.Error(t, err)

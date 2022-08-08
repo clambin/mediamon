@@ -53,6 +53,13 @@ type Collector struct {
 	url string
 }
 
+var _ prometheus.Collector = &Collector{}
+
+// Config items for Transmission collector
+type Config struct {
+	URL string
+}
+
 type transmissionStats struct {
 	version  string
 	active   int
@@ -62,7 +69,7 @@ type transmissionStats struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(url string) prometheus.Collector {
+func NewCollector(url string) *Collector {
 	return &Collector{
 		API: &transmission.Client{
 			Caller: &client.InstrumentedClient{

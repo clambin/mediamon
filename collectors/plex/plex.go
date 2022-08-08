@@ -19,8 +19,17 @@ type Collector struct {
 	url string
 }
 
+var _ prometheus.Collector = &Collector{}
+
+// Config to create a Collector
+type Config struct {
+	URL      string
+	UserName string
+	Password string
+}
+
 // NewCollector creates a new Collector
-func NewCollector(url, username, password string) prometheus.Collector {
+func NewCollector(url, username, password string) *Collector {
 	return &Collector{
 		API: &plex.Client{
 			Caller: &client.InstrumentedClient{

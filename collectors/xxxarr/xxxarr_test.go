@@ -22,7 +22,7 @@ func TestSonarrCollector_Describe(t *testing.T) {
 func TestSonarrCollector_Collect(t *testing.T) {
 	c := xxxarr.NewSonarrCollector("", "")
 	s := &mocks2.Scraper{}
-	c.(*xxxarr.Collector).Scraper = s
+	c.Scraper = s
 	s.On("Scrape").Return(testCases["sonarr"].input, nil)
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCases["sonarr"].output)))
 	s.AssertExpectations(t)
@@ -36,7 +36,7 @@ func TestRadarrCollector_Describe(t *testing.T) {
 func TestRadarrCollector_Collect(t *testing.T) {
 	c := xxxarr.NewRadarrCollector("", "")
 	s := &mocks2.Scraper{}
-	c.(*xxxarr.Collector).Scraper = s
+	c.Scraper = s
 	s.On("Scrape").Return(testCases["radarr"].input, nil)
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCases["radarr"].output)))
 
@@ -46,7 +46,7 @@ func TestRadarrCollector_Collect(t *testing.T) {
 func TestCollector_Failure(t *testing.T) {
 	c := xxxarr.NewSonarrCollector("", "")
 	s := &mocks2.Scraper{}
-	c.(*xxxarr.Collector).Scraper = s
+	c.Scraper = s
 	s.On("Scrape").Return(scraper.Stats{}, fmt.Errorf("failure"))
 
 	ch := make(chan prometheus.Metric)

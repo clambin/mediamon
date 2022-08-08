@@ -2,39 +2,26 @@ package services
 
 import (
 	"fmt"
+	"github.com/clambin/mediamon/collectors/bandwidth"
+	"github.com/clambin/mediamon/collectors/connectivity"
+	"github.com/clambin/mediamon/collectors/plex"
+	"github.com/clambin/mediamon/collectors/transmission"
+	"github.com/clambin/mediamon/collectors/xxxarr"
 	"gopkg.in/yaml.v3"
 	"net/url"
 	"os"
 	"time"
 )
 
-// Config contains the different possible services for github.com/clambin/mediamon to monitor
+// Config contains the different possible services for mediamon to monitor
 type Config struct {
-	Transmission struct {
-		URL string
-	}
-	Sonarr struct {
-		URL    string
-		APIKey string
-	}
-	Radarr struct {
-		URL    string
-		APIKey string
-	}
-	Plex struct {
-		URL      string
-		UserName string
-		Password string
-	}
-	OpenVPN struct {
-		Bandwidth struct {
-			FileName string
-		}
-		Connectivity struct {
-			Proxy    string
-			Token    string
-			Interval time.Duration
-		}
+	Transmission transmission.Config
+	Sonarr       xxxarr.Config
+	Radarr       xxxarr.Config
+	Plex         plex.Config
+	OpenVPN      struct {
+		Bandwidth    bandwidth.Config
+		Connectivity connectivity.Config
 	}
 }
 

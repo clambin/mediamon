@@ -30,7 +30,7 @@ func TestCollector_Collect_Up(t *testing.T) {
 	defer testServer.Close()
 
 	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
-	c.(*connectivity.Collector).URL = testServer.URL
+	c.URL = testServer.URL
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP openvpn_client_status OpenVPN client status
@@ -44,7 +44,7 @@ func TestCollector_Collect_Down(t *testing.T) {
 	defer testServer.Close()
 
 	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
-	c.(*connectivity.Collector).URL = testServer.URL
+	c.URL = testServer.URL
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP openvpn_client_status OpenVPN client status
 # TYPE openvpn_client_status gauge

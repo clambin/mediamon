@@ -35,8 +35,8 @@ func TestCollector_Collect(t *testing.T) {
 	c := plex.NewCollector("", "", "")
 	l := &mocks.Locator{}
 	m := &plexMock.API{}
-	c.(*plex.Collector).API = m
-	c.(*plex.Collector).Locator = l
+	c.API = m
+	c.Locator = l
 
 	l.On("Locate", "1.2.3.4").Return(10.0, 20.0, nil)
 
@@ -98,7 +98,7 @@ mediamon_plex_version{url="",version="foo"} 1
 func TestCollector_Collect_Fail(t *testing.T) {
 	c := plex.NewCollector("", "", "")
 	m := &plexMock.API{}
-	c.(*plex.Collector).API = m
+	c.API = m
 
 	m.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(plexAPI.IdentityResponse{}, fmt.Errorf("failure"))
 	m.On("GetSessions", mock.AnythingOfType("*context.emptyCtx")).Return(plexAPI.SessionsResponse{}, fmt.Errorf("failure"))

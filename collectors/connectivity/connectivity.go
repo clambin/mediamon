@@ -30,10 +30,19 @@ type Collector struct {
 	Caller client.Caller
 }
 
+var _ prometheus.Collector = &Collector{}
+
+// Config to create a Collector
+type Config struct {
+	Proxy    string
+	Token    string
+	Interval time.Duration
+}
+
 const httpTimeout = 10 * time.Second
 
 // NewCollector creates a new Collector
-func NewCollector(token string, proxyURL *url.URL, interval time.Duration) prometheus.Collector {
+func NewCollector(token string, proxyURL *url.URL, interval time.Duration) *Collector {
 	var httpClient *http.Client
 	if proxyURL != nil {
 		httpClient = &http.Client{
