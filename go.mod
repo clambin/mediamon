@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/clambin/cache v0.0.5
-	github.com/clambin/go-metrics v0.5.0
+	github.com/clambin/go-metrics v0.5.1
 	github.com/gosimple/slug v1.12.0
 	github.com/prometheus/client_golang v1.13.0
 	github.com/prometheus/common v0.37.0
