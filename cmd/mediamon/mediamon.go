@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/clambin/go-metrics/server"
 	"github.com/clambin/mediamon/collectors"
 	"github.com/clambin/mediamon/services"
@@ -55,9 +56,8 @@ func main() {
 
 	s := server.New(cfg.Port)
 	go func() {
-		err = s.Run()
-		if err != http.ErrServerClosed {
-			log.WithField("err", err).Error("Failed to start Prometheus http handler")
+		if err = s.Run(); !errors.Is(err, http.ErrServerClosed) {
+			log.WithField("err", err).Fatal("Failed to start Prometheus http handler")
 		}
 	}()
 	log.Info("mediamon started")

@@ -12,6 +12,7 @@ import (
 	"net/url"
 )
 
+// Collectors groups the different collectors
 type Collectors struct {
 	Transmission *transmission.Collector
 	Sonarr       *xxxarr.Collector
@@ -21,6 +22,7 @@ type Collectors struct {
 	Connectivity *connectivity.Collector
 }
 
+// Create builds the list of collectors based on the provided configuration and registers them with a registerer.
 func Create(cfg *services.Config, registerer prometheus.Registerer) (c Collectors) {
 	var toRegister []prometheus.Collector
 
