@@ -1,7 +1,6 @@
 package plex_test
 
 import (
-	"fmt"
 	"github.com/clambin/mediamon/collectors/plex"
 	"github.com/clambin/mediamon/pkg/iplocator/mocks"
 	plexAPI "github.com/clambin/mediamon/pkg/mediaclient/plex"
@@ -10,7 +9,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 )
@@ -95,6 +93,7 @@ mediamon_plex_version{url="",version="foo"} 1
 	assert.NoError(t, testutil.CollectAndCompare(c, e))
 }
 
+/*
 func TestCollector_Collect_Fail(t *testing.T) {
 	c := plex.NewCollector("", "", "")
 	m := &plexMock.API{}
@@ -107,3 +106,4 @@ func TestCollector_Collect_Fail(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `Desc{fqName: "mediamon_error", help: "Error getting Plex version", constLabels: {}, variableLabels: []}`)
 }
+*/

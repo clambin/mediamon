@@ -57,10 +57,12 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := coll.getStats()
 	if err != nil {
-		ch <- prometheus.NewInvalidMetric(
-			prometheus.NewDesc("mediamon_error",
-				"Error getting bandwidth statistics", nil, nil),
-			err)
+		/*
+			ch <- prometheus.NewInvalidMetric(
+				prometheus.NewDesc("mediamon_error",
+					"Error getting bandwidth statistics", nil, nil),
+				err)
+		*/
 		log.WithError(err).Warning("failed to collect bandwidth metrics")
 		return
 	}

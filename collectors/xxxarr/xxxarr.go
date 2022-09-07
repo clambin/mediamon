@@ -89,10 +89,12 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := coll.Scraper.Scrape()
 	if err != nil {
-		ch <- prometheus.NewInvalidMetric(
-			prometheus.NewDesc("mediamon_error",
-				"Error getting "+coll.application+" metrics", nil, nil),
-			err)
+		/*
+			ch <- prometheus.NewInvalidMetric(
+				prometheus.NewDesc("mediamon_error",
+					"Error getting "+coll.application+" metrics", nil, nil),
+				err)
+		*/
 		log.WithError(err).Warningf("failed to collect `%s` metrics", coll.application)
 		return
 	}
