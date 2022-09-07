@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - envvar
+      - fix
   pull_request_target:
 
 jobs:
