@@ -34,7 +34,7 @@ func main() {
 	a.HelpFlag.Short('h')
 	a.VersionFlag.Short('v')
 	a.Flag("debug", "Log debug messages").BoolVar(&cfg.Debug)
-	a.Flag("port", "API listener port").Default("8080").IntVar(&cfg.Port)
+	a.Flag("port", "Prometheus metrics port").Default("9090").IntVar(&cfg.Port)
 	a.Flag("file", "Service configuration file").Required().ExistingFileVar(&servicesFilename)
 
 	_, err := a.Parse(os.Args[1:])
