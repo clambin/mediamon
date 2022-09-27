@@ -7,7 +7,6 @@ import (
 	"github.com/clambin/mediamon/services"
 	"github.com/clambin/mediamon/version"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -55,10 +54,7 @@ func main() {
 
 	collectors.Create(cfg.Services, prometheus.DefaultRegisterer)
 
-	s := server.NewWithHandlers(cfg.Port, []server.Handler{{
-		Path:    "/metrics",
-		Handler: promhttp.Handler(),
-	}})
+	s := server.New(cfg.Port)
 
 	go func() {
 		if err = s.Run(); !errors.Is(err, http.ErrServerClosed) {
