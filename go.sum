@@ -54,14 +54,6 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/clambin/cache v0.0.5 h1:VqfQIEsuUFlk6n1NLUm5uSS1OIBgO8XXNQQjKSBwiFY=
 github.com/clambin/cache v0.0.5/go.mod h1:+BKmGZ4iIz30+yxq9gOD9ZLCBNPzu8dLyejefdkQQes=
-github.com/clambin/go-metrics v0.5.0 h1:ckw/yLAPSKQVBdP2ZZI5UcrbVc2c/FHPFEfi35dcmNA=
-github.com/clambin/go-metrics v0.5.0/go.mod h1:MxABHHW4cOOLOG55GouoMSJQLRZf19xAnM+KJkLvdq0=
-github.com/clambin/go-metrics v0.5.1-0.20220809100555-12fe4cc742f6 h1:zl0azd4hK39u+Jo5BBI1F7/PG7H5N/LDF3PxzipZqgc=
-github.com/clambin/go-metrics v0.5.1-0.20220809100555-12fe4cc742f6/go.mod h1:z3hpFI7lxGIHH+156BR/lPhwM+oYBgr9pP9Wov1/plc=
-github.com/clambin/go-metrics v0.5.1-rc1 h1:9hWHz2iH+0mnPi+W8TYFjuo4o/UrnX5YLzK15W21rBc=
-github.com/clambin/go-metrics v0.5.1-rc1/go.mod h1:z3hpFI7lxGIHH+156BR/lPhwM+oYBgr9pP9Wov1/plc=
-github.com/clambin/go-metrics v0.5.1 h1:94keFDQSSiVh+H55oKw9tr02LlOkcON4zmZh9OohLGo=
-github.com/clambin/go-metrics v0.5.1/go.mod h1:z3hpFI7lxGIHH+156BR/lPhwM+oYBgr9pP9Wov1/plc=
 github.com/clambin/go-metrics v0.6.0 h1:ACBCD9tqDWdCV3xDSCYK249AKKh3oeCUbtpjhDvojpU=
 github.com/clambin/go-metrics v0.6.0/go.mod h1:v/FFsSZlvDqUIf1NgtYwthrOb5efirZONt62uLlv6hM=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
@@ -141,8 +133,8 @@ github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
-github.com/gosimple/slug v1.12.0 h1:xzuhj7G7cGtd34NXnW/yF0l+AGNfWqwgh/IXgFy7dnc=
-github.com/gosimple/slug v1.12.0/go.mod h1:UiRaFH+GEilHstLUmcBgWcI42viBN7mAb818JrYOeFQ=
+github.com/gosimple/slug v1.13.0 h1:w4W2sU2a/JcAkI+LN316Cn/NE4CXopoXto9aloYTic0=
+github.com/gosimple/slug v1.13.0/go.mod h1:UiRaFH+GEilHstLUmcBgWcI42viBN7mAb818JrYOeFQ=
 github.com/gosimple/unidecode v1.0.1 h1:hZzFTMMqSswvf0LBJZCZgThIZrpDHFXux9KeGmn6T/o=
 github.com/gosimple/unidecode v1.0.1/go.mod h1:CP0Cr1Y1kogOtx0bJblKzsVWrqYaqfNOnHzpgWw4Awc=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
