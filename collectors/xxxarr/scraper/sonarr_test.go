@@ -1,6 +1,7 @@
 package scraper_test
 
 import (
+	"context"
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr/mocks"
@@ -11,11 +12,12 @@ import (
 )
 
 func TestSonarrUpdater_GetStats(t *testing.T) {
-	c := &mocks.SonarrAPI{}
+	c := mocks.NewSonarrAPI(t)
 	u := scraper.SonarrScraper{Client: c}
 
 	c.On("GetURL").Return("http://localhost:8080")
 	c.On("GetSystemStatus", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrSystemStatus, nil)
+	c.On("GetHealth", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrSystemHealth, nil)
 	c.On("GetCalendar", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrCalendar, nil)
 	c.On("GetQueue", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrQueue, nil)
 	c.On("GetSeries", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrSeries, nil)
@@ -24,10 +26,13 @@ func TestSonarrUpdater_GetStats(t *testing.T) {
 		c.On("GetEpisodeByID", mock.AnythingOfType("*context.emptyCtx"), id).Return(entry, nil)
 	}
 
-	stats, err := u.Scrape()
+	stats, err := u.Scrape(context.Background())
 	require.NoError(t, err)
 
 	assert.Equal(t, "http://localhost:8080", stats.URL)
+	assert.Equal(t, 0, stats.Health["ok"])
+	assert.Equal(t, 1, stats.Health["warning"])
+	assert.Equal(t, 1, stats.Health["error"])
 	assert.Equal(t, "1.2.3.4444", stats.Version)
 	assert.Equal(t, []string{"Series 11 - S01E02 - bar", "Series 11 - S01E03 - snafu"}, stats.Calendar)
 	assert.Equal(t, []scraper.QueuedFile{
@@ -37,13 +42,16 @@ func TestSonarrUpdater_GetStats(t *testing.T) {
 	}, stats.Queued)
 	assert.Equal(t, 3, stats.Monitored)
 	assert.Equal(t, 1, stats.Unmonitored)
-
-	c.AssertExpectations(t)
 }
 
 var (
 	sonarrSystemStatus = xxxarr.SonarrSystemStatusResponse{
 		Version: "1.2.3.4444",
+	}
+
+	sonarrSystemHealth = []xxxarr.SonarrHealthResponse{
+		{Type: "warning"},
+		{Type: "error"},
 	}
 
 	sonarrCalendar = []xxxarr.SonarrCalendarResponse{

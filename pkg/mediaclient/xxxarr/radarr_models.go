@@ -2,7 +2,7 @@ package xxxarr
 
 import "time"
 
-// RadarrSystemStatusResponse holds the response to Radarr's /api/v3/system/system response
+// RadarrSystemStatusResponse holds the response to Radarr's /api/v3/system/system endpoint
 type RadarrSystemStatusResponse struct {
 	AppName                string    `json:"appName"`
 	Version                string    `json:"version"`
@@ -32,6 +32,14 @@ type RadarrSystemStatusResponse struct {
 	PackageVersion         string    `json:"packageVersion"`
 	PackageAuthor          string    `json:"packageAuthor"`
 	PackageUpdateMechanism string    `json:"packageUpdateMechanism"`
+}
+
+// RadarrHealthResponse holders the response of Radar's /api/v3/system/health endpoint
+type RadarrHealthResponse struct {
+	Source  string `json:"source"`
+	Type    string `json:"type"`
+	Message string `json:"message"`
+	WikiUrl string `json:"wikiUrl"`
 }
 
 // RadarrCalendarResponse holds the response of Radarr's /api/v3/calendar endpoint

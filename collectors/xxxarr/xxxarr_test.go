@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"regexp"
 	"strings"
 	"testing"
@@ -14,31 +15,28 @@ import (
 
 func TestSonarrCollector_Describe(t *testing.T) {
 	c := xxxarr.NewSonarrCollector("http://localhost:8888", "")
-	testCollectorDescribe(t, c, `constLabels: {application="sonarr"}`)
+	testCollectorDescribe(t, c, `constLabels: {application="sonarr",url="http://localhost:8888"}`)
 }
 
 func TestSonarrCollector_Collect(t *testing.T) {
 	c := xxxarr.NewSonarrCollector("", "")
-	s := &mocks2.Scraper{}
+	s := mocks2.NewScraper(t)
 	c.Scraper = s
-	s.On("Scrape").Return(testCases["sonarr"].input, nil)
+	s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(testCases["sonarr"].input, nil)
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCases["sonarr"].output)))
-	s.AssertExpectations(t)
 }
 
 func TestRadarrCollector_Describe(t *testing.T) {
 	c := xxxarr.NewRadarrCollector("http://localhost:8888", "")
-	testCollectorDescribe(t, c, `constLabels: {application="radarr"}`)
+	testCollectorDescribe(t, c, `constLabels: {application="radarr",url="http://localhost:8888"}`)
 }
 
 func TestRadarrCollector_Collect(t *testing.T) {
 	c := xxxarr.NewRadarrCollector("", "")
-	s := &mocks2.Scraper{}
+	s := mocks2.NewScraper(t)
 	c.Scraper = s
-	s.On("Scrape").Return(testCases["radarr"].input, nil)
+	s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(testCases["radarr"].input, nil)
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCases["radarr"].output)))
-
-	s.AssertExpectations(t)
 }
 
 /*
@@ -155,6 +153,7 @@ func testCollectorDescribe(t *testing.T, collector prometheus.Collector, labelSt
 
 	metricsNames := []string{
 		"mediamon_xxxarr_version",
+		"mediamon_xxxarr_health",
 		"mediamon_xxxarr_calendar",
 		"mediamon_xxxarr_queued_count",
 		"mediamon_xxxarr_queued_total_bytes",

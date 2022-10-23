@@ -1,9 +1,12 @@
 package scraper
 
+import "context"
+
 // Stats contains the statistics returned by a Scraper
 type Stats struct {
 	URL         string
 	Version     string
+	Health      map[string]int
 	Calendar    []string
 	Queued      []QueuedFile
 	Monitored   int
@@ -18,7 +21,8 @@ type QueuedFile struct {
 }
 
 // Scraper provides a generic means of getting stats from Sonarr or Radarr
+//
 //go:generate mockery --name Scraper
 type Scraper interface {
-	Scrape() (Stats, error)
+	Scrape(ctx context.Context) (Stats, error)
 }

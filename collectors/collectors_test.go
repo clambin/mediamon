@@ -161,7 +161,7 @@ func createTransmissionMock() (m *transmissionMock.API) {
 
 func createSonarrMock() (m *scraperMock.Scraper) {
 	m = &scraperMock.Scraper{}
-	m.On("Scrape").Return(scraper.Stats{
+	m.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(scraper.Stats{
 		URL:         "http://localhost",
 		Version:     "foo",
 		Monitored:   5,
@@ -172,7 +172,7 @@ func createSonarrMock() (m *scraperMock.Scraper) {
 
 func createRadarrMock() (m *scraperMock.Scraper) {
 	m = &scraperMock.Scraper{}
-	m.On("Scrape").Return(scraper.Stats{
+	m.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(scraper.Stats{
 		URL:         "http://localhost",
 		Version:     "foo",
 		Monitored:   2,

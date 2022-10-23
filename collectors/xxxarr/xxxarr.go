@@ -1,6 +1,7 @@
 package xxxarr
 
 import (
+	"context"
 	"github.com/clambin/go-metrics/client"
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/metrics"
@@ -58,7 +59,7 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 			Client: xxxarr.NewRadarrClientWithCaller(apiKey, url, c),
 		},
 		application: "radarr",
-		metrics:     createMetrics("radarr"),
+		metrics:     createMetrics("radarr", url),
 	}
 }
 
@@ -74,7 +75,7 @@ func NewSonarrCollector(url, apiKey string) *Collector {
 			Client: xxxarr.NewSonarrClientWithCaller(apiKey, url, c),
 		},
 		application: "sonarr",
-		metrics:     createMetrics("sonarr"),
+		metrics:     createMetrics("sonarr", url),
 	}
 }
 
@@ -87,7 +88,7 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
-	stats, err := coll.Scraper.Scrape()
+	stats, err := coll.Scraper.Scrape(context.Background())
 	if err != nil {
 		/*
 			ch <- prometheus.NewInvalidMetric(
@@ -99,16 +100,19 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	ch <- prometheus.MustNewConstMetric(coll.metrics["version"], prometheus.GaugeValue, float64(1), stats.Version, stats.URL)
+	ch <- prometheus.MustNewConstMetric(coll.metrics["version"], prometheus.GaugeValue, float64(1), stats.Version)
+	for key, value := range stats.Health {
+		ch <- prometheus.MustNewConstMetric(coll.metrics["health"], prometheus.GaugeValue, float64(value), key)
+	}
 	for _, title := range stats.Calendar {
-		ch <- prometheus.MustNewConstMetric(coll.metrics["calendar"], prometheus.GaugeValue, 1.0, stats.URL, title)
+		ch <- prometheus.MustNewConstMetric(coll.metrics["calendar"], prometheus.GaugeValue, 1.0, title)
 	}
 
-	ch <- prometheus.MustNewConstMetric(coll.metrics["queued_count"], prometheus.GaugeValue, float64(len(stats.Queued)), stats.URL)
+	ch <- prometheus.MustNewConstMetric(coll.metrics["queued_count"], prometheus.GaugeValue, float64(len(stats.Queued)))
 	for _, queued := range stats.Queued {
-		ch <- prometheus.MustNewConstMetric(coll.metrics["queued_total"], prometheus.GaugeValue, queued.TotalBytes, stats.URL, queued.Name)
-		ch <- prometheus.MustNewConstMetric(coll.metrics["queued_downloaded"], prometheus.GaugeValue, queued.DownloadedBytes, stats.URL, queued.Name)
+		ch <- prometheus.MustNewConstMetric(coll.metrics["queued_total"], prometheus.GaugeValue, queued.TotalBytes, queued.Name)
+		ch <- prometheus.MustNewConstMetric(coll.metrics["queued_downloaded"], prometheus.GaugeValue, queued.DownloadedBytes, queued.Name)
 	}
-	ch <- prometheus.MustNewConstMetric(coll.metrics["monitored"], prometheus.GaugeValue, float64(stats.Monitored), stats.URL)
-	ch <- prometheus.MustNewConstMetric(coll.metrics["unmonitored"], prometheus.GaugeValue, float64(stats.Unmonitored), stats.URL)
+	ch <- prometheus.MustNewConstMetric(coll.metrics["monitored"], prometheus.GaugeValue, float64(stats.Monitored))
+	ch <- prometheus.MustNewConstMetric(coll.metrics["unmonitored"], prometheus.GaugeValue, float64(stats.Unmonitored))
 }
