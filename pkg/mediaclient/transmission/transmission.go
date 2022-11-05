@@ -5,11 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"net/http"
 )
 
 // API interface
+//
 //go:generate mockery --name API
 type API interface {
 	GetSessionParameters(ctx context.Context) (SessionParameters, error)
@@ -18,7 +19,7 @@ type API interface {
 
 // Client calls the Transmission APIs
 type Client struct {
-	Caller    client.Caller
+	Caller    httpclient.Caller
 	URL       string
 	SessionID string
 }

@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/version"
 	"net/http"
 )
 
 // API interface
+//
 //go:generate mockery --name API
 type API interface {
 	GetIdentity(context.Context) (identity IdentityResponse, err error)
@@ -20,7 +21,7 @@ type API interface {
 
 // Client calls the Plex APIs
 type Client struct {
-	client.Caller
+	httpclient.Caller
 	URL       string
 	AuthURL   string
 	UserName  string

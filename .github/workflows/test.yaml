@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - health
+      - httpserver
   pull_request_target:
 
 jobs:

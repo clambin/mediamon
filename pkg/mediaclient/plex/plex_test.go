@@ -3,7 +3,7 @@ package plex_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,8 +22,8 @@ func TestPlexClient_GetIdentity(t *testing.T) {
 	defer authServer.Close()
 
 	c := &plex.Client{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      testServer.URL,
@@ -45,8 +45,8 @@ func TestPlexClient_GetStats(t *testing.T) {
 	defer authServer.Close()
 
 	c := &plex.Client{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      testServer.URL,
@@ -80,8 +80,8 @@ func TestPlexClient_Authentication(t *testing.T) {
 	defer authServer.Close()
 
 	c := &plex.Client{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      "",
@@ -100,8 +100,8 @@ func TestPlexClient_Authentication_Failure(t *testing.T) {
 	authServer.Close()
 
 	c := &plex.Client{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      "",
@@ -121,8 +121,8 @@ func TestClient_Failures(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(plexBadHandler))
 
 	c := &plex.Client{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "plex",
 		},
 		URL:      testServer.URL,

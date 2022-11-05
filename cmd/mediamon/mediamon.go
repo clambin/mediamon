@@ -1,8 +1,7 @@
 package main
 
 import (
-	"errors"
-	"github.com/clambin/go-metrics/server"
+	"github.com/clambin/httpserver"
 	"github.com/clambin/mediamon/collectors"
 	"github.com/clambin/mediamon/services"
 	"github.com/clambin/mediamon/version"
@@ -10,7 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -54,10 +52,10 @@ func main() {
 
 	collectors.Create(cfg.Services, prometheus.DefaultRegisterer)
 
-	s := server.New(cfg.Port)
+	s := httpserver.Prometheus{Port: cfg.Port}
 
 	go func() {
-		if err = s.Run(); !errors.Is(err, http.ErrServerClosed) {
+		if err = s.Run(); err != nil {
 			log.WithField("err", err).Fatal("Failed to start Prometheus http handler")
 		}
 	}()

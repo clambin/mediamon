@@ -1,11 +1,11 @@
 package metrics
 
 import (
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 )
 
 var (
-	callerMetrics = client.NewMetrics("mediamon", "")
+	callerMetrics = httpclient.NewMetrics("mediamon", "")
 
 	// Latency collects request time statistics
 	Latency = callerMetrics.Latency

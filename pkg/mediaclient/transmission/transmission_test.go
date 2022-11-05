@@ -2,7 +2,7 @@ package transmission_test
 
 import (
 	"context"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,8 +18,8 @@ func TestTransmissionClient_GetSessionParameters(t *testing.T) {
 	defer testServer.Close()
 
 	c := &transmission.Client{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "transmission",
 		},
 		URL: testServer.URL,
@@ -36,8 +36,8 @@ func TestTransmissionClient_GetSessionStats(t *testing.T) {
 	defer testServer.Close()
 
 	c := &transmission.Client{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "transmission",
 		},
 		URL: testServer.URL,
@@ -56,8 +56,8 @@ func TestTransmissionClient_Failures(t *testing.T) {
 	testServer := s.start()
 
 	c := &transmission.Client{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "transmission",
 		},
 		URL: testServer.URL,
@@ -93,8 +93,8 @@ func TestTransmissionClient_Authentication(t *testing.T) {
 	defer testServer.Close()
 
 	c := &transmission.Client{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "transmission",
 		},
 		URL: testServer.URL,

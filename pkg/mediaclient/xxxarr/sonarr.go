@@ -3,7 +3,7 @@ package xxxarr
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"net/http"
 )
 
@@ -30,16 +30,16 @@ type SonarrClient struct {
 var _ SonarrAPI = &SonarrClient{}
 
 // NewSonarrClient creates a new SonarrClient, using http.DefaultClient as http.InstrumentedClient
-func NewSonarrClient(apiKey, url string, options client.Options) *SonarrClient {
-	return NewSonarrClientWithCaller(apiKey, url, &client.InstrumentedClient{
-		BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+func NewSonarrClient(apiKey, url string, options httpclient.Options) *SonarrClient {
+	return NewSonarrClientWithCaller(apiKey, url, &httpclient.InstrumentedClient{
+		BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 		Options:     options,
 		Application: "sonarr",
 	})
 }
 
 // NewSonarrClientWithCaller creates a new SonarrClient with a specified Caller
-func NewSonarrClientWithCaller(apiKey, url string, caller client.Caller) *SonarrClient {
+func NewSonarrClientWithCaller(apiKey, url string, caller httpclient.Caller) *SonarrClient {
 	return &SonarrClient{APICaller: &APIClient{
 		Caller: caller,
 		URL:    url,

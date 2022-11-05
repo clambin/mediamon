@@ -3,10 +3,8 @@ package xxxarr
 import (
 	"context"
 	"encoding/json"
-	"github.com/clambin/go-metrics/client"
-	"github.com/clambin/go-metrics/tools"
+	"github.com/clambin/httpclient"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -20,23 +18,26 @@ type testStruct struct {
 }
 
 func TestApiClient_WithMetrics(t *testing.T) {
-	latencyMetric := promauto.NewSummaryVec(prometheus.SummaryOpts{
+	r := prometheus.NewRegistry()
+	latencyMetric := prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Name: "xxxarr_request_duration_seconds",
 		Help: "Duration of API requests.",
 	}, []string{"application", "request", "method"})
 
-	errorMetric := promauto.NewCounterVec(prometheus.CounterOpts{
+	errorMetric := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "xxxarr_request_errors",
 		Help: "Duration of API requests.",
 	}, []string{"application", "request", "method"})
 
+	r.MustRegister(latencyMetric, errorMetric)
+
 	s := httptest.NewServer(http.HandlerFunc(handler))
 	c := APIClient{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "foo",
-			Options: client.Options{
-				PrometheusMetrics: client.Metrics{
+			Options: httpclient.Options{
+				PrometheusMetrics: httpclient.Metrics{
 					Latency: latencyMetric,
 					Errors:  errorMetric,
 				},
@@ -53,11 +54,18 @@ func TestApiClient_WithMetrics(t *testing.T) {
 	assert.Equal(t, 42, response.Age)
 
 	// validate that a metric was recorded
-	ch := make(chan prometheus.Metric)
-	go latencyMetric.Collect(ch)
+	metrics, err := r.Gather()
+	require.NoError(t, err)
 
-	desc := <-ch
-	assert.Equal(t, uint64(1), tools.MetricValue(desc).GetSummary().GetSampleCount())
+	for _, metric := range metrics {
+		require.Len(t, metric.GetMetric(), 1)
+		switch metric.GetName() {
+		case "xxxarr_request_duration_seconds":
+			assert.Equal(t, uint64(1), metric.GetMetric()[0].GetSummary().GetSampleCount())
+		case "xxxarr_request_errors":
+			assert.Equal(t, 0.0, metric.GetMetric()[0].GetCounter().GetValue())
+		}
+	}
 
 	// shut down the server
 	s.Close()
@@ -65,19 +73,26 @@ func TestApiClient_WithMetrics(t *testing.T) {
 	err = c.Get(context.Background(), "/foo", &response)
 	require.Error(t, err)
 
-	ch = make(chan prometheus.Metric)
-	go errorMetric.Collect(ch)
+	metrics, err = r.Gather()
+	require.NoError(t, err)
 
-	desc = <-ch
-	assert.Equal(t, 1.0, tools.MetricValue(desc).GetCounter().GetValue())
+	for _, metric := range metrics {
+		require.Len(t, metric.GetMetric(), 1)
+		switch metric.GetName() {
+		case "xxxarr_request_duration_seconds":
+			assert.Equal(t, uint64(2), metric.GetMetric()[0].GetSummary().GetSampleCount())
+		case "xxxarr_request_errors":
+			assert.Equal(t, 1.0, metric.GetMetric()[0].GetCounter().GetValue())
+		}
+	}
 }
 
 func TestApiClient_Failures(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handler))
 	c := APIClient{
-		Caller: &client.InstrumentedClient{
-			BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
-			Options:     client.Options{},
+		Caller: &httpclient.InstrumentedClient{
+			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
+			Options:     httpclient.Options{},
 			Application: "foo",
 		},
 		URL:    s.URL,

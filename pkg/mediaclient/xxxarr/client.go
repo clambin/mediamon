@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"net/http"
 )
 
@@ -16,7 +16,7 @@ type APICaller interface {
 
 // APIClient is a basic implementation of the APICaller interface
 type APIClient struct {
-	client.Caller
+	httpclient.Caller
 	URL    string
 	APIKey string
 }

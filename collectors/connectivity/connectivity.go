@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"io"
@@ -27,7 +27,7 @@ var (
 type Collector struct {
 	URL    string
 	token  string
-	Caller client.Caller
+	Caller httpclient.Caller
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -55,13 +55,13 @@ func NewCollector(token string, proxyURL *url.URL, interval time.Duration) *Coll
 
 	return &Collector{
 		token: token,
-		Caller: client.NewCacher(
+		Caller: httpclient.NewCacher(
 			httpClient, "ipInfo",
-			client.Options{PrometheusMetrics: client.Metrics{
+			httpclient.Options{PrometheusMetrics: httpclient.Metrics{
 				Latency: metrics.Latency,
 				Errors:  metrics.Errors,
 			}},
-			[]client.CacheTableEntry{},
+			[]httpclient.CacheTableEntry{},
 			interval, 0,
 		),
 	}

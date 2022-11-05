@@ -3,7 +3,7 @@ package xxxarr
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/go-metrics/client"
+	"github.com/clambin/httpclient"
 	"net/http"
 )
 
@@ -29,16 +29,16 @@ type RadarrClient struct {
 var _ RadarrAPI = &RadarrClient{}
 
 // NewRadarrClient creates a new RadarrClient, using http.DefaultClient as http.InstrumentedClient
-func NewRadarrClient(apiKey, url string, options client.Options) *RadarrClient {
-	return NewRadarrClientWithCaller(apiKey, url, &client.InstrumentedClient{
-		BaseClient:  client.BaseClient{HTTPClient: http.DefaultClient},
+func NewRadarrClient(apiKey, url string, options httpclient.Options) *RadarrClient {
+	return NewRadarrClientWithCaller(apiKey, url, &httpclient.InstrumentedClient{
+		BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 		Options:     options,
 		Application: "radarr",
 	})
 }
 
 // NewRadarrClientWithCaller creates a new RadarrClient with a specified Caller
-func NewRadarrClientWithCaller(apiKey, url string, caller client.Caller) *RadarrClient {
+func NewRadarrClientWithCaller(apiKey, url string, caller httpclient.Caller) *RadarrClient {
 	return &RadarrClient{APICaller: &APIClient{
 		Caller: caller,
 		URL:    url,
@@ -54,7 +54,7 @@ func (rc RadarrClient) GetSystemStatus(ctx context.Context) (response RadarrSyst
 	return
 }
 
-// GetSystemHealth calls Radarr's /api/v3/health endpoint. It returns the health of the Radarr instance
+// GetHealth calls Radarr's /api/v3/health endpoint. It returns the health of the Radarr instance
 func (rc RadarrClient) GetHealth(ctx context.Context) (response []RadarrHealthResponse, err error) {
 	err = rc.Get(ctx, radarrAPIPrefix+"/health", &response)
 	return
