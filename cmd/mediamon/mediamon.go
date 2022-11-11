@@ -11,6 +11,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -52,18 +53,28 @@ func main() {
 
 	collectors.Create(cfg.Services, prometheus.DefaultRegisterer)
 
-	s := httpserver.Prometheus{Port: cfg.Port}
+	s, err := httpserver.New(
+		httpserver.WithPort{Port: cfg.Port},
+		httpserver.WithPrometheus{Path: "/metrics"},
+	)
 
+	if err != nil {
+		log.WithError(err).Fatal("failed to start metrics server")
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
 		if err = s.Run(); err != nil {
 			log.WithField("err", err).Fatal("Failed to start Prometheus http handler")
 		}
+		wg.Done()
 	}()
 	log.Info("mediamon started")
 
 	<-shutdown.Chan()
 
 	_ = s.Shutdown(30 * time.Second)
-
+	wg.Wait()
 	log.Info("mediamon exiting")
 }
