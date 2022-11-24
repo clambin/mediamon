@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/clambin/cache v0.0.5
-	github.com/clambin/httpclient v0.1.2
+	github.com/clambin/httpclient v0.2.0
 	github.com/clambin/httpserver v0.4.0
 	github.com/gosimple/slug v1.13.1
 	github.com/prometheus/client_golang v1.14.0
