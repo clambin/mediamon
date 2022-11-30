@@ -57,10 +57,7 @@ func NewCollector(token string, proxyURL *url.URL, interval time.Duration) *Coll
 		token: token,
 		Caller: httpclient.NewCacher(
 			httpClient, "ipInfo",
-			httpclient.Options{PrometheusMetrics: httpclient.Metrics{
-				Latency: metrics.Latency,
-				Errors:  metrics.Errors,
-			}},
+			httpclient.Options{PrometheusMetrics: metrics.ClientMetrics},
 			[]httpclient.CacheTableEntry{},
 			interval, 0,
 		),

@@ -3,12 +3,12 @@ package services_test
 import (
 	"flag"
 	"github.com/clambin/mediamon/services"
-	"github.com/gosimple/slug"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -21,42 +21,41 @@ func TestParseConfigFile(t *testing.T) {
 		pass     bool
 		env      EnvVars
 	}{
-		{filename: "testdata/complete.yaml", pass: true},
-		{filename: "testdata/partial.yaml", pass: true},
-		{filename: "testdata/invalid.yaml", pass: false},
-		{filename: "testdata/envvar.yaml", pass: true, env: EnvVars{"PLEX_PASSWORD": "some-password"}},
-		{filename: "testdata/invalid_proxy.yaml", pass: false},
+		{filename: "complete", pass: true},
+		{filename: "partial", pass: true},
+		{filename: "invalid", pass: false},
+		{filename: "envvar", pass: true, env: EnvVars{"PLEX_PASSWORD": "some-password"}},
+		{filename: "invalid_proxy", pass: false},
 	}
 
 	for _, tt := range testCases {
-		err := tt.env.Set()
-		require.NoError(t, err)
+		t.Run(tt.filename, func(t *testing.T) {
+			require.NoError(t, tt.env.Set())
 
-		var cfg *services.Config
-		cfg, err = services.ParseConfigFile(tt.filename)
-		if tt.pass == false {
-			assert.Error(t, err, tt.filename)
-			continue
-		}
-		require.NoError(t, err, tt.filename)
-		assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
+			cfg, err := services.ParseConfigFile(filepath.Join("testdata", tt.filename+".yaml"))
+			if tt.pass == false {
+				assert.Error(t, err)
+				return
+			}
 
-		var body, golden []byte
-		body, err = yaml.Marshal(cfg)
-		require.NoError(t, err, tt.filename)
+			require.NoError(t, err)
+			assert.Equal(t, 5*time.Minute, cfg.OpenVPN.Connectivity.Interval)
 
-		gp := filepath.Join("testdata", t.Name()+"-"+slug.Make(tt.filename)+".golden")
-		if *update {
-			err = os.WriteFile(gp, body, 0644)
-			require.NoError(t, err, tt.filename)
-		}
+			var body, golden []byte
+			body, err = yaml.Marshal(cfg)
+			require.NoError(t, err)
 
-		golden, err = os.ReadFile(gp)
-		require.NoError(t, err, tt.filename)
-		assert.Equal(t, string(golden), string(body), tt.filename)
+			gp := filepath.Join("testdata", strings.ToLower(t.Name())+".golden")
+			if *update {
+				require.NoError(t, os.WriteFile(gp, body, 0644))
+			}
 
-		err = tt.env.Clear()
-		require.NoError(t, err)
+			golden, err = os.ReadFile(gp)
+			require.NoError(t, err)
+			assert.Equal(t, string(golden), string(body))
+
+			require.NoError(t, tt.env.Clear())
+		})
 	}
 }
 

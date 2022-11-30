@@ -75,10 +75,7 @@ func NewCollector(url string) *Collector {
 			Caller: &httpclient.InstrumentedClient{
 				BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 				Application: "transmission",
-				Options: httpclient.Options{PrometheusMetrics: httpclient.Metrics{
-					Latency: metrics.Latency,
-					Errors:  metrics.Errors,
-				}},
+				Options:     httpclient.Options{PrometheusMetrics: metrics.ClientMetrics},
 			},
 			URL: url,
 		},

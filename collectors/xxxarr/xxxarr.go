@@ -48,10 +48,7 @@ const (
 
 // NewRadarrCollector creates a new RadarrCollector
 func NewRadarrCollector(url, apiKey string) *Collector {
-	options := httpclient.Options{PrometheusMetrics: httpclient.Metrics{
-		Latency: metrics.Latency,
-		Errors:  metrics.Errors,
-	}}
+	options := httpclient.Options{PrometheusMetrics: metrics.ClientMetrics}
 	c := httpclient.NewCacher(nil, "radarr", options, radarrCacheTable, cacheExpiry, cleanupInterval)
 
 	return &Collector{
@@ -65,10 +62,7 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 
 // NewSonarrCollector creates a new SonarrCollector
 func NewSonarrCollector(url, apiKey string) *Collector {
-	options := httpclient.Options{PrometheusMetrics: httpclient.Metrics{
-		Latency: metrics.Latency,
-		Errors:  metrics.Errors,
-	}}
+	options := httpclient.Options{PrometheusMetrics: metrics.ClientMetrics}
 	c := httpclient.NewCacher(nil, "sonarr", options, sonarrCacheTable, cacheExpiry, cleanupInterval)
 	return &Collector{
 		Scraper: &scraper.SonarrScraper{

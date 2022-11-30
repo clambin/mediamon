@@ -2,13 +2,9 @@ package metrics
 
 import (
 	"github.com/clambin/httpclient"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
-	callerMetrics = httpclient.NewMetrics("mediamon", "")
-
-	// Latency collects request time statistics
-	Latency = callerMetrics.Latency
-	// Errors collects request error statistics
-	Errors = callerMetrics.Errors
+	ClientMetrics = httpclient.NewMetrics("mediamon", "", prometheus.DefaultRegisterer)
 )

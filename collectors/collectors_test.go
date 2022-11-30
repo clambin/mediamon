@@ -3,7 +3,6 @@ package collectors_test
 import (
 	"bytes"
 	"flag"
-	"fmt"
 	"github.com/clambin/mediamon/collectors"
 	"github.com/clambin/mediamon/collectors/bandwidth"
 	"github.com/clambin/mediamon/collectors/connectivity"
@@ -31,6 +30,7 @@ import (
 )
 
 type testCase struct {
+	name   string
 	config services.Config
 }
 
@@ -38,6 +38,7 @@ var update = flag.Bool("update", false, "update .golden files")
 
 var testCases = []testCase{
 	{
+		name: "full",
 		config: services.Config{
 			Transmission: transmission.Config{
 				URL: "http://localhost",
@@ -65,6 +66,7 @@ var testCases = []testCase{
 		},
 	},
 	{
+		name: "single",
 		config: services.Config{
 			Transmission: transmission.Config{
 				URL: "http://localhost",
@@ -74,58 +76,55 @@ var testCases = []testCase{
 }
 
 func TestCreate(t *testing.T) {
-	for index, tt := range testCases {
-		r := prometheus.NewRegistry()
-		c := collectors.Create(&tt.config, r)
-		assert.NotNil(t, c)
-		mocks := buildUp(&c)
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			r := prometheus.NewRegistry()
+			c := collectors.Create(&tt.config, r)
+			assert.NotNil(t, c)
+			buildUp(t, &c)
 
-		gp := filepath.Join("testdata", fmt.Sprintf("%s_%d.golden", strings.ToLower(t.Name()), index))
-		if *update {
-			metrics, err := r.Gather()
-			require.NoError(t, err)
+			gp := filepath.Join("testdata", strings.ToLower(t.Name())+".golden")
+			if *update {
+				metrics, err := r.Gather()
+				require.NoError(t, err)
 
-			buf := bytes.NewBuffer([]byte{})
-			enc := expfmt.NewEncoder(buf, expfmt.FmtOpenMetrics)
-			for _, entry := range metrics {
-				err = enc.Encode(entry)
+				buf := bytes.NewBuffer([]byte{})
+				enc := expfmt.NewEncoder(buf, expfmt.FmtOpenMetrics)
+				for _, entry := range metrics {
+					err = enc.Encode(entry)
+					require.NoError(t, err)
+				}
+				err = os.WriteFile(gp, buf.Bytes(), 0644)
 				require.NoError(t, err)
 			}
-			err = os.WriteFile(gp, buf.Bytes(), 0644)
+
+			f, err := os.Open(gp)
 			require.NoError(t, err)
-		}
+			err = testutil.GatherAndCompare(r, f)
+			assert.NoError(t, err)
 
-		f, err := os.Open(gp)
-		require.NoError(t, err)
-		err = testutil.GatherAndCompare(r, f)
-		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, mocks...)
-		tearDown(&c)
+			//mock.AssertExpectationsForObjects(t, mocks...)
+			tearDown(&c)
+		})
 	}
 }
 
-func buildUp(c *collectors.Collectors) (mocks []interface{}) {
+func buildUp(t *testing.T, c *collectors.Collectors) {
 	if c.Transmission != nil {
-		c.Transmission.API = createTransmissionMock()
-		mocks = append(mocks, c.Transmission.API)
+		c.Transmission.API = createTransmissionMock(t)
 	}
 	if c.Sonarr != nil {
-		c.Sonarr.Scraper = createSonarrMock()
-		mocks = append(mocks, c.Sonarr.Scraper)
+		c.Sonarr.Scraper = createSonarrMock(t)
 	}
 	if c.Radarr != nil {
-		c.Radarr.Scraper = createRadarrMock()
-		mocks = append(mocks, c.Radarr.Scraper)
+		c.Radarr.Scraper = createRadarrMock(t)
 	}
 	if c.Plex != nil {
-		c.Plex.API = createPlexMock()
-		mocks = append(mocks, c.Plex.API)
+		c.Plex.API = createPlexMock(t)
 	}
 	if c.Bandwidth != nil {
 		c.Bandwidth.Filename = createBandwidthFile()
 	}
-	return
 }
 
 func tearDown(c *collectors.Collectors) {
@@ -142,8 +141,8 @@ func times() (n int) {
 	return n
 }
 
-func createTransmissionMock() (m *transmissionMock.API) {
-	m = &transmissionMock.API{}
+func createTransmissionMock(t *testing.T) (m *transmissionMock.API) {
+	m = transmissionMock.NewAPI(t)
 
 	var o1 transmission2.SessionParameters
 	o1.Arguments.Version = "foo"
@@ -159,8 +158,8 @@ func createTransmissionMock() (m *transmissionMock.API) {
 	return m
 }
 
-func createSonarrMock() (m *scraperMock.Scraper) {
-	m = &scraperMock.Scraper{}
+func createSonarrMock(t *testing.T) (m *scraperMock.Scraper) {
+	m = scraperMock.NewScraper(t)
 	m.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(scraper.Stats{
 		URL:         "http://localhost",
 		Version:     "foo",
@@ -170,8 +169,8 @@ func createSonarrMock() (m *scraperMock.Scraper) {
 	return m
 }
 
-func createRadarrMock() (m *scraperMock.Scraper) {
-	m = &scraperMock.Scraper{}
+func createRadarrMock(t *testing.T) (m *scraperMock.Scraper) {
+	m = scraperMock.NewScraper(t)
 	m.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(scraper.Stats{
 		URL:         "http://localhost",
 		Version:     "foo",
@@ -181,8 +180,8 @@ func createRadarrMock() (m *scraperMock.Scraper) {
 	return m
 }
 
-func createPlexMock() (m *plexMock.API) {
-	m = &plexMock.API{}
+func createPlexMock(t *testing.T) (m *plexMock.API) {
+	m = plexMock.NewAPI(t)
 	m.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(plex2.IdentityResponse{}, nil).Times(times())
 	m.On("GetSessions", mock.AnythingOfType("*context.emptyCtx")).Return(plex2.SessionsResponse{}, nil).Times(times())
 	return m
