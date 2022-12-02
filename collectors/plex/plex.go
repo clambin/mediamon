@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/httpclient"
-	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/iplocator"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,13 +28,13 @@ type Config struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(url, username, password string) *Collector {
+func NewCollector(url, username, password string, metrics *httpclient.Metrics) *Collector {
 	return &Collector{
 		API: &plex.Client{
 			Caller: &httpclient.InstrumentedClient{
 				BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 				Application: "plex",
-				Options:     httpclient.Options{PrometheusMetrics: metrics.ClientMetrics},
+				Options:     httpclient.Options{PrometheusMetrics: metrics},
 			},
 			URL:      url,
 			UserName: username,

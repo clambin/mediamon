@@ -1,6 +1,7 @@
 package connectivity_test
 
 import (
+	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/collectors/connectivity"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -14,8 +15,9 @@ import (
 )
 
 func TestCollector_Describe(t *testing.T) {
+	m := httpclient.NewMetrics("foo", "")
 	proxy, _ := url.Parse("http://localhost:8888")
-	c := connectivity.NewCollector("123", proxy, 5*time.Minute)
+	c := connectivity.NewCollector("123", proxy, 5*time.Minute, m)
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -29,7 +31,8 @@ func TestCollector_Collect_Up(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(up))
 	defer testServer.Close()
 
-	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
+	m := httpclient.NewMetrics("foo", "")
+	c := connectivity.NewCollector("foo", nil, 5*time.Minute, m)
 	c.URL = testServer.URL
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
@@ -43,7 +46,8 @@ func TestCollector_Collect_Down(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(down))
 	defer testServer.Close()
 
-	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
+	m := httpclient.NewMetrics("foo", "")
+	c := connectivity.NewCollector("foo", nil, 5*time.Minute, m)
 	c.URL = testServer.URL
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP openvpn_client_status OpenVPN client status

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/clambin/httpclient"
-	"github.com/clambin/mediamon/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
@@ -42,7 +41,7 @@ type Config struct {
 const httpTimeout = 10 * time.Second
 
 // NewCollector creates a new Collector
-func NewCollector(token string, proxyURL *url.URL, interval time.Duration) *Collector {
+func NewCollector(token string, proxyURL *url.URL, interval time.Duration, metrics *httpclient.Metrics) *Collector {
 	var httpClient *http.Client
 	if proxyURL != nil {
 		httpClient = &http.Client{
@@ -57,7 +56,7 @@ func NewCollector(token string, proxyURL *url.URL, interval time.Duration) *Coll
 		token: token,
 		Caller: httpclient.NewCacher(
 			httpClient, "ipInfo",
-			httpclient.Options{PrometheusMetrics: metrics.ClientMetrics},
+			httpclient.Options{PrometheusMetrics: metrics},
 			[]httpclient.CacheTableEntry{},
 			interval, 0,
 		),

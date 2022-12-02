@@ -3,6 +3,7 @@ package transmission_test
 import (
 	"context"
 	"fmt"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/collectors/transmission"
 	transmission2 "github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,7 +14,8 @@ import (
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := transmission.NewCollector("http://localhost:8888")
+	m := httpclient.NewMetrics("foo", "")
+	c := transmission.NewCollector("http://localhost:8888", m)
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -30,7 +32,8 @@ func TestCollector_Describe(t *testing.T) {
 }
 
 func TestCollector_Collect(t *testing.T) {
-	c := transmission.NewCollector("")
+	m := httpclient.NewMetrics("foo", "")
+	c := transmission.NewCollector("", m)
 	c.API = &server{}
 
 	e := strings.NewReader(`# HELP mediamon_transmission_active_torrent_count Number of active torrents

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/clambin/httpclient"
 	"github.com/clambin/httpserver"
 	"github.com/clambin/mediamon/collectors"
 	"github.com/clambin/mediamon/services"
@@ -51,7 +52,9 @@ func main() {
 
 	log.WithField("version", version.BuildVersion).Info("media monitor starting")
 
-	collectors.Create(cfg.Services, prometheus.DefaultRegisterer)
+	metrics := httpclient.NewMetrics("mediamon", "")
+	prometheus.MustRegister(metrics)
+	prometheus.MustRegister(collectors.Create(cfg.Services, metrics))
 
 	s, err := httpserver.New(
 		httpserver.WithPort{Port: cfg.Port},
@@ -65,10 +68,10 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		if err = s.Run(); err != nil {
 			log.WithField("err", err).Fatal("Failed to start Prometheus http handler")
 		}
-		wg.Done()
 	}()
 	log.Info("mediamon started")
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
-	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -47,8 +46,8 @@ const (
 )
 
 // NewRadarrCollector creates a new RadarrCollector
-func NewRadarrCollector(url, apiKey string) *Collector {
-	options := httpclient.Options{PrometheusMetrics: metrics.ClientMetrics}
+func NewRadarrCollector(url, apiKey string, metrics *httpclient.Metrics) *Collector {
+	options := httpclient.Options{PrometheusMetrics: metrics}
 	c := httpclient.NewCacher(nil, "radarr", options, radarrCacheTable, cacheExpiry, cleanupInterval)
 
 	return &Collector{
@@ -61,8 +60,8 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 }
 
 // NewSonarrCollector creates a new SonarrCollector
-func NewSonarrCollector(url, apiKey string) *Collector {
-	options := httpclient.Options{PrometheusMetrics: metrics.ClientMetrics}
+func NewSonarrCollector(url, apiKey string, metrics *httpclient.Metrics) *Collector {
+	options := httpclient.Options{PrometheusMetrics: metrics}
 	c := httpclient.NewCacher(nil, "sonarr", options, sonarrCacheTable, cacheExpiry, cleanupInterval)
 	return &Collector{
 		Scraper: &scraper.SonarrScraper{

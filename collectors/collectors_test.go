@@ -3,6 +3,7 @@ package collectors_test
 import (
 	"bytes"
 	"flag"
+	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/collectors"
 	"github.com/clambin/mediamon/collectors/bandwidth"
 	"github.com/clambin/mediamon/collectors/connectivity"
@@ -29,58 +30,59 @@ import (
 	"time"
 )
 
-type testCase struct {
-	name   string
-	config services.Config
-}
-
 var update = flag.Bool("update", false, "update .golden files")
 
-var testCases = []testCase{
-	{
-		name: "full",
-		config: services.Config{
-			Transmission: transmission.Config{
-				URL: "http://localhost",
-			},
-			Sonarr: xxxarr.Config{
-				URL:    "http://localhost",
-				APIKey: "1234",
-			},
-			Radarr: xxxarr.Config{
-				URL:    "http://localhost",
-				APIKey: "1234",
-			},
-			Plex: plex.Config{
-				URL:      "http://localhost",
-				UserName: "foo",
-				Password: "bar",
-			},
-			OpenVPN: struct {
-				Bandwidth    bandwidth.Config
-				Connectivity connectivity.Config
-			}{
-				Bandwidth:    bandwidth.Config{FileName: "foo"},
-				Connectivity: connectivity.Config{Proxy: "http://localhost", Token: "foo", Interval: time.Hour},
-			},
-		},
-	},
-	{
-		name: "single",
-		config: services.Config{
-			Transmission: transmission.Config{
-				URL: "http://localhost",
-			},
-		},
-	},
-}
-
 func TestCreate(t *testing.T) {
+	testCases := []struct {
+		name   string
+		config services.Config
+	}{
+		{
+			name: "full",
+			config: services.Config{
+				Transmission: transmission.Config{
+					URL: "http://localhost",
+				},
+				Sonarr: xxxarr.Config{
+					URL:    "http://localhost",
+					APIKey: "1234",
+				},
+				Radarr: xxxarr.Config{
+					URL:    "http://localhost",
+					APIKey: "1234",
+				},
+				Plex: plex.Config{
+					URL:      "http://localhost",
+					UserName: "foo",
+					Password: "bar",
+				},
+				OpenVPN: struct {
+					Bandwidth    bandwidth.Config
+					Connectivity connectivity.Config
+				}{
+					Bandwidth:    bandwidth.Config{FileName: "foo"},
+					Connectivity: connectivity.Config{Proxy: "http://localhost", Token: "foo", Interval: time.Hour},
+				},
+			},
+		},
+		{
+			name: "single",
+			config: services.Config{
+				Transmission: transmission.Config{
+					URL: "http://localhost",
+				},
+			},
+		},
+	}
+
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			r := prometheus.NewRegistry()
-			c := collectors.Create(&tt.config, r)
+			m := httpclient.NewMetrics("foo", "bar")
+			r.MustRegister(m)
+			c := collectors.Create(&tt.config, m)
 			assert.NotNil(t, c)
+			r.MustRegister(c)
 			buildUp(t, &c)
 
 			gp := filepath.Join("testdata", strings.ToLower(t.Name())+".golden")
@@ -103,7 +105,6 @@ func TestCreate(t *testing.T) {
 			err = testutil.GatherAndCompare(r, f)
 			assert.NoError(t, err)
 
-			//mock.AssertExpectationsForObjects(t, mocks...)
 			tearDown(&c)
 		})
 	}
@@ -144,16 +145,16 @@ func times() (n int) {
 func createTransmissionMock(t *testing.T) (m *transmissionMock.API) {
 	m = transmissionMock.NewAPI(t)
 
-	var o1 transmission2.SessionParameters
-	o1.Arguments.Version = "foo"
-	m.On("GetSessionParameters", mock.AnythingOfType("*context.emptyCtx")).Return(o1, nil).Times(times())
+	var sessionParameters transmission2.SessionParameters
+	sessionParameters.Arguments.Version = "foo"
+	m.On("GetSessionParameters", mock.AnythingOfType("*context.emptyCtx")).Return(sessionParameters, nil).Times(times())
 
-	var o2 transmission2.SessionStats
-	o2.Arguments.ActiveTorrentCount = 1
-	o2.Arguments.PausedTorrentCount = 2
-	o2.Arguments.UploadSpeed = 25
-	o2.Arguments.DownloadSpeed = 100
-	m.On("GetSessionStatistics", mock.AnythingOfType("*context.emptyCtx")).Return(o2, nil).Times(times())
+	var sessionStats transmission2.SessionStats
+	sessionStats.Arguments.ActiveTorrentCount = 1
+	sessionStats.Arguments.PausedTorrentCount = 2
+	sessionStats.Arguments.UploadSpeed = 25
+	sessionStats.Arguments.DownloadSpeed = 100
+	m.On("GetSessionStatistics", mock.AnythingOfType("*context.emptyCtx")).Return(sessionStats, nil).Times(times())
 
 	return m
 }

@@ -19,29 +19,15 @@ type testStruct struct {
 
 func TestApiClient_WithMetrics(t *testing.T) {
 	r := prometheus.NewRegistry()
-	latencyMetric := prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "xxxarr_request_duration_seconds",
-		Help: "Duration of API requests.",
-	}, []string{"application", "request", "method"})
-
-	errorMetric := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "xxxarr_request_errors",
-		Help: "Duration of API requests.",
-	}, []string{"application", "request", "method"})
-
-	r.MustRegister(latencyMetric, errorMetric)
+	m := httpclient.NewMetrics("foo", "")
+	r.MustRegister(m)
 
 	s := httptest.NewServer(http.HandlerFunc(handler))
 	c := APIClient{
 		Caller: &httpclient.InstrumentedClient{
 			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 			Application: "foo",
-			Options: httpclient.Options{
-				PrometheusMetrics: httpclient.Metrics{
-					Latency: latencyMetric,
-					Errors:  errorMetric,
-				},
-			},
+			Options:     httpclient.Options{PrometheusMetrics: m},
 		},
 		URL:    s.URL,
 		APIKey: "1234",

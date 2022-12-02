@@ -3,7 +3,6 @@ package transmission
 import (
 	"context"
 	"github.com/clambin/httpclient"
-	"github.com/clambin/mediamon/metrics"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -69,13 +68,13 @@ type transmissionStats struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(url string) *Collector {
+func NewCollector(url string, metrics *httpclient.Metrics) *Collector {
 	return &Collector{
 		API: &transmission.Client{
 			Caller: &httpclient.InstrumentedClient{
 				BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
 				Application: "transmission",
-				Options:     httpclient.Options{PrometheusMetrics: metrics.ClientMetrics},
+				Options:     httpclient.Options{PrometheusMetrics: metrics},
 			},
 			URL: url,
 		},

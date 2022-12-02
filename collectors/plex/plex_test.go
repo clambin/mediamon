@@ -1,6 +1,7 @@
 package plex_test
 
 import (
+	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/collectors/plex"
 	"github.com/clambin/mediamon/pkg/iplocator/mocks"
 	plexAPI "github.com/clambin/mediamon/pkg/mediaclient/plex"
@@ -14,7 +15,8 @@ import (
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := plex.NewCollector("http://localhost:8888", "username", "password")
+	m := httpclient.NewMetrics("foo", "")
+	c := plex.NewCollector("http://localhost:8888", "username", "password", m)
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -30,17 +32,18 @@ func TestCollector_Describe(t *testing.T) {
 }
 
 func TestCollector_Collect(t *testing.T) {
-	c := plex.NewCollector("", "", "")
-	l := &mocks.Locator{}
-	m := &plexMock.API{}
-	c.API = m
+	m := httpclient.NewMetrics("foo", "")
+	c := plex.NewCollector("", "", "", m)
+	l := mocks.NewLocator(t)
+	p := plexMock.NewAPI(t)
+	c.API = p
 	c.Locator = l
 
 	l.On("Locate", "1.2.3.4").Return(10.0, 20.0, nil)
 
 	idResp := plexAPI.IdentityResponse{}
 	idResp.MediaContainer.Version = "foo"
-	m.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(idResp, nil)
+	p.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(idResp, nil)
 
 	var sessions = plexAPI.SessionsResponse{}
 	sessions.MediaContainer.Metadata = []plexAPI.SessionsResponseRecord{
@@ -72,7 +75,7 @@ func TestCollector_Collect(t *testing.T) {
 		},
 	}
 
-	m.On("GetSessions", mock.AnythingOfType("*context.emptyCtx")).Return(sessions, nil)
+	p.On("GetSessions", mock.AnythingOfType("*context.emptyCtx")).Return(sessions, nil)
 
 	e := strings.NewReader(`# HELP mediamon_plex_session_count Active Plex session
 # TYPE mediamon_plex_session_count gauge

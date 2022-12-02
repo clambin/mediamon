@@ -1,6 +1,7 @@
 package xxxarr_test
 
 import (
+	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/collectors/xxxarr"
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	mocks2 "github.com/clambin/mediamon/collectors/xxxarr/scraper/mocks"
@@ -14,12 +15,14 @@ import (
 )
 
 func TestSonarrCollector_Describe(t *testing.T) {
-	c := xxxarr.NewSonarrCollector("http://localhost:8888", "")
+	m := httpclient.NewMetrics("foo", "")
+	c := xxxarr.NewSonarrCollector("http://localhost:8888", "", m)
 	testCollectorDescribe(t, c, `constLabels: {application="sonarr",url="http://localhost:8888"}`)
 }
 
 func TestSonarrCollector_Collect(t *testing.T) {
-	c := xxxarr.NewSonarrCollector("", "")
+	m := httpclient.NewMetrics("foo", "")
+	c := xxxarr.NewSonarrCollector("", "", m)
 	s := mocks2.NewScraper(t)
 	c.Scraper = s
 	s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(testCases["sonarr"].input, nil)
@@ -27,12 +30,14 @@ func TestSonarrCollector_Collect(t *testing.T) {
 }
 
 func TestRadarrCollector_Describe(t *testing.T) {
-	c := xxxarr.NewRadarrCollector("http://localhost:8888", "")
+	m := httpclient.NewMetrics("foo", "")
+	c := xxxarr.NewRadarrCollector("http://localhost:8888", "", m)
 	testCollectorDescribe(t, c, `constLabels: {application="radarr",url="http://localhost:8888"}`)
 }
 
 func TestRadarrCollector_Collect(t *testing.T) {
-	c := xxxarr.NewRadarrCollector("", "")
+	m := httpclient.NewMetrics("foo", "")
+	c := xxxarr.NewRadarrCollector("", "", m)
 	s := mocks2.NewScraper(t)
 	c.Scraper = s
 	s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(testCases["radarr"].input, nil)
