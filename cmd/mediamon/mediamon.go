@@ -1,18 +1,18 @@
 package main
 
 import (
-	"github.com/clambin/httpclient"
-	"github.com/clambin/httpserver"
+	"github.com/clambin/go-common/httpserver"
 	"github.com/clambin/mediamon/collectors"
 	"github.com/clambin/mediamon/services"
 	"github.com/clambin/mediamon/version"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -52,9 +52,7 @@ func main() {
 
 	log.WithField("version", version.BuildVersion).Info("media monitor starting")
 
-	metrics := httpclient.NewMetrics("mediamon", "")
-	prometheus.MustRegister(metrics)
-	prometheus.MustRegister(collectors.Create(cfg.Services, metrics))
+	prometheus.MustRegister(collectors.Create(cfg.Services))
 
 	s, err := httpserver.New(
 		httpserver.WithPort{Port: cfg.Port},
@@ -75,7 +73,9 @@ func main() {
 	}()
 	log.Info("mediamon started")
 
-	<-shutdown.Chan()
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	<-ch
 
 	_ = s.Shutdown(30 * time.Second)
 	wg.Wait()

@@ -3,7 +3,6 @@ package plex_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,14 +21,11 @@ func TestPlexClient_GetIdentity(t *testing.T) {
 	defer authServer.Close()
 
 	c := &plex.Client{
-		Caller: &httpclient.InstrumentedClient{
-			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
-			Application: "plex",
-		},
-		URL:      testServer.URL,
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "somepassword",
+		HTTPClient: http.DefaultClient,
+		URL:        testServer.URL,
+		AuthURL:    authServer.URL,
+		UserName:   "user@example.com",
+		Password:   "somepassword",
 	}
 
 	identity, err := c.GetIdentity(context.Background())
@@ -45,14 +41,11 @@ func TestPlexClient_GetStats(t *testing.T) {
 	defer authServer.Close()
 
 	c := &plex.Client{
-		Caller: &httpclient.InstrumentedClient{
-			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
-			Application: "plex",
-		},
-		URL:      testServer.URL,
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "somepassword",
+		HTTPClient: http.DefaultClient,
+		URL:        testServer.URL,
+		AuthURL:    authServer.URL,
+		UserName:   "user@example.com",
+		Password:   "somepassword",
 	}
 
 	sessions, err := c.GetSessions(context.Background())
@@ -80,14 +73,11 @@ func TestPlexClient_Authentication(t *testing.T) {
 	defer authServer.Close()
 
 	c := &plex.Client{
-		Caller: &httpclient.InstrumentedClient{
-			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
-			Application: "plex",
-		},
-		URL:      "",
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "badpassword",
+		HTTPClient: http.DefaultClient,
+		URL:        "",
+		AuthURL:    authServer.URL,
+		UserName:   "user@example.com",
+		Password:   "badpassword",
 	}
 
 	_, err := c.GetIdentity(context.Background())
@@ -100,14 +90,11 @@ func TestPlexClient_Authentication_Failure(t *testing.T) {
 	authServer.Close()
 
 	c := &plex.Client{
-		Caller: &httpclient.InstrumentedClient{
-			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
-			Application: "plex",
-		},
-		URL:      "",
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "badpassword",
+		HTTPClient: http.DefaultClient,
+		URL:        "",
+		AuthURL:    authServer.URL,
+		UserName:   "user@example.com",
+		Password:   "badpassword",
 	}
 
 	_, err := c.GetIdentity(context.Background())
@@ -121,14 +108,11 @@ func TestClient_Failures(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(plexBadHandler))
 
 	c := &plex.Client{
-		Caller: &httpclient.InstrumentedClient{
-			BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
-			Application: "plex",
-		},
-		URL:      testServer.URL,
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "somepassword",
+		HTTPClient: http.DefaultClient,
+		URL:        testServer.URL,
+		AuthURL:    authServer.URL,
+		UserName:   "user@example.com",
+		Password:   "somepassword",
 	}
 
 	_, err := c.GetIdentity(context.Background())

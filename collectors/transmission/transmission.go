@@ -2,7 +2,7 @@ package transmission
 
 import (
 	"context"
-	"github.com/clambin/httpclient"
+	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -49,7 +49,8 @@ var (
 // Collector presents Transmission statistics as Prometheus metrics
 type Collector struct {
 	transmission.API
-	url string
+	url       string
+	transport *httpclient.RoundTripper
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -68,17 +69,15 @@ type transmissionStats struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(url string, metrics *httpclient.Metrics) *Collector {
+func NewCollector(url string) *Collector {
+	r := httpclient.NewRoundTripper(httpclient.WithRoundTripperMetrics{Namespace: "mediamon", Application: "transmission"})
 	return &Collector{
 		API: &transmission.Client{
-			Caller: &httpclient.InstrumentedClient{
-				BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
-				Application: "transmission",
-				Options:     httpclient.Options{PrometheusMetrics: metrics},
-			},
-			URL: url,
+			HTTPClient: &http.Client{Transport: r},
+			URL:        url,
 		},
-		url: url,
+		url:       url,
+		transport: r,
 	}
 }
 
@@ -89,6 +88,7 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- pausedTorrentsMetric
 	ch <- downloadSpeedMetric
 	ch <- uploadSpeedMetric
+	coll.transport.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface
@@ -109,6 +109,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(pausedTorrentsMetric, prometheus.GaugeValue, float64(stats.paused), coll.url)
 	ch <- prometheus.MustNewConstMetric(downloadSpeedMetric, prometheus.GaugeValue, float64(stats.download), coll.url)
 	ch <- prometheus.MustNewConstMetric(uploadSpeedMetric, prometheus.GaugeValue, float64(stats.upload), coll.url)
+	coll.transport.Collect(ch)
 }
 
 func (coll *Collector) getStats() (stats transmissionStats, err error) {

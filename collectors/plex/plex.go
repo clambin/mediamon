@@ -3,7 +3,7 @@ package plex
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/httpclient"
+	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/mediamon/pkg/iplocator"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
@@ -15,7 +15,8 @@ import (
 type Collector struct {
 	plex.API
 	iplocator.Locator
-	url string
+	url       string
+	transport *httpclient.RoundTripper
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -28,20 +29,18 @@ type Config struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(url, username, password string, metrics *httpclient.Metrics) *Collector {
+func NewCollector(url, username, password string) *Collector {
+	r := httpclient.NewRoundTripper(httpclient.WithRoundTripperMetrics{Namespace: "mediamon", Application: "plex"})
 	return &Collector{
 		API: &plex.Client{
-			Caller: &httpclient.InstrumentedClient{
-				BaseClient:  httpclient.BaseClient{HTTPClient: http.DefaultClient},
-				Application: "plex",
-				Options:     httpclient.Options{PrometheusMetrics: metrics},
-			},
-			URL:      url,
-			UserName: username,
-			Password: password,
+			HTTPClient: &http.Client{Transport: r},
+			URL:        url,
+			UserName:   username,
+			Password:   password,
 		},
-		Locator: iplocator.New(),
-		url:     url,
+		Locator:   iplocator.New(),
+		url:       url,
+		transport: r,
 	}
 }
 
@@ -51,12 +50,14 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- sessionMetric
 	ch <- transcodersMetric
 	ch <- speedMetric
+	coll.transport.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	coll.collectVersion(ch)
 	coll.collectSessionStats(ch)
+	coll.transport.Collect(ch)
 }
 
 func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {

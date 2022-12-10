@@ -1,7 +1,6 @@
 package plex_test
 
 import (
-	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/collectors/plex"
 	"github.com/clambin/mediamon/pkg/iplocator/mocks"
 	plexAPI "github.com/clambin/mediamon/pkg/mediaclient/plex"
@@ -15,8 +14,7 @@ import (
 )
 
 func TestCollector_Describe(t *testing.T) {
-	m := httpclient.NewMetrics("foo", "")
-	c := plex.NewCollector("http://localhost:8888", "username", "password", m)
+	c := plex.NewCollector("http://localhost:8888", "username", "password")
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -32,8 +30,7 @@ func TestCollector_Describe(t *testing.T) {
 }
 
 func TestCollector_Collect(t *testing.T) {
-	m := httpclient.NewMetrics("foo", "")
-	c := plex.NewCollector("", "", "", m)
+	c := plex.NewCollector("", "", "")
 	l := mocks.NewLocator(t)
 	p := plexMock.NewAPI(t)
 	c.API = p

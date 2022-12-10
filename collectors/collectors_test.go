@@ -3,7 +3,6 @@ package collectors_test
 import (
 	"bytes"
 	"flag"
-	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/collectors"
 	"github.com/clambin/mediamon/collectors/bandwidth"
 	"github.com/clambin/mediamon/collectors/connectivity"
@@ -34,8 +33,9 @@ var update = flag.Bool("update", false, "update .golden files")
 
 func TestCreate(t *testing.T) {
 	testCases := []struct {
-		name   string
-		config services.Config
+		name    string
+		config  services.Config
+		metrics []string
 	}{
 		{
 			name: "full",
@@ -64,6 +64,22 @@ func TestCreate(t *testing.T) {
 					Connectivity: connectivity.Config{Proxy: "http://localhost", Token: "foo", Interval: time.Hour},
 				},
 			},
+			metrics: []string{
+				"mediamon_api_errors_total",
+				"mediamon_plex_version",
+				"mediamon_transmission_active_torrent_count",
+				"mediamon_transmission_download_speed",
+				"mediamon_transmission_paused_torrent_count",
+				"mediamon_transmission_upload_speed",
+				"mediamon_transmission_version",
+				"mediamon_xxxarr_monitored_count",
+				"mediamon_xxxarr_queued_count",
+				"mediamon_xxxarr_unmonitored_count",
+				"mediamon_xxxarr_version",
+				"openvpn_client_status",
+				"openvpn_client_tcp_udp_read_bytes_total",
+				"openvpn_client_tcp_udp_write_bytes_total",
+			},
 		},
 		{
 			name: "single",
@@ -72,15 +88,21 @@ func TestCreate(t *testing.T) {
 					URL: "http://localhost",
 				},
 			},
+			metrics: []string{
+				"mediamon_api_errors_total",
+				"mediamon_transmission_active_torrent_count",
+				"mediamon_transmission_download_speed",
+				"mediamon_transmission_paused_torrent_count",
+				"mediamon_transmission_upload_speed",
+				"mediamon_transmission_version",
+			},
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			r := prometheus.NewRegistry()
-			m := httpclient.NewMetrics("foo", "bar")
-			r.MustRegister(m)
-			c := collectors.Create(&tt.config, m)
+			c := collectors.Create(&tt.config)
 			assert.NotNil(t, c)
 			r.MustRegister(c)
 			buildUp(t, &c)
@@ -102,7 +124,7 @@ func TestCreate(t *testing.T) {
 
 			f, err := os.Open(gp)
 			require.NoError(t, err)
-			err = testutil.GatherAndCompare(r, f)
+			err = testutil.GatherAndCompare(r, f, tt.metrics...)
 			assert.NoError(t, err)
 
 			tearDown(&c)

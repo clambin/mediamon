@@ -1,7 +1,6 @@
 package collectors
 
 import (
-	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/collectors/bandwidth"
 	"github.com/clambin/mediamon/collectors/connectivity"
 	"github.com/clambin/mediamon/collectors/plex"
@@ -68,31 +67,31 @@ func (c Collectors) Collect(ch chan<- prometheus.Metric) {
 }
 
 // Create builds the list of collectors based on the provided configuration and registers them with a registerer.
-func Create(cfg *services.Config, metrics *httpclient.Metrics) Collectors {
+func Create(cfg *services.Config) Collectors {
 	var c Collectors
 
 	// Transmission Collector
 	if cfg.Transmission.URL != "" {
 		log.WithField("url", cfg.Transmission.URL).Info("monitoring Transmission")
-		c.Transmission = transmission.NewCollector(cfg.Transmission.URL, metrics)
+		c.Transmission = transmission.NewCollector(cfg.Transmission.URL)
 	}
 
 	// Sonarr Collector
 	if cfg.Sonarr.URL != "" {
 		log.WithField("url", cfg.Sonarr.URL).Info("monitoring Sonarr")
-		c.Sonarr = xxxarr.NewSonarrCollector(cfg.Sonarr.URL, cfg.Sonarr.APIKey, metrics)
+		c.Sonarr = xxxarr.NewSonarrCollector(cfg.Sonarr.URL, cfg.Sonarr.APIKey)
 	}
 
 	// Radarr Collector
 	if cfg.Radarr.URL != "" {
 		log.WithField("url", cfg.Radarr.URL).Info("monitoring Radarr")
-		c.Radarr = xxxarr.NewRadarrCollector(cfg.Radarr.URL, cfg.Radarr.APIKey, metrics)
+		c.Radarr = xxxarr.NewRadarrCollector(cfg.Radarr.URL, cfg.Radarr.APIKey)
 	}
 
 	// Plex Collector
 	if cfg.Plex.URL != "" {
 		log.WithField("url", cfg.Plex.URL).Info("monitoring Plex")
-		c.Plex = plex.NewCollector(cfg.Plex.URL, cfg.Plex.UserName, cfg.Plex.Password, metrics)
+		c.Plex = plex.NewCollector(cfg.Plex.URL, cfg.Plex.UserName, cfg.Plex.Password)
 	}
 
 	// Bandwidth Probe
@@ -106,7 +105,7 @@ func Create(cfg *services.Config, metrics *httpclient.Metrics) Collectors {
 		// proxyURL has already been validated when we loaded the configuration
 		proxyURL, _ := url.Parse(cfg.OpenVPN.Connectivity.Proxy)
 		log.WithField("proxyURL", proxyURL).Info("monitoring OpenVPN connectivity")
-		c.Connectivity = connectivity.NewCollector(cfg.OpenVPN.Connectivity.Token, proxyURL, cfg.OpenVPN.Connectivity.Interval, metrics)
+		c.Connectivity = connectivity.NewCollector(cfg.OpenVPN.Connectivity.Token, proxyURL, cfg.OpenVPN.Connectivity.Interval)
 	}
 
 	return c

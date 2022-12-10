@@ -1,7 +1,7 @@
 package xxxarr_test
 
 import (
-	"github.com/clambin/httpclient"
+	"bytes"
 	"github.com/clambin/mediamon/collectors/xxxarr"
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	mocks2 "github.com/clambin/mediamon/collectors/xxxarr/scraper/mocks"
@@ -9,39 +9,33 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"regexp"
-	"strings"
 	"testing"
 )
 
-func TestSonarrCollector_Describe(t *testing.T) {
-	m := httpclient.NewMetrics("foo", "")
-	c := xxxarr.NewSonarrCollector("http://localhost:8888", "", m)
-	testCollectorDescribe(t, c, `constLabels: {application="sonarr",url="http://localhost:8888"}`)
-}
+func TestCollector(t *testing.T) {
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			var c *xxxarr.Collector
+			switch tt.collector {
+			case "sonarr":
+				c = xxxarr.NewSonarrCollector("", "")
+			case "radarr":
+				c = xxxarr.NewRadarrCollector("", "")
+			default:
+				t.Fatalf("invalid collector type: %s", tt.collector)
+			}
+			s := mocks2.NewScraper(t)
+			c.Scraper = s
+			s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(tt.input, nil)
 
-func TestSonarrCollector_Collect(t *testing.T) {
-	m := httpclient.NewMetrics("foo", "")
-	c := xxxarr.NewSonarrCollector("", "", m)
-	s := mocks2.NewScraper(t)
-	c.Scraper = s
-	s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(testCases["sonarr"].input, nil)
-	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCases["sonarr"].output)))
-}
+			r := prometheus.NewPedanticRegistry()
+			r.MustRegister(c)
 
-func TestRadarrCollector_Describe(t *testing.T) {
-	m := httpclient.NewMetrics("foo", "")
-	c := xxxarr.NewRadarrCollector("http://localhost:8888", "", m)
-	testCollectorDescribe(t, c, `constLabels: {application="radarr",url="http://localhost:8888"}`)
-}
+			err := testutil.GatherAndCompare(r, bytes.NewBufferString(tt.output))
+			assert.NoError(t, err)
 
-func TestRadarrCollector_Collect(t *testing.T) {
-	m := httpclient.NewMetrics("foo", "")
-	c := xxxarr.NewRadarrCollector("", "", m)
-	s := mocks2.NewScraper(t)
-	c.Scraper = s
-	s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(testCases["radarr"].input, nil)
-	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCases["radarr"].output)))
+		})
+	}
 }
 
 /*
@@ -62,12 +56,16 @@ func TestCollector_Failure(t *testing.T) {
 */
 
 type testCase struct {
-	input  scraper.Stats
-	output string
+	name      string
+	collector string
+	input     scraper.Stats
+	output    string
 }
 
-var testCases = map[string]testCase{
-	"sonarr": {
+var testCases = []testCase{
+	{
+		name:      "sonarr",
+		collector: "sonarr",
 		input: scraper.Stats{
 			URL:      "",
 			Version:  "foo",
@@ -109,7 +107,9 @@ mediamon_xxxarr_unmonitored_count{application="sonarr",url=""} 1
 mediamon_xxxarr_version{application="sonarr",url="",version="foo"} 1
 `,
 	},
-	"radarr": {
+	{
+		name:      "radarr",
+		collector: "radarr",
 		input: scraper.Stats{
 			Version:  "foo",
 			Calendar: []string{"1", "2", "3", "4", "5"},
@@ -150,33 +150,4 @@ mediamon_xxxarr_unmonitored_count{application="radarr",url=""} 1
 mediamon_xxxarr_version{application="radarr",url="",version="foo"} 1
 `,
 	},
-}
-
-func testCollectorDescribe(t *testing.T, collector prometheus.Collector, labelString string) {
-	ch := make(chan *prometheus.Desc)
-	go collector.Describe(ch)
-
-	metricsNames := []string{
-		"mediamon_xxxarr_version",
-		"mediamon_xxxarr_health",
-		"mediamon_xxxarr_calendar",
-		"mediamon_xxxarr_queued_count",
-		"mediamon_xxxarr_queued_total_bytes",
-		"mediamon_xxxarr_queued_downloaded_bytes",
-		"mediamon_xxxarr_monitored_count",
-		"mediamon_xxxarr_unmonitored_count",
-	}
-
-	r, _ := regexp.Compile(`fqName: "([a-z_]+)",`)
-
-	for range metricsNames {
-		metric := <-ch
-		metricAsString := metric.String()
-
-		name := r.FindStringSubmatch(metricAsString)
-		assert.Len(t, name, 2)
-		assert.Contains(t, metricsNames, name[1])
-
-		assert.Contains(t, metricAsString, labelString)
-	}
 }

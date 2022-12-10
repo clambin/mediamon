@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/httpclient"
+	"github.com/clambin/go-common/httpclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
@@ -24,9 +24,10 @@ var (
 // Collector tests VPN connectivity by checking connection to https://ipinfo.io through a
 // configured proxy
 type Collector struct {
-	URL    string
-	token  string
-	Caller httpclient.Caller
+	HTTPClient *http.Client
+	URL        string
+	token      string
+	transport  *httpclient.RoundTripper
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -41,31 +42,35 @@ type Config struct {
 const httpTimeout = 10 * time.Second
 
 // NewCollector creates a new Collector
-func NewCollector(token string, proxyURL *url.URL, interval time.Duration, metrics *httpclient.Metrics) *Collector {
-	var httpClient *http.Client
+func NewCollector(token string, proxyURL *url.URL, expiry time.Duration) *Collector {
+	options := []httpclient.RoundTripperOption{
+		httpclient.WithCache{
+			DefaultExpiry:   expiry,
+			CleanupInterval: 2 * expiry,
+		},
+		httpclient.WithRoundTripperMetrics{Namespace: "mediamon", Application: "connectivity"},
+	}
 	if proxyURL != nil {
-		httpClient = &http.Client{
-			Transport: &http.Transport{
-				Proxy: http.ProxyURL(proxyURL),
-			},
-			Timeout: httpTimeout,
-		}
+		options = append(options, httpclient.WithRoundTripper{
+			RoundTripper: &http.Transport{Proxy: http.ProxyURL(proxyURL)},
+		})
 	}
 
+	r := httpclient.NewRoundTripper(options...)
 	return &Collector{
-		token: token,
-		Caller: httpclient.NewCacher(
-			httpClient, "ipInfo",
-			httpclient.Options{PrometheusMetrics: metrics},
-			[]httpclient.CacheTableEntry{},
-			interval, 0,
-		),
+		HTTPClient: &http.Client{
+			Transport: r,
+			Timeout:   httpTimeout,
+		},
+		transport: r,
+		token:     token,
 	}
 }
 
 // Describe implements the prometheus.Collector interface
 func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- upMetric
+	coll.transport.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface
@@ -77,6 +82,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 		value = 1.0
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
+	coll.transport.Collect(ch)
 }
 
 func (coll *Collector) ping() (err error) {
@@ -92,7 +98,7 @@ func (coll *Collector) ping() (err error) {
 	req.URL.RawQuery = q.Encode()
 
 	var resp *http.Response
-	resp, err = coll.Caller.Do(req)
+	resp, err = coll.HTTPClient.Do(req)
 
 	if err != nil {
 		return

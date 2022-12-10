@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/httpclient"
 	"net/http"
 )
 
@@ -19,9 +18,9 @@ type API interface {
 
 // Client calls the Transmission APIs
 type Client struct {
-	Caller    httpclient.Caller
-	URL       string
-	SessionID string
+	HTTPClient *http.Client
+	URL        string
+	SessionID  string
 }
 
 var _ API = &Client{}
@@ -54,7 +53,7 @@ func (client *Client) call(ctx context.Context, method string, response interfac
 		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
 		var resp *http.Response
-		resp, err = client.Caller.Do(req)
+		resp, err = client.HTTPClient.Do(req)
 
 		if err != nil {
 			break

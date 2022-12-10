@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/clambin/httpclient"
 	"github.com/clambin/mediamon/version"
 	"net/http"
 )
@@ -21,12 +20,12 @@ type API interface {
 
 // Client calls the Plex APIs
 type Client struct {
-	httpclient.Caller
-	URL       string
-	AuthURL   string
-	UserName  string
-	Password  string
-	authToken string
+	HTTPClient *http.Client
+	URL        string
+	AuthURL    string
+	UserName   string
+	Password   string
+	authToken  string
 }
 
 var _ API = &Client{}
@@ -56,7 +55,7 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 	req.Header.Add("X-Plex-Token", client.authToken)
 
 	var resp *http.Response
-	resp, err = client.Caller.Do(req)
+	resp, err = client.HTTPClient.Do(req)
 
 	if err != nil {
 		return
@@ -95,7 +94,7 @@ func (client *Client) authenticate(ctx context.Context) (err error) {
 	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
 
 	var resp *http.Response
-	resp, err = client.Caller.Do(req)
+	resp, err = client.HTTPClient.Do(req)
 
 	if err != nil {
 		return

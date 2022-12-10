@@ -1,3 +1,6 @@
+# HELP mediamon_api_errors_total Number of failed Reporter API calls
+# TYPE mediamon_api_errors_total counter
+mediamon_api_errors_total{application="connectivity",method="GET",path="/"} 0
 # HELP mediamon_plex_version version info
 # TYPE mediamon_plex_version gauge
 mediamon_plex_version{url="http://localhost",version=""} 1.0

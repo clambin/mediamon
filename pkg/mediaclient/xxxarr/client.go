@@ -4,45 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/httpclient"
 	"net/http"
 )
 
-// APICaller calls Sonarr / Radarr endpoints
-type APICaller interface {
-	Get(ctx context.Context, endpoint string, response interface{}) (err error)
-	GetURL() string
-}
-
-// APIClient is a basic implementation of the APICaller interface
-type APIClient struct {
-	httpclient.Caller
-	URL    string
-	APIKey string
-}
-
-var _ APICaller = &APIClient{}
-
-// GetURL returns the base URL of the Sonarr / Radarr instance
-func (c APIClient) GetURL() string {
-	return c.URL
-}
-
-// Get calls the specified API endpoint via HTTP GET
-func (c APIClient) Get(ctx context.Context, endpoint string, response interface{}) (err error) {
-	var req *http.Request
-	req, err = http.NewRequestWithContext(ctx, http.MethodGet, c.URL+endpoint, nil)
+func call[T any](ctx context.Context, client *http.Client, target, key string) (T, error) {
+	var response T
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	if err != nil {
-		return fmt.Errorf("unable to create request: %w", err)
+		return response, fmt.Errorf("unable to create request: %w", err)
 	}
 
-	req.Header.Add("X-Api-Key", c.APIKey)
+	req.Header.Add("X-Api-Key", key)
 
-	var resp *http.Response
-	resp, err = c.Caller.Do(req)
-
+	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("call failed: %w", err)
+		return response, fmt.Errorf("call failed: %w", err)
 	}
 
 	defer func() {
@@ -50,8 +26,9 @@ func (c APIClient) Get(ctx context.Context, endpoint string, response interface{
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("call failed: %s", resp.Status)
+		return response, fmt.Errorf("call failed: %s", resp.Status)
 	}
 
-	return json.NewDecoder(resp.Body).Decode(response)
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	return response, err
 }
