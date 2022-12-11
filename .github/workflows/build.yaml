@@ -5,11 +5,13 @@ on:
     branches:
       - master
       - restarter
+    paths-ignore:
+      - 'assets/**'
 
 jobs:
   test:
     uses: clambin/workflows/.github/workflows/test.yaml@main
-  build:
+  build-mediamon:
     needs:
       - test
     uses: clambin/workflows/.github/workflows/build.yaml@main
