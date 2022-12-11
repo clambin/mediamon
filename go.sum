@@ -17,6 +17,8 @@ github.com/clambin/go-common/cache v0.1.1 h1:aX6v3sYaaQy8WIwP7II1UTyH2z7/cRfl40/
 github.com/clambin/go-common/cache v0.1.1/go.mod h1:7eT02BszXnBRDG0MIJ5penXQeEXRQRfmC0hNCmZqMCU=
 github.com/clambin/go-common/httpclient v0.2.0 h1:8oo6fG3UbI+cEuM+EpL/ehrQYpxbzh7lSCGcj6ocpHE=
 github.com/clambin/go-common/httpclient v0.2.0/go.mod h1:w0RUxYpmTu+TiWx4F+pfeYhOcKaHxI/Q9OrAlIaz3Lk=
+github.com/clambin/go-common/httpclient v0.3.0 h1:U0q3vjl7rz5f3Q+Mq40YkM5RbAP6xCOR8XWmQlSbBw4=
+github.com/clambin/go-common/httpclient v0.3.0/go.mod h1:w0RUxYpmTu+TiWx4F+pfeYhOcKaHxI/Q9OrAlIaz3Lk=
 github.com/clambin/go-common/httpserver v0.1.0 h1:fGU8Uy4VjaQdyRJNw3FlBe1solCZ2WYf8sU5/ob5eac=
 github.com/clambin/go-common/httpserver v0.1.0/go.mod h1:IlwlVQklRfkEbmWhsBiZWrUMHNUxkftklQDgYSCh5wU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
