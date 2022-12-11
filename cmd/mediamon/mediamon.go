@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/clambin/go-common/httpserver"
 	"github.com/clambin/mediamon/collectors"
 	"github.com/clambin/mediamon/services"
@@ -8,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -67,7 +69,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err = s.Run(); err != nil {
+		if err = s.Serve(); !errors.Is(err, http.ErrServerClosed) {
 			log.WithField("err", err).Fatal("Failed to start Prometheus http handler")
 		}
 	}()
