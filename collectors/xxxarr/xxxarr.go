@@ -6,7 +6,7 @@ import (
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"time"
 )
@@ -17,6 +17,7 @@ type Collector struct {
 	application string
 	metrics     map[string]*prometheus.Desc
 	transport   *httpclient.RoundTripper
+	logger      *slog.Logger
 }
 
 // Config to create a collector
@@ -69,6 +70,7 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 		application: "radarr",
 		metrics:     createMetrics("radarr", url),
 		transport:   r,
+		logger:      slog.Default().With(slog.String("application", "radarr")),
 	}
 }
 
@@ -94,6 +96,7 @@ func NewSonarrCollector(url, apiKey string) *Collector {
 		application: "sonarr",
 		metrics:     createMetrics("sonarr", url),
 		transport:   r,
+		logger:      slog.Default().With(slog.String("application", "sonarr")),
 	}
 }
 
@@ -115,7 +118,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 					"Error getting "+coll.application+" metrics", nil, nil),
 				err)
 		*/
-		log.WithError(err).Warningf("failed to collect `%s` metrics", coll.application)
+		coll.logger.Error("failed to collect `%s` metrics", err)
 		return
 	}
 

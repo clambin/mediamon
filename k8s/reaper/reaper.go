@@ -3,7 +3,7 @@ package reaper
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -15,8 +15,7 @@ type Reaper struct {
 
 func (r *Reaper) connect() (*k8sClient, error) {
 	if r.Connector != nil {
-		client := k8sClient{client: r.Connector()}
-		return &client, nil
+		return &k8sClient{client: r.Connector()}, nil
 	}
 
 	return connect()
@@ -33,10 +32,12 @@ func (r *Reaper) Reap(ctx context.Context, namespace, name string) (int, error) 
 	if err != nil {
 		return 0, err
 	}
-	log.Debugf("found %d pods", len(pods))
+	slog.Debug("found pods", "count", len(pods))
 
 	for _, pod := range pods {
-		log.Debugf("checking pod %s ...", pod.GetName())
+		podLogger := slog.With("name", pod.GetName())
+
+		podLogger.Debug("checking pod")
 		var found bool
 		var status coreV1.ConditionStatus
 		for _, condition := range pod.Status.Conditions {
@@ -47,24 +48,25 @@ func (r *Reaper) Reap(ctx context.Context, namespace, name string) (int, error) 
 			}
 		}
 
-		log.Debugf("%s - Ready: %s", pod.GetName(), status)
+		podLogger.Debug("pod status", "status", string(status))
 
 		if !found {
-			log.Debugf("%s doesn't appear to be running", pod.GetName())
-			continue
-		}
-		if status == "True" {
-			log.Debugf("%s is ready", pod.GetName())
+			podLogger.Debug("pod doesn't appear to be running")
 			continue
 		}
 
-		log.Infof("pod %s is not ready. deleting ...", pod.GetName())
+		if status == "True" {
+			podLogger.Debug("pod is ready")
+			continue
+		}
+
+		podLogger.Info("pod not ready. deleting ...")
 		err = client.client.CoreV1().Pods(namespace).Delete(ctx, pod.GetName(), metaV1.DeleteOptions{})
 		if err != nil {
 			break
 		}
 		deleted++
-		log.Info("pod deleted")
+		podLogger.Info("pod deleted")
 	}
 
 	return deleted, err

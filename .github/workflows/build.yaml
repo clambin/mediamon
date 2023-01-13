@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - restarter
+      - slog
     paths-ignore:
       - 'assets/**'
 

@@ -8,7 +8,7 @@ import (
 	"github.com/clambin/mediamon/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	"os"
@@ -43,32 +43,34 @@ func main() {
 		os.Exit(2)
 	}
 
+	var opts slog.HandlerOptions
 	if cfg.Debug {
-		log.SetLevel(log.DebugLevel)
+		opts.Level = slog.LevelDebug
+		opts.AddSource = true
 	}
+	slog.SetDefault(slog.New(opts.NewTextHandler(os.Stdout)))
 
 	if cfg.Services, err = services.ParseConfigFile(servicesFilename); err != nil {
-		log.WithError(err).WithField("filename", servicesFilename).Fatal("unable to parse Services file")
+		slog.Error("unable to parse Services file", err, "filename", servicesFilename)
+		return
 	}
 
-	log.WithField("version", version.BuildVersion).Info("media monitor starting")
-
 	prometheus.MustRegister(collectors.Create(cfg.Services))
-
 	go runPrometheusServer(cfg.Port)
 
-	log.Info("mediamon started")
+	slog.Info("mediamon started", "version", version.BuildVersion)
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
 
-	log.Info("mediamon exiting")
+	slog.Info("mediamon exiting")
 }
 
 func runPrometheusServer(port int) {
 	http.Handle("/metrics", promhttp.Handler())
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); !errors.Is(err, http.ErrServerClosed) {
-		log.WithError(err).Fatal("failed to start Prometheus listener")
+		slog.Error("failed to start Prometheus listener", err)
+		panic(err)
 	}
 }

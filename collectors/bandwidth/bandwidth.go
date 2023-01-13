@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"os"
 	"regexp"
 	"strconv"
@@ -63,7 +63,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 					"Error getting bandwidth statistics", nil, nil),
 				err)
 		*/
-		log.WithError(err).Warning("failed to collect bandwidth metrics")
+		slog.Error("failed to collect bandwidth metrics", err)
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(stats.read))

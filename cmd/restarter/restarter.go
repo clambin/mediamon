@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	_ "k8s.io/client-go"
 	"net/http"
 	"os"
@@ -36,24 +36,19 @@ var (
 func main() {
 	flag.Parse()
 
+	var opts slog.HandlerOptions
 	if *debug {
-		log.SetLevel(log.DebugLevel)
+		opts.Level = slog.LevelDebug
+		opts.AddSource = true
 	}
+	slog.SetDefault(slog.New(opts.NewTextHandler(os.Stdout)))
 
-	http.Handle("/metrics", promhttp.Handler())
-	go func() {
-		err := http.ListenAndServe(":9091", nil)
-		if !errors.Is(err, http.ErrServerClosed) {
-			log.WithError(err).Fatal("failed to start prometheus metrics server")
-		}
-	}()
-
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	go runPrometheusServer()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	if _, err := check(context.Background(), *namespace, *name); err != nil {
-		log.WithError(err).Error("scan failed")
+	if _, err := check(ctx, *namespace, *name); err != nil {
+		slog.Error("scan failed", err)
 	}
 	if *once {
 		return
@@ -67,7 +62,7 @@ func main() {
 }
 
 func scan(ctx context.Context, interval time.Duration) {
-	log.WithField("interval", interval).Info("scanner started")
+	slog.Info("scanner started", "interval", interval)
 	ticker := time.NewTicker(interval)
 	for running := true; running; {
 		select {
@@ -75,19 +70,30 @@ func scan(ctx context.Context, interval time.Duration) {
 			running = false
 		case <-ticker.C:
 			if _, err := check(ctx, *namespace, *name); err != nil {
-				log.WithError(err).Error("scan failed")
+				slog.Error("scan failed", err)
 			}
 		}
 	}
 	ticker.Stop()
-	log.Infof("scanner stopped")
+	slog.Info("scanner stopped")
 }
 
 func check(ctx context.Context, namespace, name string) (int, error) {
-	var r reaper.Reaper
+	r := reaper.Reaper{}
 	deleted, err := r.Reap(ctx, namespace, name)
 	if err == nil {
 		deleteCounter.WithLabelValues(namespace, name).Add(float64(deleted))
 	}
 	return deleted, err
+}
+
+func runPrometheusServer() {
+	http.Handle("/metrics", promhttp.Handler())
+	go func() {
+		err := http.ListenAndServe(":9091", nil)
+		if !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("failed to start prometheus metrics server", err)
+			panic(err)
+		}
+	}()
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"net/http"
 )
 
@@ -101,7 +101,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 					"Error getting transmission metrics", nil, nil),
 				err)
 		*/
-		log.WithError(err).Warning("failed to collect transmission metrics")
+		slog.Error("failed to collect transmission metrics", err)
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.url)

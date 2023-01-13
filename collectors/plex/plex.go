@@ -7,7 +7,7 @@ import (
 	"github.com/clambin/mediamon/pkg/iplocator"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"net/http"
 )
 
@@ -83,7 +83,7 @@ func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 			prometheus.NewDesc("mediamon_error",
 				"Error getting Plex session stats", nil, nil),
 			err)
-		log.WithError(err).Warning("failed to collect Plex session stats")
+		slog.Error("failed to collect Plex session stats", err)
 		return
 	}
 

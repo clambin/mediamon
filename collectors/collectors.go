@@ -8,7 +8,7 @@ import (
 	"github.com/clambin/mediamon/collectors/xxxarr"
 	"github.com/clambin/mediamon/services"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"net/url"
 )
 
@@ -72,31 +72,31 @@ func Create(cfg *services.Config) Collectors {
 
 	// Transmission Collector
 	if cfg.Transmission.URL != "" {
-		log.WithField("url", cfg.Transmission.URL).Info("monitoring Transmission")
+		slog.Info("monitoring Transmission", "url", cfg.Transmission.URL)
 		c.Transmission = transmission.NewCollector(cfg.Transmission.URL)
 	}
 
 	// Sonarr Collector
 	if cfg.Sonarr.URL != "" {
-		log.WithField("url", cfg.Sonarr.URL).Info("monitoring Sonarr")
+		slog.Info("monitoring Sonarr", "url", cfg.Sonarr.URL)
 		c.Sonarr = xxxarr.NewSonarrCollector(cfg.Sonarr.URL, cfg.Sonarr.APIKey)
 	}
 
 	// Radarr Collector
 	if cfg.Radarr.URL != "" {
-		log.WithField("url", cfg.Radarr.URL).Info("monitoring Radarr")
+		slog.Info("monitoring Radarr", "url", cfg.Radarr.URL)
 		c.Radarr = xxxarr.NewRadarrCollector(cfg.Radarr.URL, cfg.Radarr.APIKey)
 	}
 
 	// Plex Collector
 	if cfg.Plex.URL != "" {
-		log.WithField("url", cfg.Plex.URL).Info("monitoring Plex")
+		slog.Info("monitoring Plex", "url", cfg.Plex.URL)
 		c.Plex = plex.NewCollector(cfg.Plex.URL, cfg.Plex.UserName, cfg.Plex.Password)
 	}
 
 	// Bandwidth Probe
 	if cfg.OpenVPN.Bandwidth.FileName != "" {
-		log.WithField("filename", cfg.OpenVPN.Bandwidth.FileName).Info("monitoring OpenVPN Bandwidth usage")
+		slog.Info("monitoring OpenVPN Bandwidth usage", "filename", cfg.OpenVPN.Bandwidth.FileName)
 		c.Bandwidth = bandwidth.NewCollector(cfg.OpenVPN.Bandwidth.FileName)
 	}
 
@@ -104,7 +104,7 @@ func Create(cfg *services.Config) Collectors {
 	if cfg.OpenVPN.Connectivity.Token != "" {
 		// proxyURL has already been validated when we loaded the configuration
 		proxyURL, _ := url.Parse(cfg.OpenVPN.Connectivity.Proxy)
-		log.WithField("proxyURL", proxyURL).Info("monitoring OpenVPN connectivity")
+		slog.Info("monitoring OpenVPN connectivity", "proxyURL", proxyURL.String())
 		c.Connectivity = connectivity.NewCollector(cfg.OpenVPN.Connectivity.Token, proxyURL, cfg.OpenVPN.Connectivity.Interval)
 	}
 
