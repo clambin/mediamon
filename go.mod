@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/clambin/go-common/cache v0.1.1
-	github.com/clambin/go-common/httpclient v0.3.2
+	github.com/clambin/go-common/httpclient v0.3.3
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/common v0.39.0
 	github.com/stretchr/testify v1.8.1
