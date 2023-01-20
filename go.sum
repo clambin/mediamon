@@ -11,8 +11,8 @@ github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/clambin/go-common/cache v0.1.1 h1:aX6v3sYaaQy8WIwP7II1UTyH2z7/cRfl40/1poULgxo=
 github.com/clambin/go-common/cache v0.1.1/go.mod h1:7eT02BszXnBRDG0MIJ5penXQeEXRQRfmC0hNCmZqMCU=
-github.com/clambin/go-common/httpclient v0.3.2 h1:EKa0cSlsZ4dilNYFn+tRia2ObLdNW9QYtintjI9t+v8=
-github.com/clambin/go-common/httpclient v0.3.2/go.mod h1:w0RUxYpmTu+TiWx4F+pfeYhOcKaHxI/Q9OrAlIaz3Lk=
+github.com/clambin/go-common/httpclient v0.3.3 h1:M3L3HsPH8Bb5m8NOIvIlhZ75Cg9Hx3DjHuXIxb6Z6PY=
+github.com/clambin/go-common/httpclient v0.3.3/go.mod h1:w0RUxYpmTu+TiWx4F+pfeYhOcKaHxI/Q9OrAlIaz3Lk=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
