@@ -2,7 +2,6 @@ package plex_test
 
 import (
 	"context"
-	"errors"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -99,7 +98,7 @@ func TestPlexClient_Authentication_Failure(t *testing.T) {
 
 	_, err := c.GetIdentity(context.Background())
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, unix.ECONNREFUSED))
+	assert.ErrorIs(t, err, unix.ECONNREFUSED)
 }
 
 func TestClient_Failures(t *testing.T) {
@@ -122,7 +121,7 @@ func TestClient_Failures(t *testing.T) {
 	testServer.Close()
 	_, err = c.GetIdentity(context.Background())
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, unix.ECONNREFUSED))
+	assert.ErrorIs(t, err, unix.ECONNREFUSED)
 }
 
 // Server handlers

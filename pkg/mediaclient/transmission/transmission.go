@@ -61,8 +61,7 @@ func (client *Client) call(ctx context.Context, method string, response interfac
 
 		switch resp.StatusCode {
 		case http.StatusOK:
-			decoder := json.NewDecoder(resp.Body)
-			err = decoder.Decode(response)
+			err = json.NewDecoder(resp.Body).Decode(response)
 			answer = true
 		case http.StatusConflict:
 			// Transmission-Session-Id has expired. Get the new one and retry
