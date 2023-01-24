@@ -119,7 +119,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 					"Error getting "+coll.application+" metrics", nil, nil),
 				err)
 		*/
-		coll.logger.Error("failed to collect `%s` metrics", err)
+		coll.logger.Error("failed to collect metrics", err)
 		return
 	}
 

@@ -108,8 +108,6 @@ func (client *Client) authenticate(ctx context.Context) (err error) {
 		return fmt.Errorf("plex auth failed: %s", resp.Status)
 	}
 
-	// TODO: there's three different places in the response where the authToken appears.
-	// Which is the officially supported version?
 	var authResponse struct {
 		XMLName             xml.Name `xml:"user"`
 		AuthenticationToken string   `xml:"authenticationToken,attr"`
