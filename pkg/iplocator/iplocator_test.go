@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -26,6 +28,8 @@ func TestClient_Locate(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(s.handle))
 	c := New()
 	c.URL = ts.URL
+
+	c.Logger = slog.New(slog.HandlerOptions{Level: slog.LevelDebug}.NewTextHandler(os.Stderr))
 
 	lon, lat, err := c.Locate("8.8.8.8")
 	require.NoError(t, err)
