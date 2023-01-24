@@ -42,7 +42,7 @@ func Main(_ *cobra.Command, _ []string) {
 	var opts slog.HandlerOptions
 	if viper.GetBool("debug") {
 		opts.Level = slog.LevelDebug
-		opts.AddSource = true
+		//opts.AddSource = true
 	}
 	slog.SetDefault(slog.New(opts.NewTextHandler(os.Stderr)))
 
@@ -103,7 +103,7 @@ func createCollectors() []prometheus.Collector {
 			))
 		}
 	}
-	if filename := viper.GetString("openvpn.bandwidth.file"); filename != "" {
+	if filename := viper.GetString("openvpn.bandwidth.filename"); filename != "" {
 		slog.Info("monitoring openVPN bandwidth", "filename", filename)
 		collectors = append(collectors, bandwidth.NewCollector(filename))
 	}
