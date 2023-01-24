@@ -26,7 +26,7 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return response, fmt.Errorf("call failed: %s", resp.Status)
+		return response, fmt.Errorf("call failed: " + resp.Status)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&response)

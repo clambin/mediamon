@@ -71,28 +71,28 @@ func runPrometheusServer() {
 func createCollectors() []prometheus.Collector {
 	var collectors []prometheus.Collector
 
-	if url := viper.GetString("transmission.url"); url != "" {
-		slog.Info("monitoring Transmission", "url", url)
-		collectors = append(collectors, transmission.NewCollector(url))
+	if transmissionURL := viper.GetString("transmission.url"); transmissionURL != "" {
+		slog.Info("monitoring Transmission", "url", transmissionURL)
+		collectors = append(collectors, transmission.NewCollector(transmissionURL))
 	}
-	if url := viper.GetString("sonarr.url"); url != "" {
-		slog.Info("monitoring Sonarr", "url", url)
-		collectors = append(collectors, xxxarr.NewSonarrCollector(url, viper.GetString("sonarr.apikey")))
+	if sonarURL := viper.GetString("sonarr.url"); sonarURL != "" {
+		slog.Info("monitoring Sonarr", "url", sonarURL)
+		collectors = append(collectors, xxxarr.NewSonarrCollector(sonarURL, viper.GetString("sonarr.apikey")))
 	}
-	if url := viper.GetString("radarr.url"); url != "" {
-		slog.Info("monitoring Radarr", "url", url)
-		collectors = append(collectors, xxxarr.NewRadarrCollector(url, viper.GetString("radarr.apikey")))
+	if radarURL := viper.GetString("radarr.url"); radarURL != "" {
+		slog.Info("monitoring Radarr", "url", radarURL)
+		collectors = append(collectors, xxxarr.NewRadarrCollector(radarURL, viper.GetString("radarr.apikey")))
 	}
-	if url := viper.GetString("plex.url"); url != "" {
-		slog.Info("monitoring Plex", "url", url)
-		collectors = append(collectors, plex.NewCollector(url,
+	if plexURL := viper.GetString("plex.url"); plexURL != "" {
+		slog.Info("monitoring Plex", "url", plexURL)
+		collectors = append(collectors, plex.NewCollector(
+			plexURL,
 			viper.GetString("plex.username"),
 			viper.GetString("plex.password"),
 		))
 	}
-	if proxyUrl := viper.GetString("openvpn.connectivity.proxy"); proxyUrl != "" {
-		proxy, err := parseProxy(proxyUrl)
-		if err != nil {
+	if proxyURL := viper.GetString("openvpn.connectivity.proxy"); proxyURL != "" {
+		if proxy, err := parseProxy(proxyURL); err != nil {
 			slog.Error("invalid proxy. connectivity won't be monitored", err)
 		} else {
 			slog.Info("monitoring openVPN connectivity", "url", proxy.String())
@@ -107,7 +107,6 @@ func createCollectors() []prometheus.Collector {
 		slog.Info("monitoring openVPN bandwidth", "filename", filename)
 		collectors = append(collectors, bandwidth.NewCollector(filename))
 	}
-
 	return collectors
 }
 

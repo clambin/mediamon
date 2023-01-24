@@ -14,28 +14,26 @@ type SonarrScraper struct {
 var _ Scraper = &SonarrScraper{}
 
 // Scrape returns Stats from a Sonarr instance
-func (s SonarrScraper) Scrape(ctx context.Context) (stats Stats, err error) {
-	stats.URL = s.Client.GetURL()
+func (s SonarrScraper) Scrape(ctx context.Context) (Stats, error) {
+	stats := Stats{
+		URL: s.Client.GetURL(),
+	}
 
+	var err error
 	stats.Version, err = s.getVersion(ctx)
-
 	if err == nil {
 		stats.Health, err = s.getHealth(ctx)
 	}
-
 	if err == nil {
 		stats.Calendar, err = s.getCalendar(ctx)
 	}
-
 	if err == nil {
 		stats.Queued, err = s.getQueued(ctx)
 	}
-
 	if err == nil {
 		stats.Monitored, stats.Unmonitored, err = s.getMonitored(ctx)
 	}
-
-	return
+	return stats, err
 }
 
 func (s SonarrScraper) getVersion(ctx context.Context) (string, error) {

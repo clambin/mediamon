@@ -70,12 +70,11 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
 }
 
-func (coll *Collector) getStats() (stats bandwidthStats, err error) {
-	var file *os.File
-	file, err = os.Open(coll.Filename)
-
+func (coll *Collector) getStats() (bandwidthStats, error) {
+	var stats bandwidthStats
+	file, err := os.Open(coll.Filename)
 	if err != nil {
-		return
+		return stats, err
 	}
 
 	fieldsFound := 0
@@ -101,5 +100,5 @@ func (coll *Collector) getStats() (stats bandwidthStats, err error) {
 		err = fmt.Errorf("not all fields were found in the openvpn status file")
 	}
 
-	return
+	return stats, err
 }

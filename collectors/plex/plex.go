@@ -2,13 +2,13 @@ package plex
 
 import (
 	"context"
-	"fmt"
 	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/mediamon/pkg/iplocator"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
 	"net/http"
+	"strconv"
 )
 
 // Collector presents Plex statistics as Prometheus metrics
@@ -125,8 +125,8 @@ func (coll *Collector) locateAddress(address string) (lonAsString, latAsString s
 	lon, lat, err := coll.Locator.Locate(address)
 
 	if err == nil {
-		lonAsString = fmt.Sprintf("%.2f", lon)
-		latAsString = fmt.Sprintf("%.2f", lat)
+		lonAsString = strconv.FormatFloat(lon, 'f', 2, 64)
+		latAsString = strconv.FormatFloat(lat, 'f', 2, 64)
 	}
 	return
 }
@@ -142,8 +142,8 @@ type plexSession struct {
 	speed     float64
 }
 
-func parseSessions(input plex.SessionsResponse) (output map[string]plexSession) {
-	output = make(map[string]plexSession)
+func parseSessions(input plex.SessionsResponse) map[string]plexSession {
+	output := make(map[string]plexSession)
 
 	for _, session := range input.MediaContainer.Metadata {
 		var title string
@@ -164,5 +164,5 @@ func parseSessions(input plex.SessionsResponse) (output map[string]plexSession) 
 			speed:     session.TranscodeSession.Speed,
 		}
 	}
-	return
+	return output
 }
