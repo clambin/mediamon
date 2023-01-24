@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
 	"net/http"
+	"time"
 )
 
 var (
@@ -93,6 +94,7 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+	start := time.Now()
 	stats, err := coll.getStats()
 	if err != nil {
 		/*
@@ -110,6 +112,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(downloadSpeedMetric, prometheus.GaugeValue, float64(stats.download), coll.url)
 	ch <- prometheus.MustNewConstMetric(uploadSpeedMetric, prometheus.GaugeValue, float64(stats.upload), coll.url)
 	coll.transport.Collect(ch)
+	defer slog.Debug("transmission stats collected", "duration", time.Since(start))
 }
 
 func (coll *Collector) getStats() (stats transmissionStats, err error) {

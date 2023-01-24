@@ -110,6 +110,7 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+	start := time.Now()
 	stats, err := coll.Scraper.Scrape(context.Background())
 	if err != nil {
 		/*
@@ -144,4 +145,6 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(coll.metrics["monitored"], prometheus.GaugeValue, float64(stats.Monitored))
 	ch <- prometheus.MustNewConstMetric(coll.metrics["unmonitored"], prometheus.GaugeValue, float64(stats.Unmonitored))
 	coll.transport.Collect(ch)
+
+	slog.Debug(coll.application+" stats collected", "duration", time.Since(start))
 }

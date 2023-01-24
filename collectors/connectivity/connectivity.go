@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/clambin/go-common/httpclient"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"net/url"
 	"time"
@@ -72,6 +73,7 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+	start := time.Now()
 	err := coll.ping()
 
 	value := 0.0
@@ -80,6 +82,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
 	coll.transport.Collect(ch)
+	slog.Debug("connectivity stats collected", "duration", time.Since(start))
 }
 
 func (coll *Collector) ping() error {

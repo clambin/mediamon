@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/clambin/go-common/httpclient"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"time"
 )
@@ -19,6 +20,7 @@ type Locator interface {
 type Client struct {
 	HTTPClient *http.Client
 	URL        string
+	Logger     *slog.Logger
 }
 
 // New creates a new Client
@@ -29,6 +31,7 @@ func New() *Client {
 			CleanupInterval: 36 * time.Hour,
 		})},
 		URL: ipAPIURL,
+		//Logger: slog.Default(),
 	}
 }
 
@@ -49,6 +52,9 @@ func (c Client) Locate(ipAddress string) (lon, lat float64, err error) {
 		return
 	}
 
+	if c.Logger != nil {
+		c.Logger.Debug("ip located", "ip", ipAPIURL, "location", response)
+	}
 	//c.ipCache.Add(ipAddress, response)
 	return response.Lon, response.Lat, err
 }
@@ -88,4 +94,13 @@ type ipAPIResponse struct {
 	Isp         string  `json:"isp"`
 	Org         string  `json:"org"`
 	As          string  `json:"as"`
+}
+
+func (r ipAPIResponse) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Float64("lat", r.Lat),
+		slog.Float64("lon", r.Lat),
+		slog.String("country", r.Country),
+		slog.String("city", r.City),
+	)
 }
