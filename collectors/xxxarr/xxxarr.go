@@ -132,16 +132,18 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	ch <- prometheus.MustNewConstMetric(coll.metrics["queued_count"], prometheus.GaugeValue, float64(len(stats.Queued)))
+
+	totalBytes := make(map[string]float64)
+	downloadedBytes := make(map[string]float64)
 	for _, queued := range stats.Queued {
-		// TODO: this fails if the same queued.Name is being downloaded multiple times. /metrics reports:
-		// An error has occurred while serving metrics:
-		//
-		//2 error(s) occurred:
-		//* collected metric "mediamon_xxxarr_queued_total_bytes" { label:<name:"application" value:"sonarr" > label:<name:"title" value:"name" > label:<name:"url" value:"http://sonarr:8989" > gauge:<value:6.476722065e+09 > } was collected before with the same name and label values
-		//* collected metric "mediamon_xxxarr_queued_downloaded_bytes" { label:<name:"application" value:"sonarr" > label:<name:"title" value:"name" > label:<name:"url" value:"http://sonarr:8989" > gauge:<value:3.4451345e+07 > } was collected before with the same name and label values
-		ch <- prometheus.MustNewConstMetric(coll.metrics["queued_total"], prometheus.GaugeValue, queued.TotalBytes, queued.Name)
-		ch <- prometheus.MustNewConstMetric(coll.metrics["queued_downloaded"], prometheus.GaugeValue, queued.DownloadedBytes, queued.Name)
+		totalBytes[queued.Name] += queued.TotalBytes
+		downloadedBytes[queued.Name] += queued.DownloadedBytes
 	}
+	for name := range totalBytes {
+		ch <- prometheus.MustNewConstMetric(coll.metrics["queued_total"], prometheus.GaugeValue, totalBytes[name], name)
+		ch <- prometheus.MustNewConstMetric(coll.metrics["queued_downloaded"], prometheus.GaugeValue, downloadedBytes[name], name)
+	}
+
 	ch <- prometheus.MustNewConstMetric(coll.metrics["monitored"], prometheus.GaugeValue, float64(stats.Monitored))
 	ch <- prometheus.MustNewConstMetric(coll.metrics["unmonitored"], prometheus.GaugeValue, float64(stats.Unmonitored))
 	coll.transport.Collect(ch)

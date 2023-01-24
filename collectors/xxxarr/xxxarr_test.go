@@ -38,23 +38,6 @@ func TestCollector(t *testing.T) {
 	}
 }
 
-/*
-func TestCollector_Failure(t *testing.T) {
-	c := xxxarr.NewSonarrCollector("", "")
-	s := &mocks2.Scraper{}
-	c.Scraper = s
-	s.On("Scrape").Return(scraper.Stats{}, fmt.Errorf("failure"))
-
-	ch := make(chan prometheus.Metric)
-	go c.Collect(ch)
-
-	metric := <-ch
-	assert.Equal(t, "mediamon_error", tools.MetricName(metric))
-	assert.Contains(t, metric.Desc().String(), "Error getting sonarr metrics")
-
-}
-*/
-
 type testCase struct {
 	name      string
 	collector string
@@ -116,6 +99,7 @@ mediamon_xxxarr_version{application="sonarr",url="",version="foo"} 1
 			Queued: []scraper.QueuedFile{
 				{Name: "1", TotalBytes: 100, DownloadedBytes: 75},
 				{Name: "2", TotalBytes: 100, DownloadedBytes: 50},
+				{Name: "2", TotalBytes: 100, DownloadedBytes: 25},
 			},
 			Monitored:   2,
 			Unmonitored: 1,
@@ -133,15 +117,15 @@ mediamon_xxxarr_calendar{application="radarr",title="5",url=""} 1
 mediamon_xxxarr_monitored_count{application="radarr",url=""} 2
 # HELP mediamon_xxxarr_queued_count Episodes / movies being downloaded
 # TYPE mediamon_xxxarr_queued_count gauge
-mediamon_xxxarr_queued_count{application="radarr",url=""} 2
+mediamon_xxxarr_queued_count{application="radarr",url=""} 3
 # HELP mediamon_xxxarr_queued_downloaded_bytes Downloaded size of episode / movie being downloaded in bytes
 # TYPE mediamon_xxxarr_queued_downloaded_bytes gauge
 mediamon_xxxarr_queued_downloaded_bytes{application="radarr",title="1",url=""} 75
-mediamon_xxxarr_queued_downloaded_bytes{application="radarr",title="2",url=""} 50
+mediamon_xxxarr_queued_downloaded_bytes{application="radarr",title="2",url=""} 75
 # HELP mediamon_xxxarr_queued_total_bytes Size of episode / movie being downloaded in bytes
 # TYPE mediamon_xxxarr_queued_total_bytes gauge
 mediamon_xxxarr_queued_total_bytes{application="radarr",title="1",url=""} 100
-mediamon_xxxarr_queued_total_bytes{application="radarr",title="2",url=""} 100
+mediamon_xxxarr_queued_total_bytes{application="radarr",title="2",url=""} 200
 # HELP mediamon_xxxarr_unmonitored_count Number of Unmonitored series / movies
 # TYPE mediamon_xxxarr_unmonitored_count gauge
 mediamon_xxxarr_unmonitored_count{application="radarr",url=""} 1
