@@ -11,16 +11,6 @@ Prometheus exporter for various media applications. Currently supports Transmiss
 
 Binaries are available on the [release](https://github.com/clambin/mediamon/releases) page. Docker images are available on [ghcr.io](https://ghcr.io/clambin/mediamon).
 
-Alternatively, you can clone the repository and build from source:
-
-```
-git clone https://github.com/clambin/mediamon.git
-cd mediamon
-go build
-```
-
-You will need to have Go 1.17 installed on your system.
-
 ## Running mediamon
 ### Command-line options
 
