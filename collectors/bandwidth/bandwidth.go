@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 var (
@@ -55,6 +56,8 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+	start := time.Now()
+
 	stats, err := coll.getStats()
 	if err != nil {
 		/*
@@ -68,14 +71,14 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 	ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(stats.read))
 	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
+	slog.Debug("bandwidth stats collected", "duration", time.Since(start))
 }
 
-func (coll *Collector) getStats() (stats bandwidthStats, err error) {
-	var file *os.File
-	file, err = os.Open(coll.Filename)
-
+func (coll *Collector) getStats() (bandwidthStats, error) {
+	var stats bandwidthStats
+	file, err := os.Open(coll.Filename)
 	if err != nil {
-		return
+		return stats, err
 	}
 
 	fieldsFound := 0
@@ -101,5 +104,5 @@ func (coll *Collector) getStats() (stats bandwidthStats, err error) {
 		err = fmt.Errorf("not all fields were found in the openvpn status file")
 	}
 
-	return
+	return stats, err
 }

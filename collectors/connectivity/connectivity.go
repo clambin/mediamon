@@ -1,12 +1,10 @@
 package connectivity
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/clambin/go-common/httpclient"
 	"github.com/prometheus/client_golang/prometheus"
-	"io"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"net/url"
 	"time"
@@ -75,6 +73,7 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+	start := time.Now()
 	err := coll.ping()
 
 	value := 0.0
@@ -83,9 +82,10 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
 	coll.transport.Collect(ch)
+	slog.Debug("connectivity stats collected", "duration", time.Since(start))
 }
 
-func (coll *Collector) ping() (err error) {
+func (coll *Collector) ping() error {
 	URL := "https://ipinfo.io/"
 	if coll.URL != "" {
 		URL = coll.URL
@@ -97,11 +97,9 @@ func (coll *Collector) ping() (err error) {
 	q.Add("token", coll.token)
 	req.URL.RawQuery = q.Encode()
 
-	var resp *http.Response
-	resp, err = coll.HTTPClient.Do(req)
-
+	resp, err := coll.HTTPClient.Do(req)
 	if err != nil {
-		return
+		return err
 	}
 
 	defer func() {
@@ -112,26 +110,26 @@ func (coll *Collector) ping() (err error) {
 		return fmt.Errorf("%s", resp.Status)
 	}
 
-	var response struct {
-		IP       string
-		Hostname string
-		City     string
-		Region   string
-		Country  string
-		Loc      string
-		Org      string
-		Postal   string
-		Timezone string
-	}
+	/*
+		var response struct {
+			IP       string
+			Hostname string
+			City     string
+			Region   string
+			Country  string
+			Loc      string
+			Org      string
+			Postal   string
+			Timezone string
+		}
 
-	var body []byte
-	body, err = io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("read: %w", err)
+		}
 
-	if err != nil {
-		return fmt.Errorf("failed to parse response: %w", err)
-	}
+		return json.Unmarshal(body, &response)
 
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&response)
-
-	return
+	*/
+	return nil
 }

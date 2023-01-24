@@ -2,13 +2,14 @@ package plex
 
 import (
 	"context"
-	"fmt"
 	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/mediamon/pkg/iplocator"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 // Collector presents Plex statistics as Prometheus metrics
@@ -31,6 +32,8 @@ type Config struct {
 // NewCollector creates a new Collector
 func NewCollector(url, username, password string) *Collector {
 	r := httpclient.NewRoundTripper(httpclient.WithRoundTripperMetrics{Namespace: "mediamon", Application: "plex"})
+	l := iplocator.New()
+	l.Logger = slog.Default()
 	return &Collector{
 		API: &plex.Client{
 			HTTPClient: &http.Client{Transport: r},
@@ -38,7 +41,7 @@ func NewCollector(url, username, password string) *Collector {
 			UserName:   username,
 			Password:   password,
 		},
-		Locator:   iplocator.New(),
+		Locator:   l,
 		url:       url,
 		transport: r,
 	}
@@ -55,9 +58,11 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+	start := time.Now()
 	coll.collectVersion(ch)
 	coll.collectSessionStats(ch)
 	coll.transport.Collect(ch)
+	slog.Debug("plex stats collected", "duration", time.Since(start))
 }
 
 func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {
@@ -125,8 +130,8 @@ func (coll *Collector) locateAddress(address string) (lonAsString, latAsString s
 	lon, lat, err := coll.Locator.Locate(address)
 
 	if err == nil {
-		lonAsString = fmt.Sprintf("%.2f", lon)
-		latAsString = fmt.Sprintf("%.2f", lat)
+		lonAsString = strconv.FormatFloat(lon, 'f', 2, 64)
+		latAsString = strconv.FormatFloat(lat, 'f', 2, 64)
 	}
 	return
 }
@@ -142,8 +147,8 @@ type plexSession struct {
 	speed     float64
 }
 
-func parseSessions(input plex.SessionsResponse) (output map[string]plexSession) {
-	output = make(map[string]plexSession)
+func parseSessions(input plex.SessionsResponse) map[string]plexSession {
+	output := make(map[string]plexSession)
 
 	for _, session := range input.MediaContainer.Metadata {
 		var title string
@@ -164,5 +169,5 @@ func parseSessions(input plex.SessionsResponse) (output map[string]plexSession) 
 			speed:     session.TranscodeSession.Speed,
 		}
 	}
-	return
+	return output
 }

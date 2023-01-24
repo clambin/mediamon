@@ -3,8 +3,8 @@ package iplocator
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-common/cache"
 	"github.com/clambin/go-common/httpclient"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"time"
 )
@@ -20,7 +20,7 @@ type Locator interface {
 type Client struct {
 	HTTPClient *http.Client
 	URL        string
-	ipCache    cache.Cacher[string, ipAPIResponse]
+	Logger     *slog.Logger
 }
 
 // New creates a new Client
@@ -30,8 +30,8 @@ func New() *Client {
 			DefaultExpiry:   24 * time.Hour,
 			CleanupInterval: 36 * time.Hour,
 		})},
-		URL:     ipAPIURL,
-		ipCache: cache.New[string, ipAPIResponse](24*time.Hour, 36*time.Hour),
+		URL: ipAPIURL,
+		//Logger: slog.Default(),
 	}
 }
 
@@ -41,14 +41,8 @@ const ipAPIURL = "http://ip-api.com"
 
 // Locate finds the longitude and latitude of the specified IP address. No internal validation of the provided IP address is done.
 // This is left up entirely to the underlying API.
-func (c *Client) Locate(ipAddress string) (lon, lat float64, err error) {
-	response, found := c.ipCache.Get(ipAddress)
-	if found && response.Status == "success" {
-		lon, lat = response.Lon, response.Lat
-		return
-	}
-
-	response, err = c.lookup(ipAddress)
+func (c Client) Locate(ipAddress string) (lon, lat float64, err error) {
+	response, err := c.lookup(ipAddress)
 	if err != nil {
 		err = fmt.Errorf("ip locate failed: %w", err)
 		return
@@ -58,17 +52,20 @@ func (c *Client) Locate(ipAddress string) (lon, lat float64, err error) {
 		return
 	}
 
-	c.ipCache.Add(ipAddress, response)
+	if c.Logger != nil {
+		c.Logger.Debug("ip located", "ip", ipAPIURL, "location", response)
+	}
+	//c.ipCache.Add(ipAddress, response)
 	return response.Lon, response.Lat, err
 }
 
-func (c *Client) lookup(ipAddress string) (ipAPIResponse, error) {
+func (c Client) lookup(ipAddress string) (ipAPIResponse, error) {
 	var response ipAPIResponse
-	resp, err := http.Get(c.URL + "/json/" + ipAddress)
+	req, _ := http.NewRequest(http.MethodGet, c.URL+"/json/"+ipAddress, nil)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return response, err
 	}
-
 	defer func() {
 		_ = resp.Body.Close()
 	}()
@@ -97,4 +94,13 @@ type ipAPIResponse struct {
 	Isp         string  `json:"isp"`
 	Org         string  `json:"org"`
 	As          string  `json:"as"`
+}
+
+func (r ipAPIResponse) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Float64("lat", r.Lat),
+		slog.Float64("lon", r.Lat),
+		slog.String("country", r.Country),
+		slog.String("city", r.City),
+	)
 }

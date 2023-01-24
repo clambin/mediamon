@@ -60,13 +60,13 @@ func (s RadarrScraper) getCalendar(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var entries []string
+	var movieTitles []string
 	for _, entry := range calendar {
 		if !entry.HasFile {
-			entries = append(entries, entry.Title)
+			movieTitles = append(movieTitles, entry.Title)
 		}
 	}
-	return entries, nil
+	return movieTitles, nil
 }
 
 func (s RadarrScraper) getQueued(ctx context.Context) ([]QueuedFile, error) {
@@ -74,7 +74,7 @@ func (s RadarrScraper) getQueued(ctx context.Context) ([]QueuedFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	var entries []QueuedFile
+	var queuedFiles []QueuedFile
 	for _, entry := range queued.Records {
 		var movie xxxarr.RadarrMovieResponse
 		movie, err = s.Client.GetMovieByID(ctx, entry.MovieID)
@@ -82,13 +82,13 @@ func (s RadarrScraper) getQueued(ctx context.Context) ([]QueuedFile, error) {
 			return nil, err
 		}
 
-		entries = append(entries, QueuedFile{
+		queuedFiles = append(queuedFiles, QueuedFile{
 			Name:            movie.Title,
 			TotalBytes:      float64(entry.Size),
 			DownloadedBytes: float64(entry.Size - entry.Sizeleft),
 		})
 	}
-	return entries, nil
+	return queuedFiles, nil
 }
 
 func (s RadarrScraper) getMonitored(ctx context.Context) (int, int, error) {

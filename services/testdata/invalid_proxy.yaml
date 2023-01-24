@@ -1,5 +1,0 @@
-openvpn:
-  connectivity:
-    proxy: notavalidproxy
-    token: 'some-token'
-    interval: '5m'

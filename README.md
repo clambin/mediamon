@@ -5,44 +5,28 @@
 ![Go Report Card](https://goreportcard.com/badge/github.com/clambin/mediamon)
 ![GitHub](https://img.shields.io/github/license/clambin/mediamon?style=plastic)
 
-Prometheus exporter for various media applications. Currently supports Transmission, OpenVPN Client, Sonarr, Radarr and Plex.
+Prometheus exporter for various media applications. Currently, supports Transmission, OpenVPN Client, Sonarr, Radarr and Plex.
 
 ## Installation
-
 Binaries are available on the [release](https://github.com/clambin/mediamon/releases) page. Docker images are available on [ghcr.io](https://ghcr.io/clambin/mediamon).
-
-Alternatively, you can clone the repository and build from source:
-
-```
-git clone https://github.com/clambin/mediamon.git
-cd mediamon
-go build
-```
-
-You will need to have Go 1.17 installed on your system.
 
 ## Running mediamon
 ### Command-line options
-
 The following command-line arguments can be passed:
 
 ```
-$ ./mediamon
-usage: mediamon --file=FILE [<flags>]
-
-media monitor
+Usage:
+  mediamon [flags]
 
 Flags:
-  -h, --help       Show context-sensitive help (also try --help-long and --help-man).
-  -v, --version    Show application version.
-      --debug      Log debug messages
-      --port=8080  API listener port
-      --file=FILE  Service configuration file
+      --config string   Configuration file
+      --debug           Log debug messages
+  -h, --help            help for mediamon
+  -v, --version         version for mediamon
 ```
 
 ### Configuration
-
-The mandatory service configuration file configures the services that mediamon should monitor:
+The  configuration file option specifies a yaml file to control tado-monitor's behaviour:
 
 ```
 transmission:
@@ -69,6 +53,10 @@ plex:
   password: <password>
 
 openvpn:
+  bandwidth:
+    # mediamon uses the OpenVPN status will to measure up/download bandwidth
+    # filename contains the full path name of the client.status file. If not set, bandwidth won't be monitored
+    filename: <file path>
   # OpenVPN monitoring. Includes connectivity monitoring (up/down) and bandwidth consumption
   connectivity:
     # mediamon will connect to https://ipinfo.io through a proxy running inside the OpenVPN container
@@ -78,14 +66,24 @@ openvpn:
     token: <token>
     # interval limits how often connectivity is checked 
     interval: <duration>
-  bandwidth:
-    # mediamon uses the OpenVPN status will to measure up/download bandwidth
-    # filename contains the full path name of the client.status file. If not set, bandwidth won't be monitored
-    filename: <file path>
+```
+
+If the filename is not specified on the command line, tado-monitor will look for a file `config.yaml` in the following directories:
+
+```
+/etc/mediamon
+$HOME/.mediamon
+.
+```
+
+Any value in the configuration file may be overriden by setting an environment variable with a prefix `MEDIAMON_`. 
+E.g. to avoid setting your Sonarr API key in the configuration file, set the following environment variables:
+
+```
+export MEDIAMON_SONAR.APIKEY="your-sonarr-apikey"
 ```
 
 ### Prometheus
-
 Add mediamon as a target to let Prometheus scrape the metrics into its database.
 This highly depends on your particular Prometheus configuration. In its simplest form, add a new scrape target to `prometheus.yml`:
 
@@ -133,7 +131,7 @@ mediamon_request_errors_total     API requests errors
 
 ### Grafana
 
-[Github](https://github.com/clambin/mediamon/tree/master/assets/grafana/dashboards) contains a sample Grafana dashboard to visualize the scraped metrics.
+[GitHub](https://github.com/clambin/mediamon/tree/master/assets/grafana/dashboards) contains a sample Grafana dashboard to visualize the scraped metrics.
 Feel free to customize as you see fit.
 
 ## Authors
