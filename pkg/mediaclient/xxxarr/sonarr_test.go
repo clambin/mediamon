@@ -10,17 +10,17 @@ import (
 )
 
 var sonarrResponses = Responses{
-	`/api/v3/system/status`: `{ "version": "1.2.3.4444" }`,
-	`/api/v3/series/11`:     `{ "title": "Foo" }`,
-	`/api/v3/queue`:         `{ "page": 1, "pageSize": 1, "totalRecords": 2, "records": [ { "title": "foo" } ] }`,
-	`/api/v3/queue?page=2`:  `{ "page": 2, "pageSize": 1, "totalRecords": 2, "records": [ { "title": "bar" } ] }`,
-	`/api/v3/series`:        `[ { "title": "Foo", "monitored": true }, { "monitored": false } ]`,
-	`/api/v3/episode/11`:    `{ "title": "Foo", "seasonNumber": 1, "episodeNumber": 2, "series": { "title": "Bar" } }`,
-	`/api/v3/calendar`: `[
-  { "seriesId": 11, "title": "Bar", "seasonNumber": 2, "episodeNumber": 9, "hasFile": false, "monitored": true },
-  { "hasFile": true, "monitored": true },
-  { "hasFile": false, "monitored": false }
-]`,
+	`/api/v3/system/status`: xxxarr.SonarrSystemStatusResponse{Version: "1.2.3.4444"},
+	`/api/v3/series/11`:     xxxarr.SonarrSeriesResponse{Title: "Foo"},
+	`/api/v3/queue`:         xxxarr.SonarrQueueResponse{Page: 1, PageSize: 1, TotalRecords: 2, Records: []xxxarr.SonarrQueueResponseRecord{{Title: "foo"}}},
+	`/api/v3/queue?page=2`:  xxxarr.SonarrQueueResponse{Page: 2, PageSize: 1, TotalRecords: 2, Records: []xxxarr.SonarrQueueResponseRecord{{Title: "bar"}}},
+	`/api/v3/series`:        []xxxarr.SonarrSeriesResponse{{Title: "Foo", Monitored: true}, {Title: "Bar", Monitored: false}},
+	`/api/v3/episode/11`:    xxxarr.SonarrEpisodeResponse{Title: "Foo", SeasonNumber: 1, EpisodeNumber: 2, Series: xxxarr.SonarrEpisodeResponseSeries{Title: "Bar"}},
+	`/api/v3/calendar`: []xxxarr.SonarrCalendarResponse{
+		{SeriesID: 11, Title: "Foo", SeasonNumber: 2, EpisodeNumber: 9, HasFile: false, Monitored: true},
+		{SeriesID: 12, Title: "Bar", SeasonNumber: 1, EpisodeNumber: 1, HasFile: true, Monitored: true},
+		{SeriesID: 13, Title: "Snafu", SeasonNumber: 1, EpisodeNumber: 1, HasFile: false, Monitored: false},
+	},
 }
 
 func TestNewSonarrClient_GetURL(t *testing.T) {
@@ -46,7 +46,7 @@ func TestSonarrClient_GetCalendar(t *testing.T) {
 	calendar, err := c.GetCalendar(context.Background())
 	require.NoError(t, err)
 	require.Len(t, calendar, 3)
-	assert.Equal(t, "Bar", calendar[0].Title)
+	assert.Equal(t, "Foo", calendar[0].Title)
 	assert.True(t, calendar[1].HasFile)
 	assert.False(t, calendar[2].Monitored)
 }

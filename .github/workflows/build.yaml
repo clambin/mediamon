@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - viper
+      - errors
     paths-ignore:
       - 'assets/**'
 

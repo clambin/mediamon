@@ -1,6 +1,7 @@
 package xxxarr_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 )
@@ -20,7 +21,7 @@ func NewTestServer(responses Responses, apiKey string) *TestServer {
 	return s
 }
 
-type Responses map[string]string
+type Responses map[string]any
 
 func (ts TestServer) Handler(w http.ResponseWriter, req *http.Request) {
 	// check auth
@@ -40,6 +41,8 @@ func (ts TestServer) Handler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(response))
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "failed to encode output: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

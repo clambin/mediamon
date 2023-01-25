@@ -56,18 +56,21 @@ func (client *Client) call(ctx context.Context, method string, response interfac
 		resp, err = client.HTTPClient.Do(req)
 
 		if err != nil {
+			err = fmt.Errorf("decode %s: %w", client.URL, err)
 			break
 		}
 
 		switch resp.StatusCode {
 		case http.StatusOK:
-			err = json.NewDecoder(resp.Body).Decode(response)
+			if err = json.NewDecoder(resp.Body).Decode(response); err != nil {
+				err = fmt.Errorf("decode %s: %w", client.URL, err)
+			}
 			answer = true
 		case http.StatusConflict:
 			// Transmission-Session-Id has expired. Get the new one and retry
 			client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
 		default:
-			err = fmt.Errorf("%s", resp.Status)
+			err = fmt.Errorf("call %s: %s", client.URL, resp.Status)
 		}
 
 		_ = resp.Body.Close()

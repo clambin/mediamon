@@ -127,9 +127,7 @@ func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 }
 
 func (coll *Collector) locateAddress(address string) (lonAsString, latAsString string) {
-	lon, lat, err := coll.Locator.Locate(address)
-
-	if err == nil {
+	if lon, lat, err := coll.Locator.Locate(address); err == nil {
 		lonAsString = strconv.FormatFloat(lon, 'f', 2, 64)
 		latAsString = strconv.FormatFloat(lat, 'f', 2, 64)
 	}

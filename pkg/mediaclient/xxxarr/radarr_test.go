@@ -10,16 +10,16 @@ import (
 )
 
 var radarrResponses = Responses{
-	`/api/v3/system/status`: `{ "version": "1.2.3.4444" }`,
-	`/api/v3/queue`:         `{ "page": 1, "pageSize": 1, "totalRecords": 2, "records": [ { "title": "foo" } ] }`,
-	`/api/v3/queue?page=2`:  `{ "page": 2, "pageSize": 1, "totalRecords": 2, "records": [ { "title": "bar" } ] }`,
-	`/api/v3/movie`:         `[ { "monitored": true }, { "monitored": false }, { "monitored": true } ]`,
-	`/api/v3/movie/11`:      `{ "title": "foo", "monitored": true }`,
-	`/api/v3/calendar`: `[
-  { "title": "Bar", "hasFile": false, "monitored": true },
-  { "hasFile": true, "monitored": true },
-  { "hasFile": false, "monitored": false }
-]`,
+	`/api/v3/system/status`: xxxarr.RadarrSystemStatusResponse{Version: "1.2.3.4444"},
+	`/api/v3/queue`:         xxxarr.RadarrQueueResponse{Page: 1, PageSize: 1, TotalRecords: 2, Records: []xxxarr.RadarrQueueResponseRecord{{Title: "foo"}}},
+	`/api/v3/queue?page=2`:  xxxarr.RadarrQueueResponse{Page: 2, PageSize: 1, TotalRecords: 2, Records: []xxxarr.RadarrQueueResponseRecord{{Title: "bar"}}},
+	`/api/v3/movie`:         []xxxarr.RadarrMovieResponse{{Monitored: true}, {Monitored: false}, {Monitored: true}},
+	`/api/v3/movie/11`:      xxxarr.RadarrMovieResponse{Title: "foo", Monitored: true},
+	`/api/v3/calendar`: []xxxarr.RadarrCalendarResponse{
+		{Title: "foo", HasFile: false, Monitored: true},
+		{Title: "bar", HasFile: true, Monitored: true},
+		{Title: "snafu", HasFile: false, Monitored: false},
+	},
 }
 
 func TestNewRadarrClient_GetURL(t *testing.T) {

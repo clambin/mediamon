@@ -50,7 +50,8 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 		return
 	}
 
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, client.URL+endpoint, nil)
+	target := client.URL + endpoint
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-Plex-Token", client.authToken)
 
@@ -58,7 +59,7 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 	resp, err = client.HTTPClient.Do(req)
 
 	if err != nil {
-		return
+		return fmt.Errorf("call %s: %w", target, err)
 	}
 
 	defer func() {
@@ -69,7 +70,10 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 		return fmt.Errorf("%s", resp.Status)
 	}
 
-	return json.NewDecoder(resp.Body).Decode(&response)
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return fmt.Errorf("decode %s: %w", target, err)
+	}
+	return err
 }
 
 // authenticate logs in to plex.tv and gets an authentication token

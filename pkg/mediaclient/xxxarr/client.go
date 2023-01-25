@@ -18,7 +18,7 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return response, fmt.Errorf("call failed: %w", err)
+		return response, fmt.Errorf("get %s: %w", target, err)
 	}
 
 	defer func() {
@@ -29,6 +29,8 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 		return response, fmt.Errorf("call failed: " + resp.Status)
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		err = fmt.Errorf("decode %s: %w", target, err)
+	}
 	return response, err
 }
