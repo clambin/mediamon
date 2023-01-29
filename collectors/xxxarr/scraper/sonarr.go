@@ -33,6 +33,7 @@ func (s SonarrScraper) Scrape(ctx context.Context) (Stats, error) {
 	if err == nil {
 		stats.Monitored, stats.Unmonitored, err = s.getMonitored(ctx)
 	}
+
 	return stats, err
 }
 

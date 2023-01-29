@@ -2,10 +2,12 @@ package xxxarr_test
 
 import (
 	"context"
+	"errors"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -89,4 +91,18 @@ func TestRadarrClient_GetMovieByID(t *testing.T) {
 	movie, err := c.GetMovieByID(context.Background(), 11)
 	require.NoError(t, err)
 	assert.Equal(t, "foo", movie.Title)
+}
+
+func TestRadarrClient_BadOutput(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("bad output"))
+	}))
+	defer s.Close()
+
+	c := xxxarr.RadarrClient{Client: http.DefaultClient, URL: s.URL}
+	_, err := c.GetHealth(context.Background())
+	assert.Error(t, err)
+	var err2 *xxxarr.ErrParseFailed
+	assert.True(t, errors.As(err, &err2))
+	assert.Equal(t, "bad output", string(err2.Body))
 }

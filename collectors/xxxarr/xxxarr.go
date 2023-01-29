@@ -2,6 +2,7 @@ package xxxarr
 
 import (
 	"context"
+	"errors"
 	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
@@ -120,6 +121,10 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 				err)
 		*/
 		coll.logger.Error("failed to collect metrics", err)
+		var err2 *xxxarr.ErrParseFailed
+		if errors.As(err, &err2) {
+			coll.logger.Error("server returned invalid output", err, "body", string(err2.Body))
+		}
 		return
 	}
 

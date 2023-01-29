@@ -26,7 +26,7 @@ func TestCollector(t *testing.T) {
 			}
 			s := mocks2.NewScraper(t)
 			c.Scraper = s
-			s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(tt.input, nil)
+			s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(tt.input, nil).Once()
 
 			r := prometheus.NewPedanticRegistry()
 			r.MustRegister(c)

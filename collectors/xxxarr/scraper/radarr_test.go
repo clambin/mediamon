@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestRadarrUpdater_GetStats(t *testing.T) {
+func TestRadarrScraper_Scrape(t *testing.T) {
 	c := mocks.NewRadarrAPI(t)
 	u := scraper.RadarrScraper{Client: c}
 
