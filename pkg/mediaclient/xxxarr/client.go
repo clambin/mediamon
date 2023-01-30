@@ -30,13 +30,13 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 		_ = resp.Body.Close()
 	}()
 
-	if resp.StatusCode != http.StatusOK {
-		return response, &ErrHTTPFailed{StatusCode: resp.StatusCode, Status: resp.Status}
-	}
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return response, fmt.Errorf("read: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return response, &ErrHTTPFailed{StatusCode: resp.StatusCode, Status: resp.Status}
 	}
 
 	if err = json.Unmarshal(body, &response); err != nil {
