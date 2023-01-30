@@ -5,28 +5,25 @@ import (
 	"net/http"
 )
 
-var _ error = &ErrParseFailed{}
+var _ error = &ErrInvalidJSON{}
 
-type ErrParseFailed struct {
+type ErrInvalidJSON struct {
 	Err  error
 	Body []byte
 }
 
-func (e *ErrParseFailed) Error() string {
+func (e *ErrInvalidJSON) Error() string {
 	return "parse: " + e.Err.Error()
 }
 
-func (e *ErrParseFailed) Is(other error) bool {
-	if _, ok := other.(*ErrParseFailed); ok {
-		return true
-	}
-	if x, ok := e.Err.(interface{ Is(error) bool }); ok {
-		return x.Is(other)
-	}
-	return false
+func (e *ErrInvalidJSON) Is(target error) bool {
+	_, ok := target.(*ErrInvalidJSON)
+	return ok
 }
 
-func (e *ErrParseFailed) Unwrap() error { return e.Err }
+func (e *ErrInvalidJSON) Unwrap() error {
+	return e.Err
+}
 
 var _ error = &ErrHTTPFailed{}
 
@@ -42,7 +39,13 @@ func (e *ErrHTTPFailed) Error() string {
 	return e.Status
 }
 
-func (e *ErrHTTPFailed) Is(other error) bool {
-	_, ok := other.(*ErrHTTPFailed)
-	return ok
+func (e *ErrHTTPFailed) Is(target error) bool {
+	if t, ok := target.(*ErrHTTPFailed); ok {
+		if t == nil {
+			return true
+		}
+		return (e.StatusCode == t.StatusCode || t.StatusCode == 0) &&
+			(e.Status == t.Status || t.Status == "")
+	}
+	return false
 }

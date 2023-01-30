@@ -136,7 +136,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 		*/
 		coll.logger.Error("failed to collect metrics", err)
 
-		var err2 *xxxarr.ErrParseFailed
+		var err2 *xxxarr.ErrInvalidJSON
 		if errors.As(err, &err2) {
 			coll.logger.Error("server returned invalid output", err, "body", string(err2.Body))
 		}

@@ -102,7 +102,7 @@ func TestRadarrClient_BadOutput(t *testing.T) {
 	c := xxxarr.RadarrClient{Client: http.DefaultClient, URL: s.URL}
 	_, err := c.GetHealth(context.Background())
 	assert.Error(t, err)
-	var err2 *xxxarr.ErrParseFailed
+	var err2 *xxxarr.ErrInvalidJSON
 	assert.True(t, errors.As(err, &err2))
 	assert.Equal(t, "bad output", string(err2.Body))
 }

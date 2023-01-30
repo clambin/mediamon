@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-http-utils/headers"
 	"io"
 	"net/http"
 )
@@ -17,9 +16,9 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 	}
 
 	// TODO: does this fix the EOF errors? Is radarr/sonarr closing the connection?
-	req.Close = true
+	// req.Close = true
 	req.Header.Set("X-Api-Key", key)
-	req.Header.Set(headers.AcceptEncoding, "identity")
+	// req.Header.Set(headers.AcceptEncoding, "identity")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -40,7 +39,7 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 	}
 
 	if err = json.Unmarshal(body, &response); err != nil {
-		err = &ErrParseFailed{
+		err = &ErrInvalidJSON{
 			Err:  err,
 			Body: body,
 		}
