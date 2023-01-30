@@ -11,8 +11,6 @@ type SonarrScraper struct {
 	Client xxxarr.SonarrAPI
 }
 
-var _ Scraper = &SonarrScraper{}
-
 // Scrape returns Stats from a Sonarr instance
 func (s SonarrScraper) Scrape(ctx context.Context) (Stats, error) {
 	stats := Stats{

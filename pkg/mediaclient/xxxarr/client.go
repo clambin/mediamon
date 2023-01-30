@@ -16,7 +16,9 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 		return response, fmt.Errorf("unable to create request: %w", err)
 	}
 
-	req.Header.Add("X-Api-Key", key)
+	// TODO: does this fix the EOF errors? Is radarr/sonarr closing the connection?
+	req.Close = true
+	req.Header.Set("X-Api-Key", key)
 	req.Header.Set(headers.AcceptEncoding, "identity")
 
 	resp, err := client.Do(req)

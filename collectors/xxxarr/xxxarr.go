@@ -14,11 +14,18 @@ import (
 
 // Collector presents Sonarr/Radarr statistics as Prometheus metrics
 type Collector struct {
-	scraper.Scraper
+	Scraper
 	application string
 	metrics     map[string]*prometheus.Desc
 	transport   *httpclient.RoundTripper
 	logger      *slog.Logger
+}
+
+// Scraper provides a generic means of getting stats from Sonarr or Radarr
+//
+//go:generate mockery --name Scraper
+type Scraper interface {
+	Scrape(ctx context.Context) (scraper.Stats, error)
 }
 
 // Config to create a collector
@@ -111,6 +118,13 @@ func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+	// TODO: http response's body.Close() sometimes panics in mediaclient/xxxarr ???
+	defer func() {
+		if err := recover(); err != nil {
+			coll.logger.Warn("scrape panicked", "error", err)
+		}
+	}()
+
 	start := time.Now()
 	stats, err := coll.Scraper.Scrape(context.Background())
 	if err != nil {
@@ -121,6 +135,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 				err)
 		*/
 		coll.logger.Error("failed to collect metrics", err)
+
 		var err2 *xxxarr.ErrParseFailed
 		if errors.As(err, &err2) {
 			coll.logger.Error("server returned invalid output", err, "body", string(err2.Body))

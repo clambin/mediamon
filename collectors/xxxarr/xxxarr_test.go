@@ -2,9 +2,10 @@ package xxxarr_test
 
 import (
 	"bytes"
+	"context"
 	"github.com/clambin/mediamon/collectors/xxxarr"
+	mocks2 "github.com/clambin/mediamon/collectors/xxxarr/mocks"
 	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
-	mocks2 "github.com/clambin/mediamon/collectors/xxxarr/scraper/mocks"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -134,4 +135,20 @@ mediamon_xxxarr_unmonitored_count{application="radarr",url=""} 1
 mediamon_xxxarr_version{application="radarr",url="",version="foo"} 1
 `,
 	},
+}
+
+func TestCollector_Collect_Panic(t *testing.T) {
+	c := xxxarr.NewRadarrCollector("", "")
+	c.Scraper = &panickingScraper{}
+
+	assert.NotPanics(t, func() {
+		ch := make(chan prometheus.Metric)
+		c.Collect(ch)
+	})
+}
+
+type panickingScraper struct{}
+
+func (p *panickingScraper) Scrape(_ context.Context) (scraper.Stats, error) {
+	panic("panic")
 }
