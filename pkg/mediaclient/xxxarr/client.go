@@ -1,7 +1,6 @@
 package xxxarr
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -31,13 +30,15 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 		return response, fmt.Errorf("call failed: " + resp.Status)
 	}
 
-	var body bytes.Buffer
-	r := io.TeeReader(resp.Body, &body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return response, fmt.Errorf("read: %w", err)
+	}
 
-	if err = json.NewDecoder(r).Decode(&response); err != nil {
+	if err = json.Unmarshal(body, &response); err != nil {
 		err = &ErrParseFailed{
 			Err:  err,
-			Body: body.Bytes(),
+			Body: body,
 		}
 	}
 	return response, err
