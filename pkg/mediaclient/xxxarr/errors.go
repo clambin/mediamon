@@ -1,5 +1,10 @@
 package xxxarr
 
+import (
+	"fmt"
+	"net/http"
+)
+
 var _ error = &ErrParseFailed{}
 
 type ErrParseFailed struct {
@@ -22,3 +27,22 @@ func (e *ErrParseFailed) Is(other error) bool {
 }
 
 func (e *ErrParseFailed) Unwrap() error { return e.Err }
+
+var _ error = &ErrHTTPFailed{}
+
+type ErrHTTPFailed struct {
+	StatusCode int
+	Status     string
+}
+
+func (e *ErrHTTPFailed) Error() string {
+	if e.Status == "" {
+		return fmt.Sprintf("%d - %s", e.StatusCode, http.StatusText(e.StatusCode))
+	}
+	return e.Status
+}
+
+func (e *ErrHTTPFailed) Is(other error) bool {
+	_, ok := other.(*ErrHTTPFailed)
+	return ok
+}

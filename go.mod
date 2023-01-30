@@ -3,8 +3,8 @@ module github.com/clambin/mediamon
 go 1.19
 
 require (
-	github.com/clambin/go-common/cache v0.1.1
 	github.com/clambin/go-common/httpclient v0.3.3
+	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/prometheus/client_golang v1.14.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
@@ -19,6 +19,7 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/clambin/go-common/cache v0.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
