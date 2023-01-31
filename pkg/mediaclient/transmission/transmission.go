@@ -70,7 +70,7 @@ func (client *Client) call(ctx context.Context, method string, response interfac
 			// Transmission-Session-Id has expired. Get the new one and retry
 			client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
 		default:
-			err = fmt.Errorf("call %s: %s", client.URL, resp.Status)
+			err = fmt.Errorf("unexpected http status: %s", resp.Status)
 		}
 
 		_ = resp.Body.Close()

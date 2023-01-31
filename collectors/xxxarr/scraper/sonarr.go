@@ -44,16 +44,16 @@ func (s SonarrScraper) getVersion(ctx context.Context) (string, error) {
 }
 
 func (s SonarrScraper) getHealth(ctx context.Context) (map[string]int, error) {
+	var healthEntries map[string]int
 	health, err := s.Client.GetHealth(ctx)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		healthEntries = make(map[string]int)
+		for _, entry := range health {
+			value := healthEntries[entry.Type]
+			healthEntries[entry.Type] = value + 1
+		}
 	}
-	healthEntries := make(map[string]int)
-	for _, entry := range health {
-		value := healthEntries[entry.Type]
-		healthEntries[entry.Type] = value + 1
-	}
-	return healthEntries, nil
+	return healthEntries, err
 }
 
 func (s SonarrScraper) getCalendar(ctx context.Context) ([]string, error) {
@@ -106,25 +106,25 @@ func (s SonarrScraper) getQueued(ctx context.Context) ([]QueuedFile, error) {
 }
 
 func (s SonarrScraper) getMonitored(ctx context.Context) (int, int, error) {
-	movies, err := s.Client.GetSeries(ctx)
-	if err != nil {
-		return 0, 0, err
-	}
 	var monitored, unmonitored int
-	for _, entry := range movies {
-		if entry.Monitored {
-			monitored++
-		} else {
-			unmonitored++
+	movies, err := s.Client.GetSeries(ctx)
+	if err == nil {
+		for _, entry := range movies {
+			if entry.Monitored {
+				monitored++
+			} else {
+				unmonitored++
+			}
 		}
 	}
-	return monitored, unmonitored, nil
+	return monitored, unmonitored, err
 }
 
 func (s SonarrScraper) getShowName(ctx context.Context, id int) (string, error) {
+	var title string
 	show, err := s.Client.GetSeriesByID(ctx, id)
-	if err != nil {
-		return "", err
+	if err == nil {
+		title = show.Title
 	}
-	return show.Title, nil
+	return title, err
 }

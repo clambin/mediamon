@@ -22,7 +22,7 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return response, fmt.Errorf("get %s: %w", target, err)
+		return response, err
 	}
 
 	defer func() {
@@ -35,7 +35,7 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return response, &ErrHTTPFailed{StatusCode: resp.StatusCode, Status: resp.Status}
+		return response, fmt.Errorf("unexpected http status: %s", resp.Status)
 	}
 
 	if err = json.Unmarshal(body, &response); err != nil {

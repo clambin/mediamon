@@ -60,12 +60,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 
 	stats, err := coll.getStats()
 	if err != nil {
-		/*
-			ch <- prometheus.NewInvalidMetric(
-				prometheus.NewDesc("mediamon_error",
-					"Error getting bandwidth statistics", nil, nil),
-				err)
-		*/
+		// ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting bandwidth statistics", nil, nil), err)
 		slog.Error("failed to collect bandwidth metrics", err)
 		return
 	}
@@ -74,19 +69,23 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	slog.Debug("bandwidth stats collected", "duration", time.Since(start))
 }
 
+var (
+	statusFileRegEx = regexp.MustCompile(`^(.+),(\d+)$`)
+)
+
 func (coll *Collector) getStats() (bandwidthStats, error) {
 	var stats bandwidthStats
-	file, err := os.Open(coll.Filename)
+	statusFile, err := os.Open(coll.Filename)
 	if err != nil {
 		return stats, err
 	}
+	defer func() { _ = statusFile.Close() }()
 
 	fieldsFound := 0
-	r := regexp.MustCompile(`^(.+),(\d+)$`)
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(statusFile)
 	for scanner.Scan() {
 		line := scanner.Text()
-		for _, match := range r.FindAllStringSubmatch(line, -1) {
+		for _, match := range statusFileRegEx.FindAllStringSubmatch(line, -1) {
 			value, _ := strconv.ParseInt(match[2], 10, 64)
 			switch match[1] {
 			case "TCP/UDP read bytes":
@@ -98,8 +97,6 @@ func (coll *Collector) getStats() (bandwidthStats, error) {
 			}
 		}
 	}
-	_ = file.Close()
-
 	if fieldsFound != 2 {
 		err = fmt.Errorf("not all fields were found in the openvpn status file")
 	}

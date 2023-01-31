@@ -2,10 +2,12 @@ package xxxarr_test
 
 import (
 	"context"
+	"errors"
 	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -107,4 +109,18 @@ func TestSonarrClient_GetEpisodeByID(t *testing.T) {
 	assert.Equal(t, "Bar", episode.Series.Title)
 	assert.Equal(t, 1, episode.SeasonNumber)
 	assert.Equal(t, 2, episode.EpisodeNumber)
+}
+
+func TestSonarrClient_BadOutput(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("bad output"))
+	}))
+	defer s.Close()
+
+	c := xxxarr.SonarrClient{Client: http.DefaultClient, URL: s.URL}
+	_, err := c.GetHealth(context.Background())
+	assert.Error(t, err)
+	var err2 *xxxarr.ErrInvalidJSON
+	assert.True(t, errors.As(err, &err2))
+	assert.Equal(t, "bad output", string(err2.Body))
 }
