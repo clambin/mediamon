@@ -89,18 +89,11 @@ func (client *Client) authenticate(ctx context.Context) error {
 		return nil
 	}
 
-	/*
-		authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s",
-			client.UserName,
-			client.Password,
-		)
-	*/
-
-	authBody := client.MakeAuthBody()
 	authURL := "https://plex.tv/users/sign_in.xml"
 	if client.AuthURL != "" {
 		authURL = client.AuthURL
 	}
+	authBody := client.makeAuthBody()
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, authURL, bytes.NewBufferString(authBody))
 	req.Header.Add("X-Plex-Product", "github.com/clambin/mediamon")
@@ -108,7 +101,6 @@ func (client *Client) authenticate(ctx context.Context) error {
 	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
 
 	resp, err := client.HTTPClient.Do(req)
-
 	if err != nil {
 		return err
 	}
@@ -126,22 +118,29 @@ func (client *Client) authenticate(ctx context.Context) error {
 		return fmt.Errorf("plex auth failed: %s", resp.Status)
 	}
 
-	var authResponse struct {
-		XMLName             xml.Name `xml:"user"`
-		AuthenticationToken string   `xml:"authenticationToken,attr"`
-	}
-
-	if err = xml.Unmarshal(body, &authResponse); err == nil {
-		client.authToken = authResponse.AuthenticationToken
-	}
-
+	client.authToken, err = getAuthResponse(body)
 	return err
 }
 
-func (client *Client) MakeAuthBody() string {
+func (client *Client) makeAuthBody() string {
 	v := make(url.Values)
 	v.Set("user[login]", client.UserName)
 	v.Set("user[password]", client.Password)
 
 	return v.Encode()
+}
+
+func getAuthResponse(body []byte) (string, error) {
+	var authResponse struct {
+		XMLName             xml.Name `xml:"user"`
+		AuthenticationToken string   `xml:"authenticationToken,attr"`
+	}
+
+	var token string
+	err := xml.Unmarshal(body, &authResponse)
+	if err == nil {
+		token = authResponse.AuthenticationToken
+	}
+
+	return token, err
 }
