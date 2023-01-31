@@ -7,6 +7,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/clambin/mediamon/version"
+	"io"
 	"net/http"
 )
 
@@ -56,31 +57,35 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 	req.Header.Add("X-Plex-Token", client.authToken)
 
 	var resp *http.Response
-	resp, err = client.HTTPClient.Do(req)
-
-	if err != nil {
-		return fmt.Errorf("call %s: %w", target, err)
+	if resp, err = client.HTTPClient.Do(req); err != nil {
+		return err
 	}
 
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 
+	var body []byte
+	if body, err = io.ReadAll(resp.Body); err != nil {
+		return fmt.Errorf("read: %w", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("%s", resp.Status)
 	}
 
-	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return fmt.Errorf("decode %s: %w", target, err)
+	if err = json.Unmarshal(body, &response); err != nil {
+		return fmt.Errorf("decode: %w", err)
 	}
+
 	return err
 }
 
 // authenticate logs in to plex.tv and gets an authentication token
 // to be used for calls to the Plex server APIs
-func (client *Client) authenticate(ctx context.Context) (err error) {
+func (client *Client) authenticate(ctx context.Context) error {
 	if client.authToken != "" {
-		return
+		return nil
 	}
 
 	authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s",
@@ -97,16 +102,20 @@ func (client *Client) authenticate(ctx context.Context) (err error) {
 	req.Header.Add("X-Plex-Version", version.BuildVersion)
 	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
 
-	var resp *http.Response
-	resp, err = client.HTTPClient.Do(req)
+	resp, err := client.HTTPClient.Do(req)
 
 	if err != nil {
-		return
+		return err
 	}
 
 	defer func() {
 		_ = resp.Body.Close()
 	}()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("read: %w", err)
+	}
 
 	if resp.StatusCode != http.StatusCreated {
 		return fmt.Errorf("plex auth failed: %s", resp.Status)
@@ -117,9 +126,9 @@ func (client *Client) authenticate(ctx context.Context) (err error) {
 		AuthenticationToken string   `xml:"authenticationToken,attr"`
 	}
 
-	if err = xml.NewDecoder(resp.Body).Decode(&authResponse); err == nil {
+	if err = xml.Unmarshal(body, &authResponse); err == nil {
 		client.authToken = authResponse.AuthenticationToken
 	}
 
-	return
+	return err
 }
