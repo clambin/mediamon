@@ -125,6 +125,25 @@ func TestClient_Failures(t *testing.T) {
 	assert.ErrorIs(t, err, unix.ECONNREFUSED)
 }
 
+func TestClient_Decode_Failure(t *testing.T) {
+	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	defer authServer.Close()
+	testServer := httptest.NewServer(http.HandlerFunc(plexGarbageHandler))
+	defer testServer.Close()
+
+	c := &plex.Client{
+		HTTPClient: http.DefaultClient,
+		URL:        testServer.URL,
+		AuthURL:    authServer.URL,
+		UserName:   "user@example.com",
+		Password:   "somepassword",
+	}
+
+	_, err := c.GetIdentity(context.Background())
+	require.Error(t, err)
+	assert.Equal(t, "decode: invalid character 'h' in literal true (expecting 'r')", err.Error())
+}
+
 // Server handlers
 
 func plexAuthHandler(w http.ResponseWriter, req *http.Request) {
@@ -171,6 +190,10 @@ func plexHandler(w http.ResponseWriter, req *http.Request) {
 
 func plexBadHandler(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "server's having a hard day", http.StatusInternalServerError)
+}
+
+func plexGarbageHandler(w http.ResponseWriter, _ *http.Request) {
+	_, _ = w.Write([]byte("this is definitely not json"))
 }
 
 var plexResponses = map[string]string{

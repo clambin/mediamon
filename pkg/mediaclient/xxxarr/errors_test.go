@@ -45,7 +45,7 @@ func TestErrInvalidJSON(t *testing.T) {
 			var newErr *ErrInvalidJSON
 			assert.Equal(t, tt.expectAs, errors.As(tt.err, &newErr))
 			if tt.expectAs {
-				assert.True(t, errors.Is(newErr, &ErrInvalidJSON{}))
+				assert.ErrorIs(t, newErr, &ErrInvalidJSON{})
 			}
 		})
 	}
