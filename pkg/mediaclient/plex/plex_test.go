@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
@@ -116,7 +117,7 @@ func TestClient_Failures(t *testing.T) {
 
 	_, err := c.GetIdentity(context.Background())
 	require.Error(t, err)
-	assert.Equal(t, "500 Internal Server Error", err.Error())
+	assert.Equal(t, "500 "+http.StatusText(http.StatusInternalServerError), err.Error())
 
 	testServer.Close()
 	_, err = c.GetIdentity(context.Background())
@@ -130,14 +131,20 @@ func plexAuthHandler(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		_ = req.Body.Close()
 	}()
-	body, err := io.ReadAll(req.Body)
 
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	if string(body) != `user%5Blogin%5D=user@example.com&user%5Bpassword%5D=somepassword` {
+	auth, err := url.PathUnescape(string(body))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if auth != `user[login]=user@example.com&user[password]=somepassword` {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

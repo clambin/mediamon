@@ -9,6 +9,7 @@ import (
 	"github.com/clambin/mediamon/version"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 // API interface
@@ -88,10 +89,14 @@ func (client *Client) authenticate(ctx context.Context) error {
 		return nil
 	}
 
-	authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s",
-		client.UserName,
-		client.Password,
-	)
+	/*
+		authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s",
+			client.UserName,
+			client.Password,
+		)
+	*/
+
+	authBody := client.MakeAuthBody()
 	authURL := "https://plex.tv/users/sign_in.xml"
 	if client.AuthURL != "" {
 		authURL = client.AuthURL
@@ -131,4 +136,12 @@ func (client *Client) authenticate(ctx context.Context) error {
 	}
 
 	return err
+}
+
+func (client *Client) MakeAuthBody() string {
+	v := make(url.Values)
+	v.Set("user[login]", client.UserName)
+	v.Set("user[password]", client.Password)
+
+	return v.Encode()
 }
