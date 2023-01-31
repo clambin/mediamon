@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestSonarrUpdater_GetStats(t *testing.T) {
+func TestSonarrScraper_Scrape(t *testing.T) {
 	c := mocks.NewSonarrAPI(t)
 	u := scraper.SonarrScraper{Client: c}
 

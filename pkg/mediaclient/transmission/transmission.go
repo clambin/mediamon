@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -45,36 +46,45 @@ func (client *Client) GetSessionStatistics(ctx context.Context) (stats SessionSt
 
 // call the specified Transmission API endpoint
 func (client *Client) call(ctx context.Context, method string, response interface{}) (err error) {
-	var answer bool
-	for !answer && err == nil {
-
-		req, _ := http.NewRequestWithContext(ctx, http.MethodPost, client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("X-Transmission-Session-Id", client.SessionID)
-
-		var resp *http.Response
-		resp, err = client.HTTPClient.Do(req)
-
-		if err != nil {
-			err = fmt.Errorf("decode %s: %w", client.URL, err)
-			break
+	for err == nil {
+		var success bool
+		success, err = client.post(ctx, method, response)
+		if success && err == nil {
+			return nil
 		}
+	}
+	return
+}
 
-		switch resp.StatusCode {
-		case http.StatusOK:
-			if err = json.NewDecoder(resp.Body).Decode(response); err != nil {
-				err = fmt.Errorf("decode %s: %w", client.URL, err)
-			}
-			answer = true
-		case http.StatusConflict:
-			// Transmission-Session-Id has expired. Get the new one and retry
-			client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
-		default:
-			err = fmt.Errorf("call %s: %s", client.URL, resp.Status)
-		}
+func (client *Client) post(ctx context.Context, method string, response interface{}) (bool, error) {
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, client.URL, bytes.NewBufferString("{ \"method\": \""+method+"\" }"))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-Transmission-Session-Id", client.SessionID)
 
-		_ = resp.Body.Close()
+	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		return false, err
 	}
 
-	return
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, fmt.Errorf("read: %w", err)
+	}
+
+	var success bool
+	switch resp.StatusCode {
+	case http.StatusOK:
+		success = true
+		if err = json.Unmarshal(body, response); err != nil {
+			err = fmt.Errorf("unmarshal: %w", err)
+		}
+	case http.StatusConflict:
+		client.SessionID = resp.Header.Get("X-Transmission-Session-Id")
+	default:
+		err = fmt.Errorf("unexpected http status: %s", resp.Status)
+	}
+
+	return success, err
 }

@@ -68,13 +68,8 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {
 	identity, err := coll.API.GetIdentity(context.Background())
 	if err != nil {
-		/*
-			ch <- prometheus.NewInvalidMetric(
-				prometheus.NewDesc("mediamon_error",
-					"Error getting Plex version", nil, nil),
-				err)
-			log.WithError(err).Warning("failed to collect Plex version")
-		*/
+		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting Plex version", nil, nil),err)
+		slog.Error("failed to collect Plex version", err)
 		return
 	}
 

@@ -10,10 +10,13 @@ type RadarrScraper struct {
 	Client xxxarr.RadarrAPI
 }
 
-var _ Scraper = &RadarrScraper{}
-
 // Scrape returns Stats from a Radarr instance
-func (s RadarrScraper) Scrape(ctx context.Context) (stats Stats, err error) {
+func (s RadarrScraper) Scrape(ctx context.Context) (Stats, error) {
+	stats := Stats{
+		URL: s.Client.GetURL(),
+	}
+
+	var err error
 	stats.URL = s.Client.GetURL()
 
 	stats.Version, err = s.getVersion(ctx)
@@ -34,7 +37,7 @@ func (s RadarrScraper) Scrape(ctx context.Context) (stats Stats, err error) {
 		stats.Monitored, stats.Unmonitored, err = s.getMonitored(ctx)
 	}
 
-	return
+	return stats, err
 }
 
 func (s RadarrScraper) getVersion(ctx context.Context) (string, error) {

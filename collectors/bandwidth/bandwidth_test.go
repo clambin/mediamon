@@ -29,13 +29,6 @@ func TestCollector_Collect(t *testing.T) {
 		pass    bool
 		output  string
 	}{
-		/*
-			{
-				name:    "empty",
-				content: []byte(``),
-				pass:    false,
-			},
-		*/
 		{
 			name: "valid",
 			content: []byte(`OpenVPN STATISTICS
@@ -53,20 +46,17 @@ openvpn_client_tcp_udp_read_bytes_total 5.624951995e+09
 openvpn_client_tcp_udp_write_bytes_total 2048
 `,
 		},
-		/*
-					{
-						name: "invalid",
-						content: []byte(`OpenVPN STATISTICS
+		{
+			name: "invalid",
+			content: []byte(`OpenVPN STATISTICS
 			Updated,Fri Dec 18 11:24:01 2020
 			TCP/UDP read bytes,A
 			TCP/UDP write bytes,B
-			END`),
-						pass: false,
-					},
-		*/
+			END
+`),
+			pass: true,
+		},
 	}
-
-	// valid/invalid file content
 
 	for _, testCase := range testCases {
 		filename, err := tempFile(testCase.content)
@@ -76,7 +66,7 @@ openvpn_client_tcp_udp_write_bytes_total 2048
 		if testCase.pass {
 			assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCase.output)))
 		} else {
-			err = testutil.CollectAndCompare(c, nil)
+			err = testutil.CollectAndCompare(c, strings.NewReader(""))
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`)
 		}

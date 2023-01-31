@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -14,23 +15,34 @@ func call[T any](ctx context.Context, client *http.Client, target, key string) (
 		return response, fmt.Errorf("unable to create request: %w", err)
 	}
 
-	req.Header.Add("X-Api-Key", key)
+	// TODO: does this fix the EOF errors? Is radarr/sonarr closing the connection?
+	// req.Close = true
+	req.Header.Set("X-Api-Key", key)
+	// req.Header.Set(headers.AcceptEncoding, "identity")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return response, fmt.Errorf("get %s: %w", target, err)
+		return response, err
 	}
 
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 
-	if resp.StatusCode != http.StatusOK {
-		return response, fmt.Errorf("call failed: " + resp.Status)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return response, fmt.Errorf("read: %w", err)
 	}
 
-	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		err = fmt.Errorf("decode %s: %w", target, err)
+	if resp.StatusCode != http.StatusOK {
+		return response, fmt.Errorf("unexpected http status: %s", resp.Status)
+	}
+
+	if err = json.Unmarshal(body, &response); err != nil {
+		err = &ErrInvalidJSON{
+			Err:  err,
+			Body: body,
+		}
 	}
 	return response, err
 }

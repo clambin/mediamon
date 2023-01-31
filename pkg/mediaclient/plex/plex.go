@@ -7,7 +7,9 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/clambin/mediamon/version"
+	"io"
 	"net/http"
+	"net/url"
 )
 
 // API interface
@@ -56,70 +58,89 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 	req.Header.Add("X-Plex-Token", client.authToken)
 
 	var resp *http.Response
-	resp, err = client.HTTPClient.Do(req)
-
-	if err != nil {
-		return fmt.Errorf("call %s: %w", target, err)
+	if resp, err = client.HTTPClient.Do(req); err != nil {
+		return err
 	}
 
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 
+	var body []byte
+	if body, err = io.ReadAll(resp.Body); err != nil {
+		return fmt.Errorf("read: %w", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("%s", resp.Status)
 	}
 
-	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return fmt.Errorf("decode %s: %w", target, err)
+	if err = json.Unmarshal(body, &response); err != nil {
+		return fmt.Errorf("decode: %w", err)
 	}
+
 	return err
 }
 
 // authenticate logs in to plex.tv and gets an authentication token
 // to be used for calls to the Plex server APIs
-func (client *Client) authenticate(ctx context.Context) (err error) {
+func (client *Client) authenticate(ctx context.Context) error {
 	if client.authToken != "" {
-		return
+		return nil
 	}
 
-	authBody := fmt.Sprintf("user%%5Blogin%%5D=%s&user%%5Bpassword%%5D=%s",
-		client.UserName,
-		client.Password,
-	)
 	authURL := "https://plex.tv/users/sign_in.xml"
 	if client.AuthURL != "" {
 		authURL = client.AuthURL
 	}
+	authBody := client.makeAuthBody()
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, authURL, bytes.NewBufferString(authBody))
 	req.Header.Add("X-Plex-Product", "github.com/clambin/mediamon")
 	req.Header.Add("X-Plex-Version", version.BuildVersion)
 	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
 
-	var resp *http.Response
-	resp, err = client.HTTPClient.Do(req)
-
+	resp, err := client.HTTPClient.Do(req)
 	if err != nil {
-		return
+		return err
 	}
 
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("read: %w", err)
+	}
+
 	if resp.StatusCode != http.StatusCreated {
 		return fmt.Errorf("plex auth failed: %s", resp.Status)
 	}
 
+	client.authToken, err = getAuthResponse(body)
+	return err
+}
+
+func (client *Client) makeAuthBody() string {
+	v := make(url.Values)
+	v.Set("user[login]", client.UserName)
+	v.Set("user[password]", client.Password)
+
+	return v.Encode()
+}
+
+func getAuthResponse(body []byte) (string, error) {
 	var authResponse struct {
 		XMLName             xml.Name `xml:"user"`
 		AuthenticationToken string   `xml:"authenticationToken,attr"`
 	}
 
-	if err = xml.NewDecoder(resp.Body).Decode(&authResponse); err == nil {
-		client.authToken = authResponse.AuthenticationToken
+	var token string
+	err := xml.Unmarshal(body, &authResponse)
+	if err == nil {
+		token = authResponse.AuthenticationToken
 	}
 
-	return
+	return token, err
 }

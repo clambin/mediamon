@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
@@ -116,12 +117,31 @@ func TestClient_Failures(t *testing.T) {
 
 	_, err := c.GetIdentity(context.Background())
 	require.Error(t, err)
-	assert.Equal(t, "500 Internal Server Error", err.Error())
+	assert.Equal(t, "500 "+http.StatusText(http.StatusInternalServerError), err.Error())
 
 	testServer.Close()
 	_, err = c.GetIdentity(context.Background())
 	require.Error(t, err)
 	assert.ErrorIs(t, err, unix.ECONNREFUSED)
+}
+
+func TestClient_Decode_Failure(t *testing.T) {
+	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	defer authServer.Close()
+	testServer := httptest.NewServer(http.HandlerFunc(plexGarbageHandler))
+	defer testServer.Close()
+
+	c := &plex.Client{
+		HTTPClient: http.DefaultClient,
+		URL:        testServer.URL,
+		AuthURL:    authServer.URL,
+		UserName:   "user@example.com",
+		Password:   "somepassword",
+	}
+
+	_, err := c.GetIdentity(context.Background())
+	require.Error(t, err)
+	assert.Equal(t, "decode: invalid character 'h' in literal true (expecting 'r')", err.Error())
 }
 
 // Server handlers
@@ -130,14 +150,20 @@ func plexAuthHandler(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		_ = req.Body.Close()
 	}()
-	body, err := io.ReadAll(req.Body)
 
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	if string(body) != `user%5Blogin%5D=user@example.com&user%5Bpassword%5D=somepassword` {
+	auth, err := url.PathUnescape(string(body))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if auth != `user[login]=user@example.com&user[password]=somepassword` {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
@@ -164,6 +190,10 @@ func plexHandler(w http.ResponseWriter, req *http.Request) {
 
 func plexBadHandler(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "server's having a hard day", http.StatusInternalServerError)
+}
+
+func plexGarbageHandler(w http.ResponseWriter, _ *http.Request) {
+	_, _ = w.Write([]byte("this is definitely not json"))
 }
 
 var plexResponses = map[string]string{
