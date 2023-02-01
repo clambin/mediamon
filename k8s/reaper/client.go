@@ -9,38 +9,10 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"os"
-	"path/filepath"
 )
 
 type k8sClient struct {
 	client kubernetes.Interface
-}
-
-func connect() (*k8sClient, error) {
-	cfg, err := rest.InClusterConfig()
-	if err != nil {
-		// not running inside cluster. try to connect as external client
-		userHomeDir, err := os.UserHomeDir()
-		if err != nil {
-			return nil, fmt.Errorf("user home dir: %w", err)
-		}
-		kubeConfigPath := filepath.Join(userHomeDir, ".kube", "config")
-		slog.Debug("not running inside cluster. using kube config", "filename", kubeConfigPath)
-
-		cfg, err = clientcmd.BuildConfigFromFlags("", kubeConfigPath)
-		if err != nil {
-			return nil, fmt.Errorf("kubernetes config: %w", err)
-		}
-	}
-	client := k8sClient{}
-	client.client, err = kubernetes.NewForConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("kubernetes connect: %w", err)
-	}
-	return &client, nil
 }
 
 func (c *k8sClient) getPods(ctx context.Context, namespace, name string) ([]coreV1.Pod, error) {
@@ -49,12 +21,12 @@ func (c *k8sClient) getPods(ctx context.Context, namespace, name string) ([]core
 		return nil, err
 	}
 
-	replicasets, err := c.getReplicaSetsForDeployment(ctx, namespace, deployment)
+	replicaSets, err := c.getReplicaSetsForDeployment(ctx, namespace, deployment)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.getPodsForReplicaSets(ctx, namespace, replicasets)
+	return c.getPodsForReplicaSets(ctx, namespace, replicaSets)
 }
 
 func (c *k8sClient) getDeployment(ctx context.Context, namespace, name string) (*appsV1.Deployment, error) {

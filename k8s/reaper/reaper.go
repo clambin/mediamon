@@ -10,15 +10,20 @@ import (
 )
 
 type Reaper struct {
-	Connector func() kubernetes.Interface
+	Connector func() (kubernetes.Interface, error)
 }
 
 func (r *Reaper) connect() (*k8sClient, error) {
-	if r.Connector != nil {
-		return &k8sClient{client: r.Connector()}, nil
+	if r.Connector == nil {
+		return nil, fmt.Errorf("no connector specified")
 	}
 
-	return connect()
+	var client k8sClient
+	var err error
+	if client.client, err = r.Connector(); err != nil {
+		err = fmt.Errorf("could not connect to cluster: %w", err)
+	}
+	return &client, err
 }
 
 func (r *Reaper) Reap(ctx context.Context, namespace, name string) (int, error) {
@@ -61,10 +66,10 @@ func (r *Reaper) Reap(ctx context.Context, namespace, name string) (int, error) 
 		}
 
 		podLogger.Info("pod not ready. deleting ...")
-		err = client.client.CoreV1().Pods(namespace).Delete(ctx, pod.GetName(), metaV1.DeleteOptions{})
-		if err != nil {
+		if err = client.client.CoreV1().Pods(namespace).Delete(ctx, pod.GetName(), metaV1.DeleteOptions{}); err != nil {
 			break
 		}
+
 		deleted++
 		podLogger.Info("pod deleted")
 	}

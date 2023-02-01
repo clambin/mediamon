@@ -111,8 +111,8 @@ func TestReaper_Reap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := Reaper{Connector: func() kubernetes.Interface {
-				return fake.NewSimpleClientset(tt.objects...)
+			r := Reaper{Connector: func() (kubernetes.Interface, error) {
+				return fake.NewSimpleClientset(tt.objects...), nil
 			}}
 			count, err := r.Reap(context.Background(), "media", "transmission")
 			if tt.pass {
