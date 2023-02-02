@@ -4,12 +4,11 @@ go 1.19
 
 require (
 	github.com/clambin/go-common/httpclient v0.3.3
-	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/prometheus/client_golang v1.14.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/exp v0.0.0-20230113213754-f9f960f08ad4
+	golang.org/x/exp v0.0.0-20230131160201-f062dba9d201
 	golang.org/x/sys v0.4.0
 	k8s.io/api v0.26.1
 	k8s.io/apimachinery v0.26.1

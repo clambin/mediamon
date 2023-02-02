@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/clambin/mediamon/k8s/reaper"
+	"github.com/clambin/mediamon/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -48,6 +49,7 @@ func main() {
 	}
 	slog.SetDefault(slog.New(opts.NewTextHandler(os.Stdout)))
 
+	slog.Info("restarter", "version", version.BuildVersion)
 	go runPrometheusServer()
 
 	ctx, cancel := context.WithCancel(context.Background())
