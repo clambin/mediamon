@@ -12,7 +12,7 @@ require (
 	golang.org/x/sys v0.6.0
 	k8s.io/api v0.26.2
 	k8s.io/apimachinery v0.26.2
-	k8s.io/client-go v0.26.1
+	k8s.io/client-go v0.26.2
 )
 
 require (
