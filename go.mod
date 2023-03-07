@@ -9,7 +9,7 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/exp v0.0.0-20230131160201-f062dba9d201
-	golang.org/x/sys v0.5.0
+	golang.org/x/sys v0.6.0
 	k8s.io/api v0.26.2
 	k8s.io/apimachinery v0.26.2
 	k8s.io/client-go v0.26.1
