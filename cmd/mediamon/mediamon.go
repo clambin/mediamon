@@ -33,7 +33,7 @@ var (
 
 func main() {
 	if err := cmd.Execute(); err != nil {
-		slog.Error("failed to start", err)
+		slog.Error("failed to start", "err", err)
 		os.Exit(1)
 	}
 }
@@ -63,7 +63,7 @@ func Main(_ *cobra.Command, _ []string) {
 func runPrometheusServer() {
 	http.Handle(viper.GetString("metrics.path"), promhttp.Handler())
 	if err := http.ListenAndServe(viper.GetString("metrics.addr"), nil); !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("failed to start Prometheus listener", err)
+		slog.Error("failed to start Prometheus listener", "err", err)
 		panic(err)
 	}
 }
@@ -93,7 +93,7 @@ func createCollectors() []prometheus.Collector {
 	}
 	if proxyURL := viper.GetString("openvpn.connectivity.proxy"); proxyURL != "" {
 		if proxy, err := parseProxy(proxyURL); err != nil {
-			slog.Error("invalid proxy. connectivity won't be monitored", err)
+			slog.Error("invalid proxy. connectivity won't be monitored", "err", err)
 		} else {
 			slog.Info("monitoring openVPN connectivity", "url", proxy.String())
 			collectors = append(collectors, connectivity.NewCollector(
@@ -159,7 +159,7 @@ func initConfig() {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		slog.Error("failed to read config file", err)
+		slog.Error("failed to read config file", "err", err)
 		os.Exit(1)
 	}
 }

@@ -88,7 +88,7 @@ func check(ctx context.Context, namespace, name string) error {
 	if err == nil {
 		deleteCounter.WithLabelValues(namespace, name).Add(float64(deleted))
 	} else {
-		slog.Error("scan failed", err)
+		slog.Error("scan failed", "err", err)
 	}
 	return err
 }
@@ -116,6 +116,6 @@ func runPrometheusServer() {
 	http.Handle("/metrics", promhttp.Handler())
 	err := http.ListenAndServe(":9091", nil)
 	if !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("failed to start prometheus metrics server", err)
+		slog.Error("failed to start prometheus metrics server", "err", err)
 	}
 }
