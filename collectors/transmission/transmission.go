@@ -103,7 +103,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 					"Error getting transmission metrics", nil, nil),
 				err)
 		*/
-		slog.Error("failed to collect transmission metrics", err)
+		slog.Error("failed to collect transmission metrics", "err", err)
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.url)

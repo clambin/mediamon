@@ -80,7 +80,7 @@ func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {
 	identity, err := coll.API.GetIdentity(context.Background())
 	if err != nil {
 		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting Plex version", nil, nil),err)
-		slog.Error("failed to collect Plex version", err)
+		slog.Error("failed to collect Plex version", "err", err)
 		return
 	}
 
@@ -94,7 +94,7 @@ func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 			prometheus.NewDesc("mediamon_error",
 				"Error getting Plex session stats", nil, nil),
 			err)
-		slog.Error("failed to collect Plex session stats", err)
+		slog.Error("failed to collect Plex session stats", "err", err)
 		return
 	}
 

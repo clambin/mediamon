@@ -61,7 +61,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := coll.getStats()
 	if err != nil {
 		// ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting bandwidth statistics", nil, nil), err)
-		slog.Error("failed to collect bandwidth metrics", err)
+		slog.Error("failed to collect bandwidth metrics", "err", err)
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(stats.read))
