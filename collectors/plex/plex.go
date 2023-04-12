@@ -14,10 +14,21 @@ import (
 
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
-	plex.API
-	iplocator.Locator
+	API
+	IPLocator
 	url       string
 	transport *httpclient.RoundTripper
+}
+
+//go:generate mockery --name API
+type API interface {
+	GetIdentity(context.Context) (plex.Identity, error)
+	GetSessions(context.Context) (plex.Sessions, error)
+}
+
+//go:generate mockery --name IPLocator
+type IPLocator interface {
+	Locate(string) (float64, float64, error)
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -41,7 +52,7 @@ func NewCollector(url, username, password string) *Collector {
 			UserName:   username,
 			Password:   password,
 		},
-		Locator:   l,
+		IPLocator: l,
 		url:       url,
 		transport: r,
 	}
@@ -122,7 +133,7 @@ func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 }
 
 func (coll *Collector) locateAddress(address string) (lonAsString, latAsString string) {
-	if lon, lat, err := coll.Locator.Locate(address); err == nil {
+	if lon, lat, err := coll.IPLocator.Locate(address); err == nil {
 		lonAsString = strconv.FormatFloat(lon, 'f', 2, 64)
 		latAsString = strconv.FormatFloat(lat, 'f', 2, 64)
 	}
@@ -140,7 +151,7 @@ type plexSession struct {
 	speed     float64
 }
 
-func parseSessions(input plex.SessionsResponse) map[string]plexSession {
+func parseSessions(input plex.Sessions) map[string]plexSession {
 	output := make(map[string]plexSession)
 
 	for _, session := range input.MediaContainer.Metadata {

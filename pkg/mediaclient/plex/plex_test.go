@@ -21,16 +21,15 @@ func TestPlexClient_GetIdentity(t *testing.T) {
 	defer authServer.Close()
 
 	c := &plex.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        testServer.URL,
-		AuthURL:    authServer.URL,
-		UserName:   "user@example.com",
-		Password:   "somepassword",
+		URL:      testServer.URL,
+		AuthURL:  authServer.URL,
+		UserName: "user@example.com",
+		Password: "somepassword",
 	}
 
 	identity, err := c.GetIdentity(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "SomeVersion", identity.MediaContainer.Version)
+	assert.Equal(t, "SomeVersion", identity.Version)
 }
 
 func TestPlexClient_GetStats(t *testing.T) {
@@ -41,11 +40,10 @@ func TestPlexClient_GetStats(t *testing.T) {
 	defer authServer.Close()
 
 	c := &plex.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        testServer.URL,
-		AuthURL:    authServer.URL,
-		UserName:   "user@example.com",
-		Password:   "somepassword",
+		URL:      testServer.URL,
+		AuthURL:  authServer.URL,
+		UserName: "user@example.com",
+		Password: "somepassword",
 	}
 
 	sessions, err := c.GetSessions(context.Background())
@@ -53,17 +51,17 @@ func TestPlexClient_GetStats(t *testing.T) {
 
 	titles := []string{"pilot", "movie 1", "movie 2", "movie 3"}
 	locations := []string{"lan", "wan", "lan", "lan"}
-	require.Len(t, sessions.MediaContainer.Metadata, len(titles))
+	require.Len(t, sessions.Metadata, len(titles))
 
 	for index, title := range titles {
-		assert.Equal(t, title, sessions.MediaContainer.Metadata[index].Title)
-		assert.Equal(t, "Plex Web", sessions.MediaContainer.Metadata[index].Player.Product)
-		assert.Equal(t, locations[index], sessions.MediaContainer.Metadata[index].Session.Location)
+		assert.Equal(t, title, sessions.Metadata[index].Title)
+		assert.Equal(t, "Plex Web", sessions.Metadata[index].Player.Product)
+		assert.Equal(t, locations[index], sessions.Metadata[index].Session.Location)
 
-		if sessions.MediaContainer.Metadata[index].TranscodeSession.VideoDecision == "transcode" {
-			assert.NotZero(t, sessions.MediaContainer.Metadata[index].TranscodeSession.Speed)
+		if sessions.Metadata[index].TranscodeSession.VideoDecision == "transcode" {
+			assert.NotZero(t, sessions.Metadata[index].TranscodeSession.Speed)
 		} else {
-			assert.Zero(t, sessions.MediaContainer.Metadata[index].TranscodeSession.Speed)
+			assert.Zero(t, sessions.Metadata[index].TranscodeSession.Speed)
 		}
 	}
 }
@@ -73,11 +71,9 @@ func TestPlexClient_Authentication(t *testing.T) {
 	defer authServer.Close()
 
 	c := &plex.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        "",
-		AuthURL:    authServer.URL,
-		UserName:   "user@example.com",
-		Password:   "badpassword",
+		AuthURL:  authServer.URL,
+		UserName: "user@example.com",
+		Password: "badpassword",
 	}
 
 	_, err := c.GetIdentity(context.Background())
@@ -90,11 +86,9 @@ func TestPlexClient_Authentication_Failure(t *testing.T) {
 	authServer.Close()
 
 	c := &plex.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        "",
-		AuthURL:    authServer.URL,
-		UserName:   "user@example.com",
-		Password:   "badpassword",
+		AuthURL:  authServer.URL,
+		UserName: "user@example.com",
+		Password: "badpassword",
 	}
 
 	_, err := c.GetIdentity(context.Background())
@@ -108,11 +102,10 @@ func TestClient_Failures(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(plexBadHandler))
 
 	c := &plex.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        testServer.URL,
-		AuthURL:    authServer.URL,
-		UserName:   "user@example.com",
-		Password:   "somepassword",
+		URL:      testServer.URL,
+		AuthURL:  authServer.URL,
+		UserName: "user@example.com",
+		Password: "somepassword",
 	}
 
 	_, err := c.GetIdentity(context.Background())
@@ -132,11 +125,10 @@ func TestClient_Decode_Failure(t *testing.T) {
 	defer testServer.Close()
 
 	c := &plex.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        testServer.URL,
-		AuthURL:    authServer.URL,
-		UserName:   "user@example.com",
-		Password:   "somepassword",
+		URL:      testServer.URL,
+		AuthURL:  authServer.URL,
+		UserName: "user@example.com",
+		Password: "somepassword",
 	}
 
 	_, err := c.GetIdentity(context.Background())

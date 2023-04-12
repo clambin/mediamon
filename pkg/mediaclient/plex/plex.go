@@ -1,64 +1,78 @@
 package plex
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
-	"github.com/clambin/mediamon/version"
 	"io"
 	"net/http"
-	"net/url"
 )
-
-// API interface
-//
-//go:generate mockery --name API
-type API interface {
-	GetIdentity(context.Context) (identity IdentityResponse, err error)
-	GetSessions(ctx context.Context) (sessions SessionsResponse, err error)
-}
 
 // Client calls the Plex APIs
 type Client struct {
 	HTTPClient *http.Client
 	URL        string
+	AuthToken  string
 	AuthURL    string
 	UserName   string
 	Password   string
-	authToken  string
+	Product    string
 }
 
-var _ API = &Client{}
-
 // GetIdentity calls Plex' /identity endpoint. Mainly useful to get the server's version.
-func (client *Client) GetIdentity(ctx context.Context) (identity IdentityResponse, err error) {
-	err = client.call(ctx, "/identity", &identity)
+func (c *Client) GetIdentity(ctx context.Context) (identity Identity, err error) {
+	err = c.call(ctx, "/identity", &identity)
 	return
 }
 
 // GetSessions retrieves session information from the server.
-func (client *Client) GetSessions(ctx context.Context) (sessions SessionsResponse, err error) {
-	err = client.call(ctx, "/status/sessions", &sessions)
+func (c *Client) GetSessions(ctx context.Context) (sessions Sessions, err error) {
+	err = c.call(ctx, "/status/sessions", &sessions)
+	return
+}
+
+// GetAuthToken logs into plex.tv and returns the current authToken.
+func (c *Client) GetAuthToken(ctx context.Context) (string, error) {
+	err := c.authenticate(ctx)
+	if err != nil {
+		return "", err
+	}
+	return c.AuthToken, nil
+}
+
+func (c *Client) GetLibraries(ctx context.Context) (libraries Libraries, err error) {
+	err = c.call(ctx, "/library/sections", &libraries)
+	return
+}
+
+func (c *Client) GetMovieLibrary(ctx context.Context, key string) (library MovieLibrary, err error) {
+	err = c.call(ctx, fmt.Sprintf("/library/sections/%s/all", key), &library)
+	return
+}
+
+func (c *Client) GetShowLibrary(ctx context.Context, key string) (library ShowLibrary, err error) {
+	err = c.call(ctx, fmt.Sprintf("/library/sections/%s/all", key), &library)
 	return
 }
 
 // call the specified Plex API endpoint
-func (client *Client) call(ctx context.Context, endpoint string, response interface{}) (err error) {
-	err = client.authenticate(ctx)
-
-	if err != nil {
-		return
+func (c *Client) call(ctx context.Context, endpoint string, response any) error {
+	if err := c.authenticate(ctx); err != nil {
+		return err
 	}
 
-	target := client.URL + endpoint
+	target := c.URL + endpoint
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("X-Plex-Token", client.authToken)
+	req.Header.Add("X-Plex-Token", c.AuthToken)
 
-	var resp *http.Response
-	if resp, err = client.HTTPClient.Do(req); err != nil {
+	httpClient := c.HTTPClient
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
 		return err
 	}
 
@@ -75,72 +89,13 @@ func (client *Client) call(ctx context.Context, endpoint string, response interf
 		return fmt.Errorf("%s", resp.Status)
 	}
 
-	if err = json.Unmarshal(body, &response); err != nil {
+	mediaContainer := struct {
+		MediaContainer any `json:"MediaContainer"`
+	}{MediaContainer: response}
+
+	if err = json.Unmarshal(body, &mediaContainer); err != nil {
 		return fmt.Errorf("decode: %w", err)
 	}
 
 	return err
-}
-
-// authenticate logs in to plex.tv and gets an authentication token
-// to be used for calls to the Plex server APIs
-func (client *Client) authenticate(ctx context.Context) error {
-	if client.authToken != "" {
-		return nil
-	}
-
-	authURL := "https://plex.tv/users/sign_in.xml"
-	if client.AuthURL != "" {
-		authURL = client.AuthURL
-	}
-	authBody := client.makeAuthBody()
-
-	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, authURL, bytes.NewBufferString(authBody))
-	req.Header.Add("X-Plex-Product", "github.com/clambin/mediamon")
-	req.Header.Add("X-Plex-Version", version.BuildVersion)
-	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
-
-	resp, err := client.HTTPClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("read: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("plex auth failed: %s", resp.Status)
-	}
-
-	client.authToken, err = getAuthResponse(body)
-	return err
-}
-
-func (client *Client) makeAuthBody() string {
-	v := make(url.Values)
-	v.Set("user[login]", client.UserName)
-	v.Set("user[password]", client.Password)
-
-	return v.Encode()
-}
-
-func getAuthResponse(body []byte) (string, error) {
-	var authResponse struct {
-		XMLName             xml.Name `xml:"user"`
-		AuthenticationToken string   `xml:"authenticationToken,attr"`
-	}
-
-	var token string
-	err := xml.Unmarshal(body, &authResponse)
-	if err == nil {
-		token = authResponse.AuthenticationToken
-	}
-
-	return token, err
 }

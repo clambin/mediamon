@@ -1,25 +1,23 @@
 package plex
 
-// IdentityResponse contains the response of Plex' /identity endpoint
-type IdentityResponse struct {
-	MediaContainer struct {
-		Size              int    `json:"size"`
-		Claimed           bool   `json:"claimed"`
-		MachineIdentifier string `json:"machineIdentifier"`
-		Version           string `json:"version"`
-	} `json:"MediaContainer"`
+import "time"
+
+// Identity contains the response of Plex's /identity API
+type Identity struct {
+	Size              int    `json:"size"`
+	Claimed           bool   `json:"claimed"`
+	MachineIdentifier string `json:"machineIdentifier"`
+	Version           string `json:"version"`
 }
 
-// SessionsResponse contains the response of Plex' /status/sessions endpoint
-type SessionsResponse struct {
-	MediaContainer struct {
-		Size     int                      `json:"size"`
-		Metadata []SessionsResponseRecord `json:"Metadata"`
-	} `json:"MediaContainer"`
+// Sessions contains the response of Plex's /status/sessions API
+type Sessions struct {
+	Size     int       `json:"size"`
+	Metadata []Session `json:"Metadata"`
 }
 
-// SessionsResponseRecord contains one record in a SessionsResponse
-type SessionsResponseRecord struct {
+// Session contains one record in a Sessions
+type Session struct {
 	AddedAt               int     `json:"addedAt"`
 	Art                   string  `json:"art"`
 	AudienceRating        float64 `json:"audienceRating"`
@@ -136,21 +134,21 @@ type SessionsResponseRecord struct {
 		Tag    string `json:"tag"`
 		Thumb  string `json:"thumb,omitempty"`
 	} `json:"Role"`
-	User             SessionsResponseRecordUser             `json:"User"`
-	Player           SessionsResponseRecordPlayer           `json:"Player"`
-	Session          SessionsResponseRecordSession          `json:"Session"`
-	TranscodeSession SessionsResponseRecordTranscodeSession `json:"TranscodeSession"`
+	User             SessionUser       `json:"User"`
+	Player           SessionPlayer     `json:"Player"`
+	Session          SessionStats      `json:"Session"`
+	TranscodeSession SessionTranscoder `json:"TranscodeSession"`
 }
 
-// SessionsResponseRecordUser contains the user details inside a SessionsResponseRecord
-type SessionsResponseRecordUser struct {
+// SessionUser contains the user details inside a Session
+type SessionUser struct {
 	ID    string `json:"id"`
 	Thumb string `json:"thumb"`
 	Title string `json:"title"`
 }
 
-// SessionsResponseRecordPlayer contains the player details inside a SessionsResponseRecord
-type SessionsResponseRecordPlayer struct {
+// SessionPlayer contains the player details inside a Session
+type SessionPlayer struct {
 	Address             string `json:"address"`
 	Device              string `json:"device"`
 	MachineIdentifier   string `json:"machineIdentifier"`
@@ -169,16 +167,16 @@ type SessionsResponseRecordPlayer struct {
 	UserID              int    `json:"userID"`
 }
 
-// SessionsResponseRecordSession contains the session details inside a SessionsResponseRecord
-type SessionsResponseRecordSession struct {
+// SessionStats contains the session details inside a Session
+type SessionStats struct {
 	ID        string `json:"id"`
 	Bandwidth int    `json:"bandwidth"`
 	Location  string `json:"location"`
 }
 
-// SessionsResponseRecordTranscodeSession contains the transcoder details inside a SessionsResponseRecord.
+// SessionTranscoder contains the transcoder details inside a Session.
 // If the session doesn't transcode any media streams, all fields will be blank.
-type SessionsResponseRecordTranscodeSession struct {
+type SessionTranscoder struct {
 	Key                     string  `json:"key"`
 	Throttled               bool    `json:"throttled"`
 	Complete                bool    `json:"complete"`
@@ -201,4 +199,240 @@ type SessionsResponseRecordTranscodeSession struct {
 	TranscodeHwRequested    bool    `json:"transcodeHwRequested"`
 	TranscodeHwFullPipeline bool    `json:"transcodeHwFullPipeline"`
 	TimeStamp               float64 `json:"timeStamp"`
+}
+
+type LibrariesDirectory struct {
+	AllowSync        bool   `json:"allowSync"`
+	Art              string `json:"art"`
+	Composite        string `json:"composite"`
+	Filters          bool   `json:"filters"`
+	Refreshing       bool   `json:"refreshing"`
+	Thumb            string `json:"thumb"`
+	Key              string `json:"key"`
+	Type             string `json:"type"`
+	Title            string `json:"title"`
+	Agent            string `json:"agent"`
+	Scanner          string `json:"scanner"`
+	Language         string `json:"language"`
+	Uuid             string `json:"uuid"`
+	UpdatedAt        int    `json:"updatedAt"`
+	CreatedAt        int    `json:"createdAt"`
+	ScannedAt        int    `json:"scannedAt"`
+	Content          bool   `json:"content"`
+	Directory        bool   `json:"directory"`
+	ContentChangedAt int    `json:"contentChangedAt"`
+	Hidden           int    `json:"hidden"`
+	Location         []struct {
+		Id   int    `json:"id"`
+		Path string `json:"path"`
+	} `json:"Location"`
+}
+
+type Libraries struct {
+	Size      int                  `json:"size"`
+	AllowSync bool                 `json:"allowSync"`
+	Title1    string               `json:"title1"`
+	Directory []LibrariesDirectory `json:"Directory"`
+}
+
+type MovieLibrary struct {
+	Size                int                 `json:"size"`
+	AllowSync           bool                `json:"allowSync"`
+	Art                 string              `json:"art"`
+	Identifier          string              `json:"identifier"`
+	LibrarySectionID    int                 `json:"librarySectionID"`
+	LibrarySectionTitle string              `json:"librarySectionTitle"`
+	LibrarySectionUUID  string              `json:"librarySectionUUID"`
+	MediaTagPrefix      string              `json:"mediaTagPrefix"`
+	MediaTagVersion     int                 `json:"mediaTagVersion"`
+	Thumb               string              `json:"thumb"`
+	Title1              string              `json:"title1"`
+	Title2              string              `json:"title2"`
+	ViewGroup           string              `json:"viewGroup"`
+	ViewMode            int                 `json:"viewMode"`
+	Metadata            []MovieLibraryEntry `json:"Metadata"`
+}
+
+type MovieLibraryEntry struct {
+	RatingKey             string  `json:"ratingKey"`
+	Key                   string  `json:"key"`
+	Guid                  string  `json:"guid"`
+	Studio                string  `json:"studio,omitempty"`
+	Type                  string  `json:"type"`
+	Title                 string  `json:"title"`
+	ContentRating         string  `json:"contentRating,omitempty"`
+	Summary               string  `json:"summary"`
+	Rating                float64 `json:"rating,omitempty"`
+	AudienceRating        float64 `json:"audienceRating,omitempty"`
+	SkipCount             int     `json:"skipCount,omitempty"`
+	LastViewedAt          int     `json:"lastViewedAt,omitempty"`
+	Year                  int     `json:"year,omitempty"`
+	Tagline               string  `json:"tagline,omitempty"`
+	Thumb                 string  `json:"thumb"`
+	Art                   string  `json:"art,omitempty"`
+	Duration              int     `json:"duration"`
+	OriginallyAvailableAt string  `json:"originallyAvailableAt"`
+	AddedAt               int     `json:"addedAt"`
+	UpdatedAt             int     `json:"updatedAt,omitempty"`
+	AudienceRatingImage   string  `json:"audienceRatingImage,omitempty"`
+	PrimaryExtraKey       string  `json:"primaryExtraKey,omitempty"`
+	RatingImage           string  `json:"ratingImage,omitempty"`
+	Media                 []struct {
+		Id              int     `json:"id"`
+		Duration        int     `json:"duration"`
+		Bitrate         int     `json:"bitrate"`
+		Width           int     `json:"width"`
+		Height          int     `json:"height"`
+		AspectRatio     float64 `json:"aspectRatio"`
+		AudioChannels   int     `json:"audioChannels"`
+		AudioCodec      string  `json:"audioCodec"`
+		VideoCodec      string  `json:"videoCodec"`
+		VideoResolution string  `json:"videoResolution"`
+		Container       string  `json:"container"`
+		VideoFrameRate  string  `json:"videoFrameRate"`
+		VideoProfile    string  `json:"videoProfile"`
+		Part            []struct {
+			Id                    int    `json:"id"`
+			Key                   string `json:"key"`
+			Duration              int    `json:"duration"`
+			File                  string `json:"file"`
+			Size                  int64  `json:"size"`
+			Container             string `json:"container"`
+			VideoProfile          string `json:"videoProfile"`
+			AudioProfile          string `json:"audioProfile,omitempty"`
+			Has64BitOffsets       bool   `json:"has64bitOffsets,omitempty"`
+			OptimizedForStreaming bool   `json:"optimizedForStreaming,omitempty"`
+			HasThumbnail          string `json:"hasThumbnail,omitempty"`
+		} `json:"Part"`
+		OptimizedForStreaming int    `json:"optimizedForStreaming,omitempty"`
+		AudioProfile          string `json:"audioProfile,omitempty"`
+		Has64BitOffsets       bool   `json:"has64bitOffsets,omitempty"`
+	} `json:"Media"`
+	Genre []struct {
+		Tag string `json:"tag"`
+	} `json:"Genre,omitempty"`
+	Director []struct {
+		Tag string `json:"tag"`
+	} `json:"Director,omitempty"`
+	Writer []struct {
+		Tag string `json:"tag"`
+	} `json:"Writer,omitempty"`
+	Country []struct {
+		Tag string `json:"tag"`
+	} `json:"Country,omitempty"`
+	Role []struct {
+		Tag string `json:"tag"`
+	} `json:"Role,omitempty"`
+	ViewCount  int `json:"viewCount,omitempty"`
+	Collection []struct {
+		Tag string `json:"tag"`
+	} `json:"Collection,omitempty"`
+	ChapterSource string  `json:"chapterSource,omitempty"`
+	TitleSort     string  `json:"titleSort,omitempty"`
+	OriginalTitle string  `json:"originalTitle,omitempty"`
+	UserRating    float64 `json:"userRating,omitempty"`
+	LastRatedAt   int     `json:"lastRatedAt,omitempty"`
+}
+
+type ShowLibrary struct {
+	Size                int                `json:"size"`
+	AllowSync           bool               `json:"allowSync"`
+	Art                 string             `json:"art"`
+	Identifier          string             `json:"identifier"`
+	LibrarySectionID    int                `json:"librarySectionID"`
+	LibrarySectionTitle string             `json:"librarySectionTitle"`
+	LibrarySectionUUID  string             `json:"librarySectionUUID"`
+	MediaTagPrefix      string             `json:"mediaTagPrefix"`
+	MediaTagVersion     int                `json:"mediaTagVersion"`
+	Nocache             bool               `json:"nocache"`
+	Thumb               string             `json:"thumb"`
+	Title1              string             `json:"title1"`
+	Title2              string             `json:"title2"`
+	ViewGroup           string             `json:"viewGroup"`
+	ViewMode            int                `json:"viewMode"`
+	Metadata            []ShowLibraryEntry `json:"Metadata"`
+}
+
+type ShowLibraryEntry struct {
+	RatingKey             string  `json:"ratingKey"`
+	Key                   string  `json:"key"`
+	Guid                  string  `json:"guid"`
+	Studio                string  `json:"studio"`
+	Type                  string  `json:"type"`
+	Title                 string  `json:"title"`
+	ContentRating         string  `json:"contentRating,omitempty"`
+	Summary               string  `json:"summary"`
+	Index                 int     `json:"index"`
+	AudienceRating        float64 `json:"audienceRating,omitempty"`
+	ViewCount             int     `json:"viewCount,omitempty"`
+	SkipCount             int     `json:"skipCount,omitempty"`
+	LastViewedAt          int     `json:"lastViewedAt,omitempty"`
+	Year                  int     `json:"year"`
+	Thumb                 string  `json:"thumb"`
+	Art                   string  `json:"art"`
+	Theme                 string  `json:"theme,omitempty"`
+	Duration              int     `json:"duration"`
+	OriginallyAvailableAt string  `json:"originallyAvailableAt"`
+	LeafCount             int     `json:"leafCount"`
+	ViewedLeafCount       int     `json:"viewedLeafCount"`
+	ChildCount            int     `json:"childCount"`
+	AddedAt               int     `json:"addedAt"`
+	UpdatedAt             int     `json:"updatedAt"`
+	AudienceRatingImage   string  `json:"audienceRatingImage,omitempty"`
+	PrimaryExtraKey       string  `json:"primaryExtraKey,omitempty"`
+	Genre                 []struct {
+		Tag string `json:"tag"`
+	} `json:"Genre"`
+	Country []struct {
+		Tag string `json:"tag"`
+	} `json:"Country,omitempty"`
+	Role []struct {
+		Tag string `json:"tag"`
+	} `json:"Role,omitempty"`
+	Tagline       string  `json:"tagline,omitempty"`
+	TitleSort     string  `json:"titleSort,omitempty"`
+	Rating        float64 `json:"rating,omitempty"`
+	Banner        string  `json:"banner,omitempty"`
+	OriginalTitle string  `json:"originalTitle,omitempty"`
+}
+
+type AccessToken struct {
+	Type      string    `json:"type"`
+	Device    string    `json:"device,omitempty"`
+	Token     string    `json:"token"`
+	Owned     bool      `json:"owned"`
+	CreatedAt time.Time `json:"createdAt"`
+	Invited   struct {
+		Id       int         `json:"id"`
+		Uuid     string      `json:"uuid"`
+		Title    string      `json:"title"`
+		Username interface{} `json:"username"`
+		Thumb    string      `json:"thumb"`
+		Profile  struct {
+			AutoSelectAudio              bool        `json:"autoSelectAudio"`
+			DefaultAudioLanguage         interface{} `json:"defaultAudioLanguage"`
+			DefaultSubtitleLanguage      interface{} `json:"defaultSubtitleLanguage"`
+			AutoSelectSubtitle           int         `json:"autoSelectSubtitle"`
+			DefaultSubtitleAccessibility int         `json:"defaultSubtitleAccessibility"`
+			DefaultSubtitleForced        int         `json:"defaultSubtitleForced"`
+		} `json:"profile"`
+		Scrobbling    []interface{} `json:"scrobbling"`
+		ScrobbleTypes string        `json:"scrobbleTypes"`
+	} `json:"invited,omitempty"`
+	Settings struct {
+		AllowChannels      bool        `json:"allowChannels"`
+		FilterMovies       *string     `json:"filterMovies"`
+		FilterMusic        *string     `json:"filterMusic"`
+		FilterPhotos       interface{} `json:"filterPhotos"`
+		FilterTelevision   *string     `json:"filterTelevision"`
+		FilterAll          interface{} `json:"filterAll"`
+		AllowSync          bool        `json:"allowSync"`
+		AllowCameraUpload  bool        `json:"allowCameraUpload"`
+		AllowSubtitleAdmin bool        `json:"allowSubtitleAdmin"`
+		AllowTuners        int         `json:"allowTuners"`
+	} `json:"settings,omitempty"`
+	Sections []struct {
+		Key       int       `json:"key"`
+		CreatedAt time.Time `json:"createdAt"`
+	} `json:"sections,omitempty"`
 }
