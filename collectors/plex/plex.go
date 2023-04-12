@@ -84,7 +84,7 @@ func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), identity.MediaContainer.Version, coll.url)
+	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), identity.Version, coll.url)
 }
 
 func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
@@ -154,7 +154,7 @@ type plexSession struct {
 func parseSessions(input plex.Sessions) map[string]plexSession {
 	output := make(map[string]plexSession)
 
-	for _, session := range input.MediaContainer.Metadata {
+	for _, session := range input.Metadata {
 		var title string
 		if session.Type == "episode" {
 			title = session.GrandparentTitle + " - " + session.ParentTitle + " - " + session.Title

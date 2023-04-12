@@ -38,11 +38,11 @@ func TestCollector_Collect(t *testing.T) {
 	l.On("Locate", "1.2.3.4").Return(10.0, 20.0, nil)
 
 	idResp := plexClient.Identity{}
-	idResp.MediaContainer.Version = "foo"
+	idResp.Version = "foo"
 	p.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(idResp, nil)
 
 	var sessions = plexClient.Sessions{}
-	sessions.MediaContainer.Metadata = []plexClient.Session{
+	sessions.Metadata = []plexClient.Session{
 		{
 			Title:   "foo",
 			User:    plexClient.SessionUser{Title: "bar"},

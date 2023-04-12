@@ -13,89 +13,6 @@ import (
 	"testing"
 )
 
-func TestPlexClient_GetIdentity(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
-	defer testServer.Close()
-
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
-	defer authServer.Close()
-
-	c := &plex.Client{
-		URL:      testServer.URL,
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "somepassword",
-	}
-
-	identity, err := c.GetIdentity(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, "SomeVersion", identity.Version)
-}
-
-func TestPlexClient_GetStats(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
-	defer testServer.Close()
-
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
-	defer authServer.Close()
-
-	c := &plex.Client{
-		URL:      testServer.URL,
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "somepassword",
-	}
-
-	sessions, err := c.GetSessions(context.Background())
-	require.NoError(t, err)
-
-	titles := []string{"pilot", "movie 1", "movie 2", "movie 3"}
-	locations := []string{"lan", "wan", "lan", "lan"}
-	require.Len(t, sessions.Metadata, len(titles))
-
-	for index, title := range titles {
-		assert.Equal(t, title, sessions.Metadata[index].Title)
-		assert.Equal(t, "Plex Web", sessions.Metadata[index].Player.Product)
-		assert.Equal(t, locations[index], sessions.Metadata[index].Session.Location)
-
-		if sessions.Metadata[index].TranscodeSession.VideoDecision == "transcode" {
-			assert.NotZero(t, sessions.Metadata[index].TranscodeSession.Speed)
-		} else {
-			assert.Zero(t, sessions.Metadata[index].TranscodeSession.Speed)
-		}
-	}
-}
-
-func TestPlexClient_Authentication(t *testing.T) {
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
-	defer authServer.Close()
-
-	c := &plex.Client{
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "badpassword",
-	}
-
-	_, err := c.GetIdentity(context.Background())
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "403 Forbidden")
-}
-
-func TestPlexClient_Authentication_Failure(t *testing.T) {
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
-	authServer.Close()
-
-	c := &plex.Client{
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "badpassword",
-	}
-
-	_, err := c.GetIdentity(context.Background())
-	require.Error(t, err)
-	assert.ErrorIs(t, err, unix.ECONNREFUSED)
-}
-
 func TestClient_Failures(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
@@ -204,6 +121,23 @@ var plexResponses = map[string]string{
 			{ "User": { "title": "snafu" }, "Player": { "product": "Plex Web" }, "Session": { "location": "lan"}, "TranscodeSession": { "throttled": true, "speed": 4.1, "videoDecision": "transcode" }, "title": "movie 3" }
 		]
 	}}`,
+	"/library/sections": `{ "MediaContainer": {
+		"size": 2,
+        "Directory": [
+           { "Key": "1", "Type": "movie", "Title": "Movies" },
+           { "Key": "2", "Type": "show", "Title": "Shows" }
+        ]
+    }}`,
+	"/library/sections/1/all": `{ "MediaContainer" : {
+        "Metadata": [
+           { "guid": "1", "title": "foo" }
+        ]
+    }}`,
+	"/library/sections/2/all": `{ "MediaContainer" : {
+        "Metadata": [
+           { "guid": "2", "title": "bar" }
+        ]
+    }}`,
 }
 
 const (
@@ -220,3 +154,54 @@ const (
   <authentication-token>some_token</authentication-token>
 </user>`
 )
+
+func TestClient_GetAuthToken(t *testing.T) {
+	type fields struct {
+		AuthToken string
+		UserName  string
+		Password  string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    string
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "authToken",
+			fields:  fields{AuthToken: "1234"},
+			want:    "1234",
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "username / password",
+			fields:  fields{UserName: "user@example.com", Password: "somepassword"},
+			want:    "some_token",
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "bad password",
+			fields:  fields{UserName: "user@example.com", Password: "bad-password"},
+			wantErr: assert.Error,
+		},
+	}
+
+	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	defer authServer.Close()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &plex.Client{
+				AuthToken: tt.fields.AuthToken,
+				AuthURL:   authServer.URL,
+				UserName:  tt.fields.UserName,
+				Password:  tt.fields.Password,
+			}
+			got, err := c.GetAuthToken(context.Background())
+			if !tt.wantErr(t, err) {
+				return
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

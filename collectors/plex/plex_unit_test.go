@@ -8,7 +8,7 @@ import (
 
 func TestProcessSessions(t *testing.T) {
 	var sessions = plex.Sessions{}
-	sessions.MediaContainer.Metadata = []plex.Session{
+	sessions.Metadata = []plex.Session{
 		{
 			Title:   "foo",
 			User:    plex.SessionUser{Title: "bar"},
@@ -38,7 +38,7 @@ func TestProcessSessions(t *testing.T) {
 	}
 
 	stats := parseSessions(sessions)
-	assert.Len(t, stats, len(sessions.MediaContainer.Metadata))
+	assert.Len(t, stats, len(sessions.Metadata))
 
 	entry, ok := stats["1"]
 	assert.True(t, ok)

@@ -3,7 +3,6 @@ package plex
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"github.com/clambin/mediamon/version"
@@ -11,6 +10,20 @@ import (
 	"net/http"
 	"net/url"
 )
+
+// SetAuthToken sets the AuthToken
+func (c *Client) SetAuthToken(s string) {
+	c.AuthToken = s
+}
+
+// GetAuthToken logs into plex.tv and returns the current authToken.
+func (c *Client) GetAuthToken(ctx context.Context) (string, error) {
+	err := c.authenticate(ctx)
+	if err != nil {
+		return "", err
+	}
+	return c.AuthToken, nil
+}
 
 // authenticate logs in to plex.tv and gets an authentication token
 // to be used for calls to the Plex server APIs
@@ -76,25 +89,6 @@ func getAuthResponse(body []byte) (string, error) {
 		AuthenticationToken string   `xml:"authenticationToken,attr"`
 	}
 
-	var token string
 	err := xml.Unmarshal(body, &authResponse)
-	if err == nil {
-		token = authResponse.AuthenticationToken
-	}
-
-	return token, err
-}
-
-func (c *Client) GetAccessTokens(ctx context.Context) ([]AccessToken, error) {
-	var tokens []AccessToken
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://plex.tv/api/v2/server/access_tokens?auth_token="+c.AuthToken, nil)
-	req.Header.Set("Accept", "application/json")
-	resp, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return tokens, err
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	err = json.NewDecoder(resp.Body).Decode(&tokens)
-	return tokens, err
+	return authResponse.AuthenticationToken, err
 }

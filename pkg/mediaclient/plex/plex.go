@@ -19,43 +19,6 @@ type Client struct {
 	Product    string
 }
 
-// GetIdentity calls Plex' /identity endpoint. Mainly useful to get the server's version.
-func (c *Client) GetIdentity(ctx context.Context) (identity Identity, err error) {
-	err = c.call(ctx, "/identity", &identity)
-	return
-}
-
-// GetSessions retrieves session information from the server.
-func (c *Client) GetSessions(ctx context.Context) (sessions Sessions, err error) {
-	err = c.call(ctx, "/status/sessions", &sessions)
-	return
-}
-
-// GetAuthToken logs into plex.tv and returns the current authToken.
-func (c *Client) GetAuthToken(ctx context.Context) (string, error) {
-	err := c.authenticate(ctx)
-	if err != nil {
-		return "", err
-	}
-	return c.AuthToken, nil
-}
-
-func (c *Client) GetLibraries(ctx context.Context) (libraries Libraries, err error) {
-	err = c.call(ctx, "/library/sections", &libraries)
-	return
-}
-
-func (c *Client) GetMovieLibrary(ctx context.Context, key string) (library MovieLibrary, err error) {
-	err = c.call(ctx, fmt.Sprintf("/library/sections/%s/all", key), &library)
-	return
-}
-
-func (c *Client) GetShowLibrary(ctx context.Context, key string) (library ShowLibrary, err error) {
-	err = c.call(ctx, fmt.Sprintf("/library/sections/%s/all", key), &library)
-	return
-}
-
-// call the specified Plex API endpoint
 func (c *Client) call(ctx context.Context, endpoint string, response any) error {
 	if err := c.authenticate(ctx); err != nil {
 		return err
@@ -86,6 +49,7 @@ func (c *Client) call(ctx context.Context, endpoint string, response any) error 
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		//return fmt.Errorf("%s: %s", req.URL.Path, resp.Status)
 		return fmt.Errorf("%s", resp.Status)
 	}
 

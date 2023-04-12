@@ -1,13 +1,20 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/clambin/mediamon/pkg/mediaclient/plex"
+	"github.com/clambin/mediamon/qplex"
 	"github.com/clambin/mediamon/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slog"
 	"net/http"
+	"net/url"
 	"os"
+	"time"
 )
 
 var (
@@ -19,7 +26,7 @@ var (
 
 func main() {
 	if err := cmd.Execute(); err != nil {
-		slog.Error("failed to start", err)
+		slog.Error("failed to start", "err", err)
 		os.Exit(1)
 	}
 }
@@ -32,20 +39,24 @@ func init() {
 	}
 	cmd.PersistentFlags().StringVarP(&configFilename, "config", "c", "qplex.yaml", "configuration file")
 	cmd.PersistentFlags().Bool("debug", false, "Log debug messages")
-	_ = viper.BindPFlag("debug", cmd.Flags().Lookup("debug"))
+	_ = viper.BindPFlag("debug", cmd.PersistentFlags().Lookup("debug"))
 
 	tokenCmd = &cobra.Command{
 		Use:   "token",
 		Short: "get an auth token",
-		Run:   authToken,
+		Run:   getAuthToken,
 	}
 	cmd.AddCommand(tokenCmd)
 
 	viewsCmd = &cobra.Command{
 		Use:   "views",
 		Short: "shows view counters for all media in all libraries",
-		Run:   views,
+		Run:   getViews,
 	}
+	viewsCmd.Flags().BoolP("reverse", "r", false, "Sort view count high to low")
+	_ = viper.BindPFlag("views.reverse", viewsCmd.Flags().Lookup("reverse"))
+	viewsCmd.Flags().BoolP("server", "s", false, "Use server token to query all users")
+	_ = viper.BindPFlag("views.server", viewsCmd.Flags().Lookup("server"))
 	cmd.AddCommand(viewsCmd)
 
 	cobra.OnInitialize(initConfig)
@@ -75,8 +86,8 @@ func initConfig() {
 	}
 }
 
-func MakePlexClient() plex.Client {
-	return plex.Client{
+func getAuthToken(_ *cobra.Command, _ []string) {
+	c := plex.Client{
 		HTTPClient: http.DefaultClient,
 		URL:        viper.GetString("url"),
 		AuthToken:  viper.GetString("auth.token"),
@@ -84,4 +95,127 @@ func MakePlexClient() plex.Client {
 		Password:   viper.GetString("auth.password"),
 		Product:    "qplex",
 	}
+
+	token, err := c.GetAuthToken(context.Background())
+	if err != nil {
+		slog.Error("failed to get authentication token", "err", err)
+		return
+	}
+	fmt.Printf("authToken: %s\n", token)
+}
+
+func getViews(_ *cobra.Command, _ []string) {
+	ctx := context.Background()
+	tokens, err := getTokens(ctx, viper.GetBool("views.server"))
+	if err != nil {
+		slog.Error("failed to get tokens", "err", err)
+		return
+	}
+
+	c := plex.Client{URL: viper.GetString("url")}
+	views, err := qplex.GetViews(ctx, &c, tokens, viper.GetBool("views.reverse"))
+	if err != nil {
+		slog.Error("failed to get views", "err", err)
+		return
+	}
+
+	for _, entry := range views {
+		fmt.Printf("%s: %s - %d\n", entry.Library, entry.Title, entry.Views)
+	}
+}
+
+func getTokens(ctx context.Context, server bool) ([]string, error) {
+	if server {
+		return getServerTokens(ctx)
+	}
+
+	c := plex.Client{UserName: viper.GetString("auth.username"), Password: viper.GetString("auth.password")}
+	token, err := c.GetAuthToken(ctx)
+	return []string{token}, err
+}
+
+func getServerTokens(ctx context.Context) ([]string, error) {
+	serverToken := viper.GetString("auth.serverToken")
+	if serverToken == "" {
+		return nil, fmt.Errorf("no server token configured")
+	}
+
+	tokens, err := GetAccessTokens(ctx, serverToken)
+	if err != nil {
+		return nil, err
+	}
+
+	serverTokens := []string{serverToken}
+	for _, token := range tokens {
+		if token.Type == "server" {
+			slog.Debug("token found", "user", token.Invited.Title)
+			serverTokens = append(serverTokens, token.Token)
+		}
+	}
+
+	return serverTokens, nil
+}
+
+func GetAccessTokens(ctx context.Context, serverToken string) ([]AccessToken, error) {
+	args := make(url.Values)
+	args.Set("auth_token", serverToken)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://plex.tv/api/v2/server/access_tokens?"+args.Encode(), nil)
+	req.Header.Set("Accept", "application/json")
+
+	httpClient := http.DefaultClient
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
+	}
+
+	var tokens []AccessToken
+	err = json.NewDecoder(resp.Body).Decode(&tokens)
+	return tokens, err
+}
+
+type AccessToken struct {
+	Type      string    `json:"type"`
+	Device    string    `json:"device,omitempty"`
+	Token     string    `json:"token"`
+	Owned     bool      `json:"owned"`
+	CreatedAt time.Time `json:"createdAt"`
+	Invited   struct {
+		Id       int         `json:"id"`
+		Uuid     string      `json:"uuid"`
+		Title    string      `json:"title"`
+		Username interface{} `json:"username"`
+		Thumb    string      `json:"thumb"`
+		Profile  struct {
+			AutoSelectAudio              bool        `json:"autoSelectAudio"`
+			DefaultAudioLanguage         interface{} `json:"defaultAudioLanguage"`
+			DefaultSubtitleLanguage      interface{} `json:"defaultSubtitleLanguage"`
+			AutoSelectSubtitle           int         `json:"autoSelectSubtitle"`
+			DefaultSubtitleAccessibility int         `json:"defaultSubtitleAccessibility"`
+			DefaultSubtitleForced        int         `json:"defaultSubtitleForced"`
+		} `json:"profile"`
+		Scrobbling    []interface{} `json:"scrobbling"`
+		ScrobbleTypes string        `json:"scrobbleTypes"`
+	} `json:"invited,omitempty"`
+	Settings struct {
+		AllowChannels      bool        `json:"allowChannels"`
+		FilterMovies       *string     `json:"filterMovies"`
+		FilterMusic        *string     `json:"filterMusic"`
+		FilterPhotos       interface{} `json:"filterPhotos"`
+		FilterTelevision   *string     `json:"filterTelevision"`
+		FilterAll          interface{} `json:"filterAll"`
+		AllowSync          bool        `json:"allowSync"`
+		AllowCameraUpload  bool        `json:"allowCameraUpload"`
+		AllowSubtitleAdmin bool        `json:"allowSubtitleAdmin"`
+		AllowTuners        int         `json:"allowTuners"`
+	} `json:"settings,omitempty"`
+	Sections []struct {
+		Key       int       `json:"key"`
+		CreatedAt time.Time `json:"createdAt"`
+	} `json:"sections,omitempty"`
 }
