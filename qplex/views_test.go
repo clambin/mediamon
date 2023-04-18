@@ -73,6 +73,8 @@ func TestGetViews(t *testing.T) {
 type fakeClient struct {
 }
 
+var _ qplex.PlexGetter = &fakeClient{}
+
 func (f fakeClient) SetAuthToken(_ string) {
 }
 
@@ -122,5 +124,3 @@ func (f fakeClient) GetShowLibrary(_ context.Context, s string) (plex.ShowLibrar
 		},
 	}, nil
 }
-
-var _ qplex.PlexGetter = &fakeClient{}

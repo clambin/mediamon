@@ -18,46 +18,51 @@ import (
 )
 
 var (
-	cmd            *cobra.Command
+	rootCmd        *cobra.Command
 	configFilename string
-	tokenCmd       *cobra.Command
-	viewsCmd       *cobra.Command
 )
 
 func main() {
-	if err := cmd.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		slog.Error("failed to start", "err", err)
 		os.Exit(1)
 	}
 }
 
 func init() {
-	cmd = &cobra.Command{
+	rootCmd = &cobra.Command{
 		Use:     "qplex",
 		Short:   "Plex utility",
 		Version: version.BuildVersion,
 	}
-	cmd.PersistentFlags().StringVarP(&configFilename, "config", "c", "qplex.yaml", "configuration file")
-	cmd.PersistentFlags().Bool("debug", false, "Log debug messages")
-	_ = viper.BindPFlag("debug", cmd.PersistentFlags().Lookup("debug"))
+	rootCmd.PersistentFlags().StringVarP(&configFilename, "config", "c", "qplex.yaml", "configuration file")
+	rootCmd.PersistentFlags().Bool("debug", false, "Log debug messages")
+	_ = viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 
-	tokenCmd = &cobra.Command{
+	tokenCmd := &cobra.Command{
 		Use:   "token",
 		Short: "get an auth token",
 		Run:   getAuthToken,
 	}
-	cmd.AddCommand(tokenCmd)
+	rootCmd.AddCommand(tokenCmd)
 
-	viewsCmd = &cobra.Command{
+	viewsCmd := &cobra.Command{
 		Use:   "views",
-		Short: "shows view counters for all media in all libraries",
+		Short: "list view counters for all media in all libraries",
 		Run:   getViews,
 	}
 	viewsCmd.Flags().BoolP("reverse", "r", false, "Sort view count high to low")
 	_ = viper.BindPFlag("views.reverse", viewsCmd.Flags().Lookup("reverse"))
 	viewsCmd.Flags().BoolP("server", "s", false, "Use server token to query all users")
 	_ = viper.BindPFlag("views.server", viewsCmd.Flags().Lookup("server"))
-	cmd.AddCommand(viewsCmd)
+	rootCmd.AddCommand(viewsCmd)
+
+	sessionCmd := &cobra.Command{
+		Use:   "sessions",
+		Short: "list active sessions",
+		Run:   getSessions,
+	}
+	rootCmd.AddCommand(sessionCmd)
 
 	cobra.OnInitialize(initConfig)
 }
@@ -119,8 +124,11 @@ func getViews(_ *cobra.Command, _ []string) {
 		return
 	}
 
-	for _, entry := range views {
-		fmt.Printf("%s: %s - %d\n", entry.Library, entry.Title, entry.Views)
+	if len(views) > 0 {
+		fmt.Printf("%-20s %-60s %s\n", "LIBRARY", "TITLE", "VIEWS")
+		for _, entry := range views {
+			fmt.Printf("%-20s %-60s %d\n", entry.Library, entry.Title, entry.Views)
+		}
 	}
 }
 
@@ -218,4 +226,37 @@ type AccessToken struct {
 		Key       int       `json:"key"`
 		CreatedAt time.Time `json:"createdAt"`
 	} `json:"sections,omitempty"`
+}
+
+func getSessions(_ *cobra.Command, _ []string) {
+	c := plex.Client{
+		HTTPClient: http.DefaultClient,
+		URL:        viper.GetString("url"),
+		AuthToken:  viper.GetString("auth.token"),
+		UserName:   viper.GetString("auth.username"),
+		Password:   viper.GetString("auth.password"),
+		Product:    "qplex",
+	}
+
+	sessions, err := c.GetSessions(context.Background())
+	if err != nil {
+		slog.Error("failed to get active sessions", "err", err)
+		return
+	}
+
+	if len(sessions.Metadata) > 0 {
+		fmt.Printf("%-10s %-40s %-5s %-5s\n", "USER", "TITLE", "LOCATION", "VIDEO MODE")
+		for _, session := range sessions.Metadata {
+			video := session.TranscodeSession.VideoDecision
+			if video == "" {
+				video = "direct"
+			}
+			fmt.Printf("%-10s %-40s %-5s %-5s\n",
+				session.User.Title,
+				session.Title,
+				session.Session.Location,
+				video,
+			)
+		}
+	}
 }

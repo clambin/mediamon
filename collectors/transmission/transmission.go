@@ -69,6 +69,14 @@ type transmissionStats struct {
 	upload   int
 }
 
+func (s transmissionStats) collect(ch chan<- prometheus.Metric, url string) {
+	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), s.version, url)
+	ch <- prometheus.MustNewConstMetric(activeTorrentsMetric, prometheus.GaugeValue, float64(s.active), url)
+	ch <- prometheus.MustNewConstMetric(pausedTorrentsMetric, prometheus.GaugeValue, float64(s.paused), url)
+	ch <- prometheus.MustNewConstMetric(downloadSpeedMetric, prometheus.GaugeValue, float64(s.download), url)
+	ch <- prometheus.MustNewConstMetric(uploadSpeedMetric, prometheus.GaugeValue, float64(s.upload), url)
+}
+
 // NewCollector creates a new Collector
 func NewCollector(url string) *Collector {
 	r := httpclient.NewRoundTripper(httpclient.WithRoundTripperMetrics{Namespace: "mediamon", Application: "transmission"})
@@ -97,20 +105,11 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	start := time.Now()
 	stats, err := coll.getStats()
 	if err != nil {
-		/*
-			ch <- prometheus.NewInvalidMetric(
-				prometheus.NewDesc("mediamon_error",
-					"Error getting transmission metrics", nil, nil),
-				err)
-		*/
+		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting transmission metrics", nil, nil),err)
 		slog.Error("failed to collect transmission metrics", "err", err)
 		return
 	}
-	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), stats.version, coll.url)
-	ch <- prometheus.MustNewConstMetric(activeTorrentsMetric, prometheus.GaugeValue, float64(stats.active), coll.url)
-	ch <- prometheus.MustNewConstMetric(pausedTorrentsMetric, prometheus.GaugeValue, float64(stats.paused), coll.url)
-	ch <- prometheus.MustNewConstMetric(downloadSpeedMetric, prometheus.GaugeValue, float64(stats.download), coll.url)
-	ch <- prometheus.MustNewConstMetric(uploadSpeedMetric, prometheus.GaugeValue, float64(stats.upload), coll.url)
+	stats.collect(ch, coll.url)
 	coll.transport.Collect(ch)
 	defer slog.Debug("transmission stats collected", "duration", time.Since(start))
 }
