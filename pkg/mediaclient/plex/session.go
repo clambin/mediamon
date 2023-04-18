@@ -1,61 +1,51 @@
 package plex
 
-// IdentityResponse contains the response of Plex' /identity endpoint
-type IdentityResponse struct {
-	MediaContainer struct {
-		Size              int    `json:"size"`
-		Claimed           bool   `json:"claimed"`
-		MachineIdentifier string `json:"machineIdentifier"`
-		Version           string `json:"version"`
-	} `json:"MediaContainer"`
+import "context"
+
+// Sessions contains the response of Plex's /status/sessions API
+type Sessions struct {
+	Size     int       `json:"size"`
+	Metadata []Session `json:"Metadata"`
 }
 
-// SessionsResponse contains the response of Plex' /status/sessions endpoint
-type SessionsResponse struct {
-	MediaContainer struct {
-		Size     int                      `json:"size"`
-		Metadata []SessionsResponseRecord `json:"Metadata"`
-	} `json:"MediaContainer"`
-}
-
-// SessionsResponseRecord contains one record in a SessionsResponse
-type SessionsResponseRecord struct {
-	AddedAt               int     `json:"addedAt"`
-	Art                   string  `json:"art"`
-	AudienceRating        float64 `json:"audienceRating"`
-	AudienceRatingImage   string  `json:"audienceRatingImage"`
-	ContentRating         string  `json:"contentRating"`
-	Duration              int     `json:"duration"`
-	GrandparentArt        string  `json:"grandparentArt"`
-	GrandparentGUID       string  `json:"grandparentGuid"`
-	GrandparentKey        string  `json:"grandparentKey"`
-	GrandparentRatingKey  string  `json:"grandparentRatingKey"`
-	GrandparentTheme      string  `json:"grandparentTheme"`
-	GrandparentThumb      string  `json:"grandparentThumb"`
-	GrandparentTitle      string  `json:"grandparentTitle"`
-	GUID                  string  `json:"guid"`
-	Index                 int     `json:"index"`
-	Key                   string  `json:"key"`
-	LastViewedAt          int     `json:"lastViewedAt"`
-	LibrarySectionID      string  `json:"librarySectionID"`
-	LibrarySectionKey     string  `json:"librarySectionKey"`
-	LibrarySectionTitle   string  `json:"librarySectionTitle"`
-	OriginallyAvailableAt string  `json:"originallyAvailableAt"`
-	ParentGUID            string  `json:"parentGuid"`
-	ParentIndex           int     `json:"parentIndex"`
-	ParentKey             string  `json:"parentKey"`
-	ParentRatingKey       string  `json:"parentRatingKey"`
-	ParentThumb           string  `json:"parentThumb"`
-	ParentTitle           string  `json:"parentTitle"`
-	Rating                float64 `json:"rating"`
-	RatingKey             string  `json:"ratingKey"`
-	SessionKey            string  `json:"sessionKey"`
-	Summary               string  `json:"summary"`
-	Thumb                 string  `json:"thumb"`
-	Title                 string  `json:"title"`
-	Type                  string  `json:"type"`
-	UpdatedAt             int     `json:"updatedAt"`
-	ViewOffset            int     `json:"viewOffset"`
+// Session contains one record in a Sessions
+type Session struct {
+	AddedAt               int       `json:"addedAt"`
+	Art                   string    `json:"art"`
+	AudienceRating        float64   `json:"audienceRating"`
+	AudienceRatingImage   string    `json:"audienceRatingImage"`
+	ContentRating         string    `json:"contentRating"`
+	Duration              int       `json:"duration"`
+	GrandparentArt        string    `json:"grandparentArt"`
+	GrandparentGUID       string    `json:"grandparentGuid"`
+	GrandparentKey        string    `json:"grandparentKey"`
+	GrandparentRatingKey  string    `json:"grandparentRatingKey"`
+	GrandparentTheme      string    `json:"grandparentTheme"`
+	GrandparentThumb      string    `json:"grandparentThumb"`
+	GrandparentTitle      string    `json:"grandparentTitle"`
+	GUID                  string    `json:"guid"`
+	Index                 int       `json:"index"`
+	Key                   string    `json:"key"`
+	LastViewedAt          Timestamp `json:"lastViewedAt"`
+	LibrarySectionID      string    `json:"librarySectionID"`
+	LibrarySectionKey     string    `json:"librarySectionKey"`
+	LibrarySectionTitle   string    `json:"librarySectionTitle"`
+	OriginallyAvailableAt string    `json:"originallyAvailableAt"`
+	ParentGUID            string    `json:"parentGuid"`
+	ParentIndex           int       `json:"parentIndex"`
+	ParentKey             string    `json:"parentKey"`
+	ParentRatingKey       string    `json:"parentRatingKey"`
+	ParentThumb           string    `json:"parentThumb"`
+	ParentTitle           string    `json:"parentTitle"`
+	Rating                float64   `json:"rating"`
+	RatingKey             string    `json:"ratingKey"`
+	SessionKey            string    `json:"sessionKey"`
+	Summary               string    `json:"summary"`
+	Thumb                 string    `json:"thumb"`
+	Title                 string    `json:"title"`
+	Type                  string    `json:"type"`
+	UpdatedAt             Timestamp `json:"updatedAt"`
+	ViewOffset            int       `json:"viewOffset"`
 	Media                 []struct {
 		AudioProfile          string `json:"audioProfile"`
 		ID                    string `json:"id"`
@@ -136,21 +126,21 @@ type SessionsResponseRecord struct {
 		Tag    string `json:"tag"`
 		Thumb  string `json:"thumb,omitempty"`
 	} `json:"Role"`
-	User             SessionsResponseRecordUser             `json:"User"`
-	Player           SessionsResponseRecordPlayer           `json:"Player"`
-	Session          SessionsResponseRecordSession          `json:"Session"`
-	TranscodeSession SessionsResponseRecordTranscodeSession `json:"TranscodeSession"`
+	User             SessionUser       `json:"User"`
+	Player           SessionPlayer     `json:"Player"`
+	Session          SessionStats      `json:"Session"`
+	TranscodeSession SessionTranscoder `json:"TranscodeSession"`
 }
 
-// SessionsResponseRecordUser contains the user details inside a SessionsResponseRecord
-type SessionsResponseRecordUser struct {
+// SessionUser contains the user details inside a Session
+type SessionUser struct {
 	ID    string `json:"id"`
 	Thumb string `json:"thumb"`
 	Title string `json:"title"`
 }
 
-// SessionsResponseRecordPlayer contains the player details inside a SessionsResponseRecord
-type SessionsResponseRecordPlayer struct {
+// SessionPlayer contains the player details inside a Session
+type SessionPlayer struct {
 	Address             string `json:"address"`
 	Device              string `json:"device"`
 	MachineIdentifier   string `json:"machineIdentifier"`
@@ -169,16 +159,16 @@ type SessionsResponseRecordPlayer struct {
 	UserID              int    `json:"userID"`
 }
 
-// SessionsResponseRecordSession contains the session details inside a SessionsResponseRecord
-type SessionsResponseRecordSession struct {
+// SessionStats contains the session details inside a Session
+type SessionStats struct {
 	ID        string `json:"id"`
 	Bandwidth int    `json:"bandwidth"`
 	Location  string `json:"location"`
 }
 
-// SessionsResponseRecordTranscodeSession contains the transcoder details inside a SessionsResponseRecord.
+// SessionTranscoder contains the transcoder details inside a Session.
 // If the session doesn't transcode any media streams, all fields will be blank.
-type SessionsResponseRecordTranscodeSession struct {
+type SessionTranscoder struct {
 	Key                     string  `json:"key"`
 	Throttled               bool    `json:"throttled"`
 	Complete                bool    `json:"complete"`
@@ -201,4 +191,10 @@ type SessionsResponseRecordTranscodeSession struct {
 	TranscodeHwRequested    bool    `json:"transcodeHwRequested"`
 	TranscodeHwFullPipeline bool    `json:"transcodeHwFullPipeline"`
 	TimeStamp               float64 `json:"timeStamp"`
+}
+
+// GetSessions retrieves session information from the server.
+func (c *Client) GetSessions(ctx context.Context) (sessions Sessions, err error) {
+	err = c.call(ctx, "/status/sessions", &sessions)
+	return
 }

@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - unmarshal
+      - qplex
     paths-ignore:
       - 'assets/**'
 
@@ -24,3 +24,10 @@ jobs:
     with:
       target: restarter
       dockerfile: ./build/Dockerfile-restarter
+  build-qplex:
+    needs:
+      - test
+    uses: clambin/workflows/.github/workflows/build.yaml@main
+    with:
+      target: qplex
+      docker: false

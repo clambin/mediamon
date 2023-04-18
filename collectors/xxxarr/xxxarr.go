@@ -121,24 +121,19 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	// TODO: http response's body.Close() sometimes panics in mediaclient/xxxarr ???
 	defer func() {
 		if err := recover(); err != nil {
-			coll.logger.Warn("scrape panicked", "error", err)
+			coll.logger.Warn("scrape panicked", "err", err)
 		}
 	}()
 
 	start := time.Now()
 	stats, err := coll.Scraper.Scrape(context.Background())
 	if err != nil {
-		/*
-			ch <- prometheus.NewInvalidMetric(
-				prometheus.NewDesc("mediamon_error",
-					"Error getting "+coll.application+" metrics", nil, nil),
-				err)
-		*/
-		coll.logger.Error("failed to collect metrics", err)
-
+		// ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting "+coll.application+" metrics", nil, nil), err)
 		var err2 *xxxarr.ErrInvalidJSON
 		if errors.As(err, &err2) {
-			coll.logger.Error("server returned invalid output", err, "body", string(err2.Body))
+			coll.logger.Error("server returned invalid output", "err", err, "body", string(err2.Body))
+		} else {
+			coll.logger.Error("failed to collect metrics", "err", err)
 		}
 		return
 	}

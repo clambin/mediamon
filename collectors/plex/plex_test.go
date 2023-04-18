@@ -2,9 +2,8 @@ package plex_test
 
 import (
 	"github.com/clambin/mediamon/collectors/plex"
-	"github.com/clambin/mediamon/pkg/iplocator/mocks"
-	plexAPI "github.com/clambin/mediamon/pkg/mediaclient/plex"
-	plexMock "github.com/clambin/mediamon/pkg/mediaclient/plex/mocks"
+	"github.com/clambin/mediamon/collectors/plex/mocks"
+	plexClient "github.com/clambin/mediamon/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -31,41 +30,41 @@ func TestCollector_Describe(t *testing.T) {
 
 func TestCollector_Collect(t *testing.T) {
 	c := plex.NewCollector("", "", "")
-	l := mocks.NewLocator(t)
-	p := plexMock.NewAPI(t)
+	l := mocks.NewIPLocator(t)
+	p := mocks.NewAPI(t)
 	c.API = p
-	c.Locator = l
+	c.IPLocator = l
 
 	l.On("Locate", "1.2.3.4").Return(10.0, 20.0, nil)
 
-	idResp := plexAPI.IdentityResponse{}
-	idResp.MediaContainer.Version = "foo"
+	idResp := plexClient.Identity{}
+	idResp.Version = "foo"
 	p.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(idResp, nil)
 
-	var sessions = plexAPI.SessionsResponse{}
-	sessions.MediaContainer.Metadata = []plexAPI.SessionsResponseRecord{
+	var sessions = plexClient.Sessions{}
+	sessions.Metadata = []plexClient.Session{
 		{
 			Title:   "foo",
-			User:    plexAPI.SessionsResponseRecordUser{Title: "bar"},
-			Player:  plexAPI.SessionsResponseRecordPlayer{Product: "Plex Web", Address: "192.168.0.1"},
-			Session: plexAPI.SessionsResponseRecordSession{ID: "1", Location: "lan"},
+			User:    plexClient.SessionUser{Title: "bar"},
+			Player:  plexClient.SessionPlayer{Product: "Plex Web", Address: "192.168.0.1"},
+			Session: plexClient.SessionStats{ID: "1", Location: "lan"},
 		},
 		{
 			Title:   "foo",
-			User:    plexAPI.SessionsResponseRecordUser{Title: "bar"},
-			Player:  plexAPI.SessionsResponseRecordPlayer{Product: "Plex Web", Address: "1.2.3.4"},
-			Session: plexAPI.SessionsResponseRecordSession{ID: "2", Location: "wan"},
-			TranscodeSession: plexAPI.SessionsResponseRecordTranscodeSession{
+			User:    plexClient.SessionUser{Title: "bar"},
+			Player:  plexClient.SessionPlayer{Product: "Plex Web", Address: "1.2.3.4"},
+			Session: plexClient.SessionStats{ID: "2", Location: "wan"},
+			TranscodeSession: plexClient.SessionTranscoder{
 				VideoDecision: "transcode",
 				Speed:         21.0,
 			},
 		},
 		{
 			Title:   "foo",
-			User:    plexAPI.SessionsResponseRecordUser{Title: "bar"},
-			Player:  plexAPI.SessionsResponseRecordPlayer{Product: "Plex Web", Address: "1.2.3.4"},
-			Session: plexAPI.SessionsResponseRecordSession{ID: "3", Location: "wan"},
-			TranscodeSession: plexAPI.SessionsResponseRecordTranscodeSession{
+			User:    plexClient.SessionUser{Title: "bar"},
+			Player:  plexClient.SessionPlayer{Product: "Plex Web", Address: "1.2.3.4"},
+			Session: plexClient.SessionStats{ID: "3", Location: "wan"},
+			TranscodeSession: plexClient.SessionTranscoder{
 				VideoDecision: "transcode",
 				Throttled:     true,
 			},
@@ -99,8 +98,8 @@ func TestCollector_Collect_Fail(t *testing.T) {
 	m := &plexMock.API{}
 	c.API = m
 
-	m.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(plexAPI.IdentityResponse{}, fmt.Errorf("failure"))
-	m.On("GetSessions", mock.AnythingOfType("*context.emptyCtx")).Return(plexAPI.SessionsResponse{}, fmt.Errorf("failure"))
+	m.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(plexClient.Identity{}, fmt.Errorf("failure"))
+	m.On("GetSessions", mock.AnythingOfType("*context.emptyCtx")).Return(plexClient.Sessions{}, fmt.Errorf("failure"))
 
 	err := testutil.CollectAndCompare(c, nil)
 	require.Error(t, err)
