@@ -3,7 +3,7 @@ package xxxarr_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"

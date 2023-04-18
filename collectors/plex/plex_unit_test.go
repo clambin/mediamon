@@ -1,7 +1,7 @@
 package plex
 
 import (
-	"github.com/clambin/mediamon/pkg/mediaclient/plex"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

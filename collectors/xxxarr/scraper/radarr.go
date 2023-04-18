@@ -2,7 +2,7 @@ package scraper
 
 import (
 	"context"
-	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
 )
 
 // RadarrScraper collects Stats from a Radarr instance

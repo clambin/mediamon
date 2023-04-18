@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	plex "github.com/clambin/mediamon/pkg/mediaclient/plex"
+	plex "github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	mock "github.com/stretchr/testify/mock"
 )
 

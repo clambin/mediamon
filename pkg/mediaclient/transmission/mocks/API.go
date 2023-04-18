@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	transmission "github.com/clambin/mediamon/pkg/mediaclient/transmission"
+	transmission "github.com/clambin/mediamon/v2/pkg/mediaclient/transmission"
 	mock "github.com/stretchr/testify/mock"
 )
 

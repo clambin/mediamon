@@ -3,8 +3,8 @@ package transmission_test
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/mediamon/collectors/transmission"
-	transmission2 "github.com/clambin/mediamon/pkg/mediaclient/transmission"
+	"github.com/clambin/mediamon/v2/collectors/transmission"
+	transmission2 "github.com/clambin/mediamon/v2/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"

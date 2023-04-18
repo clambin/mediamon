@@ -2,9 +2,9 @@ package scraper_test
 
 import (
 	"context"
-	"github.com/clambin/mediamon/collectors/xxxarr/scraper"
-	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
-	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr/mocks"
+	"github.com/clambin/mediamon/v2/collectors/xxxarr/scraper"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

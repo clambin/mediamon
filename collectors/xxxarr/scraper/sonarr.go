@@ -3,7 +3,7 @@ package scraper
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
 )
 
 // SonarrScraper collects Stats from a Sonarr instance

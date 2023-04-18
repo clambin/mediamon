@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	scraper "github.com/clambin/mediamon/collectors/xxxarr/scraper"
+	scraper "github.com/clambin/mediamon/v2/collectors/xxxarr/scraper"
 	mock "github.com/stretchr/testify/mock"
 )
 

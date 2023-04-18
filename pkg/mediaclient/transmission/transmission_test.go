@@ -2,7 +2,7 @@ package transmission_test
 
 import (
 	"context"
-	"github.com/clambin/mediamon/pkg/mediaclient/transmission"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/transmission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"

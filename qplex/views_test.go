@@ -3,8 +3,8 @@ package qplex_test
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/mediamon/pkg/mediaclient/plex"
-	"github.com/clambin/mediamon/qplex"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
+	"github.com/clambin/mediamon/v2/qplex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

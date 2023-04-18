@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	xxxarr "github.com/clambin/mediamon/pkg/mediaclient/xxxarr"
+	xxxarr "github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
 	mock "github.com/stretchr/testify/mock"
 )
 

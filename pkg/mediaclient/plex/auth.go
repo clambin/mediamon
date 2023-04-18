@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-	"github.com/clambin/mediamon/version"
+	"github.com/clambin/mediamon/v2/version"
 	"io"
 	"net/http"
 	"net/url"

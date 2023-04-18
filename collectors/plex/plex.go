@@ -3,8 +3,8 @@ package plex
 import (
 	"context"
 	"github.com/clambin/go-common/httpclient"
-	"github.com/clambin/mediamon/pkg/iplocator"
-	"github.com/clambin/mediamon/pkg/mediaclient/plex"
+	"github.com/clambin/mediamon/v2/pkg/iplocator"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
 	"net/http"

@@ -1,4 +1,4 @@
-module github.com/clambin/mediamon
+module github.com/clambin/mediamon/v2
 
 go 1.19
 

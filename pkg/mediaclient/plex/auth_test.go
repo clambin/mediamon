@@ -2,7 +2,7 @@ package plex_test
 
 import (
 	"context"
-	"github.com/clambin/mediamon/pkg/mediaclient/plex"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
