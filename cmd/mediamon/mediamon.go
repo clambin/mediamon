@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/clambin/mediamon/v2/collectors/bandwidth"
@@ -53,9 +54,9 @@ func Main(_ *cobra.Command, _ []string) {
 	collectors := createCollectors()
 	prometheus.MustRegister(collectors...)
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	<-ch
+	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer done()
+	<-ctx.Done()
 
 	slog.Info("mediamon exiting")
 }

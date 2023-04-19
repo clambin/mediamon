@@ -62,9 +62,9 @@ func main() {
 
 	go scan(ctx, *interval)
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	<-ch
+	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer done()
+	<-ctx.Done()
 }
 
 func scan(ctx context.Context, interval time.Duration) {
