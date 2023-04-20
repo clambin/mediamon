@@ -59,12 +59,8 @@ const (
 // NewRadarrCollector creates a new RadarrCollector
 func NewRadarrCollector(url, apiKey string) *Collector {
 	r := httpclient.NewRoundTripper(
-		httpclient.WithCache{
-			Table:           radarrCacheTable,
-			DefaultExpiry:   cacheExpiry,
-			CleanupInterval: cleanupInterval,
-		},
-		httpclient.WithRoundTripperMetrics{Namespace: "mediamon", Application: "radarr"},
+		httpclient.WithCache(radarrCacheTable, cacheExpiry, cleanupInterval),
+		httpclient.WithMetrics("mediamon", "", "radarr"),
 	)
 
 	return &Collector{
@@ -85,12 +81,8 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 // NewSonarrCollector creates a new SonarrCollector
 func NewSonarrCollector(url, apiKey string) *Collector {
 	r := httpclient.NewRoundTripper(
-		httpclient.WithCache{
-			Table:           sonarrCacheTable,
-			DefaultExpiry:   cacheExpiry,
-			CleanupInterval: cleanupInterval,
-		},
-		httpclient.WithRoundTripperMetrics{Namespace: "mediamon", Application: "sonarr"},
+		httpclient.WithCache(sonarrCacheTable, cacheExpiry, cleanupInterval),
+		httpclient.WithMetrics("mediamon", "", "sonarr"),
 	)
 
 	return &Collector{

@@ -42,7 +42,7 @@ type Config struct {
 
 // NewCollector creates a new Collector
 func NewCollector(url, username, password string) *Collector {
-	r := httpclient.NewRoundTripper(httpclient.WithRoundTripperMetrics{Namespace: "mediamon", Application: "plex"})
+	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "plex"))
 	l := iplocator.New()
 	l.Logger = slog.Default()
 	return &Collector{

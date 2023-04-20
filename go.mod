@@ -3,12 +3,12 @@ module github.com/clambin/mediamon/v2
 go 1.19
 
 require (
-	github.com/clambin/go-common/httpclient v0.3.3
+	github.com/clambin/go-common/httpclient v0.4.0
 	github.com/prometheus/client_golang v1.15.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
-	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
+	golang.org/x/exp v0.0.0-20230419192730-864b3d6c5c2c
 	golang.org/x/sys v0.7.0
 	k8s.io/api v0.27.1
 	k8s.io/apimachinery v0.27.1

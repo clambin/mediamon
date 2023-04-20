@@ -79,7 +79,7 @@ func (s transmissionStats) collect(ch chan<- prometheus.Metric, url string) {
 
 // NewCollector creates a new Collector
 func NewCollector(url string) *Collector {
-	r := httpclient.NewRoundTripper(httpclient.WithRoundTripperMetrics{Namespace: "mediamon", Application: "transmission"})
+	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "transmission"))
 	return &Collector{
 		API: &transmission.Client{
 			HTTPClient: &http.Client{Transport: r},
