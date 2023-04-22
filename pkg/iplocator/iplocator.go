@@ -27,7 +27,7 @@ type Client struct {
 func New() *Client {
 	return &Client{
 		HTTPClient: &http.Client{
-			Transport: httpclient.NewRoundTripper(httpclient.WithCache(httpclient.CacheTable{}, 24*time.Hour, 36*time.Hour)),
+			Transport: httpclient.NewRoundTripper(httpclient.WithCache(httpclient.DefaultCacheTable, 24*time.Hour, 36*time.Hour)),
 		},
 		URL: ipAPIURL,
 		//Logger: slog.Default(),
