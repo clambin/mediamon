@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	"github.com/clambin/mediamon/v2/qplex"
-	"github.com/clambin/mediamon/v2/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slog"
@@ -22,6 +21,8 @@ var (
 	configFilename string
 )
 
+var version = "change_me"
+
 func main() {
 	if err := rootCmd.Execute(); err != nil {
 		slog.Error("failed to start", "err", err)
@@ -33,7 +34,7 @@ func init() {
 	rootCmd = &cobra.Command{
 		Use:     "qplex",
 		Short:   "Plex utility",
-		Version: version.BuildVersion,
+		Version: version,
 	}
 	rootCmd.PersistentFlags().StringVarP(&configFilename, "config", "c", "qplex.yaml", "configuration file")
 	rootCmd.PersistentFlags().Bool("debug", false, "Log debug messages")
@@ -94,6 +95,7 @@ func initConfig() {
 func getAuthToken(_ *cobra.Command, _ []string) {
 	c := plex.Client{
 		HTTPClient: http.DefaultClient,
+		Version:    version,
 		URL:        viper.GetString("url"),
 		AuthToken:  viper.GetString("auth.token"),
 		UserName:   viper.GetString("auth.username"),
@@ -117,7 +119,7 @@ func getViews(_ *cobra.Command, _ []string) {
 		return
 	}
 
-	c := plex.Client{URL: viper.GetString("url")}
+	c := plex.Client{URL: viper.GetString("url"), Version: version}
 	views, err := qplex.GetViews(ctx, &c, tokens, viper.GetBool("views.reverse"))
 	if err != nil {
 		slog.Error("failed to get views", "err", err)
@@ -137,7 +139,7 @@ func getTokens(ctx context.Context, server bool) ([]string, error) {
 		return getServerTokens(ctx)
 	}
 
-	c := plex.Client{UserName: viper.GetString("auth.username"), Password: viper.GetString("auth.password")}
+	c := plex.Client{Version: version, UserName: viper.GetString("auth.username"), Password: viper.GetString("auth.password")}
 	token, err := c.GetAuthToken(ctx)
 	return []string{token}, err
 }

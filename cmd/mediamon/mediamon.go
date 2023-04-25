@@ -9,7 +9,6 @@ import (
 	"github.com/clambin/mediamon/v2/collectors/plex"
 	"github.com/clambin/mediamon/v2/collectors/transmission"
 	"github.com/clambin/mediamon/v2/collectors/xxxarr"
-	"github.com/clambin/mediamon/v2/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
@@ -26,11 +25,14 @@ import (
 var (
 	configFilename string
 	cmd            = cobra.Command{
-		Use:   "mediamon",
-		Short: "Prometheus exporter for various media applications. Currently supports Transmission, OpenVPN Client, Sonarr, Radarr and Plex.",
-		Run:   Main,
+		Use:     "mediamon",
+		Short:   "Prometheus exporter for various media applications. Currently supports Transmission, OpenVPN Client, Sonarr, Radarr and Plex.",
+		Run:     Main,
+		Version: version,
 	}
 )
+
+var version = "change_me"
 
 func main() {
 	if err := cmd.Execute(); err != nil {
@@ -39,7 +41,7 @@ func main() {
 	}
 }
 
-func Main(_ *cobra.Command, _ []string) {
+func Main(cmd *cobra.Command, _ []string) {
 	var opts slog.HandlerOptions
 	if viper.GetBool("debug") {
 		opts.Level = slog.LevelDebug
@@ -47,7 +49,7 @@ func Main(_ *cobra.Command, _ []string) {
 	}
 	slog.SetDefault(slog.New(opts.NewTextHandler(os.Stderr)))
 
-	slog.Info("mediamon starting", "version", version.BuildVersion)
+	slog.Info("mediamon starting", "version", cmd.Version)
 
 	go runPrometheusServer()
 
@@ -87,6 +89,7 @@ func createCollectors() []prometheus.Collector {
 	if plexURL := viper.GetString("plex.url"); plexURL != "" {
 		slog.Info("monitoring Plex", "url", plexURL)
 		collectors = append(collectors, plex.NewCollector(
+			version,
 			plexURL,
 			viper.GetString("plex.username"),
 			viper.GetString("plex.password"),
@@ -124,7 +127,6 @@ func parseProxy(proxyURL string) (*url.URL, error) {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	cmd.Version = version.BuildVersion
 	cmd.Flags().StringVar(&configFilename, "config", "", "Configuration file")
 	cmd.Flags().Bool("debug", false, "Log debug messages")
 	_ = viper.BindPFlag("debug", cmd.Flags().Lookup("debug"))

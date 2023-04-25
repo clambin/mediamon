@@ -41,13 +41,14 @@ type Config struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(url, username, password string) *Collector {
+func NewCollector(version, url, username, password string) *Collector {
 	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "plex"))
 	l := iplocator.New()
 	l.Logger = slog.Default()
 	return &Collector{
 		API: &plex.Client{
 			HTTPClient: &http.Client{Transport: r},
+			Version:    version,
 			URL:        url,
 			UserName:   username,
 			Password:   password,

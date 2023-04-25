@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/clambin/mediamon/v2/k8s/reaper"
-	"github.com/clambin/mediamon/v2/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -29,15 +28,15 @@ var (
 	interval  = flag.Duration("interval", 5*time.Minute, "scanning interval")
 	once      = flag.Bool("once", false, "scan once and exit")
 	debug     = flag.Bool("debug", false, "enable debug mode")
-)
 
-var (
 	deleteCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "restarter",
 		Name:      "restarted",
 		Help:      "total restarted pods",
 	}, []string{"namespace", "name"})
 )
+
+var version = "change_me"
 
 func main() {
 	flag.Parse()
@@ -49,7 +48,7 @@ func main() {
 	}
 	slog.SetDefault(slog.New(opts.NewTextHandler(os.Stdout)))
 
-	slog.Info("restarter", "version", version.BuildVersion)
+	slog.Info("restarter", "version", version)
 	go runPrometheusServer()
 
 	ctx, cancel := context.WithCancel(context.Background())

@@ -11,6 +11,7 @@ import (
 // Client calls the Plex APIs
 type Client struct {
 	HTTPClient *http.Client
+	Version    string
 	URL        string
 	AuthToken  string
 	AuthURL    string

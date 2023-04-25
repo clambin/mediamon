@@ -13,7 +13,7 @@ import (
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := plex.NewCollector("http://localhost:8888", "username", "password")
+	c := plex.NewCollector("1.0", "http://localhost:8888", "username", "password")
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -29,7 +29,7 @@ func TestCollector_Describe(t *testing.T) {
 }
 
 func TestCollector_Collect(t *testing.T) {
-	c := plex.NewCollector("", "", "")
+	c := plex.NewCollector("1.0", "", "", "")
 	l := mocks.NewIPLocator(t)
 	p := mocks.NewAPI(t)
 	c.API = p
