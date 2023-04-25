@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2513,
+  "id": 3352,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -84,7 +84,32 @@
           },
           "unit": "reqps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "sonarr - /api/v3/series"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 9,
@@ -120,7 +145,7 @@
           "refId": "A"
         }
       ],
-      "title": "call rate",
+      "title": "API call rate",
       "type": "timeseries"
     },
     {
@@ -179,7 +204,48 @@
           },
           "unit": "s"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "plex - /identity - GET",
+                  "plex - /status/sessions - GET",
+                  "plex - /users/sign_in.xml - POST",
+                  "radarr - /api/v3/calendar - GET",
+                  "radarr - /api/v3/health - GET",
+                  "radarr - /api/v3/movie - GET",
+                  "radarr - /api/v3/queue - GET",
+                  "radarr - /api/v3/system/status - GET",
+                  "sonarr - /api/v3/calendar - GET",
+                  "sonarr - /api/v3/episode/3552 - GET",
+                  "sonarr - /api/v3/health - GET",
+                  "sonarr - /api/v3/queue - GET",
+                  "sonarr - /api/v3/series - GET",
+                  "sonarr - /api/v3/series/65 - GET",
+                  "sonarr - /api/v3/series/86 - GET",
+                  "sonarr - /api/v3/system/status - GET",
+                  "transmission - /transmission/rpc - POST"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 9,
@@ -215,7 +281,7 @@
           "refId": "A"
         }
       ],
-      "title": "latency",
+      "title": "API latency",
       "type": "timeseries"
     },
     {
@@ -310,7 +376,7 @@
           "refId": "A"
         }
       ],
-      "title": "error rate",
+      "title": "API errors",
       "type": "timeseries"
     },
     {
@@ -370,7 +436,32 @@
           },
           "unit": "percentunit"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "sonarr - /api/v3/series"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 9,
@@ -398,31 +489,32 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "avg by (application,path) (mediamon_api_cache_hit_total / mediamon_api_cache_total)",
-          "legendFormat": "{{application}}:/{{path}}",
+          "expr": "avg by (application, path) (mediamon_api_cache_hit_total / mediamon_api_cache_total)",
+          "legendFormat": "{{application}} - {{path}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "cache hit rate",
+      "title": "API cache hit rate",
       "type": "timeseries"
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 37,
+  "revision": 1,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-12h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "mediamon - internal",
   "uid": "TFkbKcJ7z",
-  "version": 8,
+  "version": 3,
   "weekStart": ""
 }

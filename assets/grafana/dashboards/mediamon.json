@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2502,
+  "id": 3353,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -96,7 +96,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "expr": "sum(openvpn_client_status)",
@@ -501,7 +501,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "exemplar": true,
@@ -764,7 +764,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -834,7 +834,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -913,7 +913,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "exemplar": true,
@@ -939,7 +939,9 @@
           },
           "custom": {
             "align": "auto",
-            "displayMode": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
             "inspect": false
           },
           "mappings": [],
@@ -970,6 +972,7 @@
       "id": 6,
       "options": {
         "footer": {
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -978,7 +981,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -1077,7 +1080,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "exemplar": true,
@@ -1134,7 +1137,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "exemplar": true,
@@ -1193,7 +1196,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "exemplar": true,
@@ -1219,7 +1222,9 @@
           },
           "custom": {
             "align": "auto",
-            "displayMode": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
             "inspect": false
           },
           "decimals": 0,
@@ -1253,8 +1258,11 @@
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "lcd-gauge"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
               }
             ]
           }
@@ -1269,6 +1277,7 @@
       "id": 49,
       "options": {
         "footer": {
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -1283,7 +1292,7 @@
           }
         ]
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -1362,7 +1371,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1395,7 +1405,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "9.3.0",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "exemplar": true,
@@ -1421,26 +1431,50 @@
           },
           "custom": {
             "align": "auto",
-            "displayMode": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
             "inspect": false
           },
           "mappings": [],
+          "max": 1,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "yellow",
+                "value": null
               },
               {
-                "color": "red",
-                "value": 80
+                "color": "green",
+                "value": 0.01
+              },
+              {
+                "color": "blue",
+                "value": 0.95
               }
             ]
           },
-          "unit": "short"
+          "unit": "percentunit"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "progress"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -1451,6 +1485,7 @@
       "id": 20,
       "options": {
         "footer": {
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -1459,7 +1494,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "9.3.0",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -1484,7 +1519,7 @@
           "options": {
             "excludeByName": {
               "Time": true,
-              "Value": true,
+              "Value": false,
               "__name__": true,
               "address": true,
               "app": true,
@@ -1515,7 +1550,9 @@
               "url": 14,
               "user": 1
             },
-            "renameByName": {}
+            "renameByName": {
+              "Value": "progress"
+            }
           }
         }
       ],
@@ -1567,7 +1604,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1672,7 +1710,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1765,7 +1804,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1902,7 +1942,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1972,7 +2013,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2061,7 +2103,7 @@
           "zoom": 8.83
         }
       },
-      "pluginVersion": "9.3.0",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -2124,7 +2166,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2200,7 +2243,8 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 37,
+  "revision": 1,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -2227,6 +2271,6 @@
   "timezone": "",
   "title": "Media Server",
   "uid": "8C0N81WRl",
-  "version": 2,
+  "version": 4,
   "weekStart": ""
 }
