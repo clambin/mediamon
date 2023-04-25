@@ -103,7 +103,7 @@ func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 			lon, lat = coll.locateAddress(stats.address)
 		}
 
-		ch <- prometheus.MustNewConstMetric(sessionMetric, prometheus.GaugeValue, 1.0,
+		ch <- prometheus.MustNewConstMetric(sessionMetric, prometheus.GaugeValue, stats.progress,
 			coll.url, id, stats.user, stats.player, stats.title, stats.location, stats.address, lon, lat,
 		)
 
@@ -143,6 +143,7 @@ type plexSession struct {
 	location  string
 	title     string
 	address   string
+	progress  float64
 	transcode bool
 	throttled bool
 	speed     float64
@@ -152,19 +153,13 @@ func parseSessions(input plex.Sessions) map[string]plexSession {
 	output := make(map[string]plexSession)
 
 	for _, session := range input.Metadata {
-		var title string
-		if session.Type == "episode" {
-			title = session.GrandparentTitle + " - " + session.ParentTitle + " - " + session.Title
-		} else {
-			title = session.Title
-		}
-
 		output[session.Session.ID] = plexSession{
 			user:      session.User.Title,
 			player:    session.Player.Product,
 			location:  session.Session.Location,
-			title:     title,
+			title:     session.GetTitle(),
 			address:   session.Player.Address,
+			progress:  session.GetProgress(),
 			transcode: session.TranscodeSession.VideoDecision == "transcode",
 			throttled: session.TranscodeSession.Throttled,
 			speed:     session.TranscodeSession.Speed,

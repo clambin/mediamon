@@ -8,6 +8,12 @@ type Sessions struct {
 	Metadata []Session `json:"Metadata"`
 }
 
+// GetSessions retrieves session information from the server.
+func (c *Client) GetSessions(ctx context.Context) (sessions Sessions, err error) {
+	err = c.call(ctx, "/status/sessions", &sessions)
+	return
+}
+
 // Session contains one record in a Sessions
 type Session struct {
 	AddedAt               int       `json:"addedAt"`
@@ -193,8 +199,18 @@ type SessionTranscoder struct {
 	TimeStamp               float64 `json:"timeStamp"`
 }
 
-// GetSessions retrieves session information from the server.
-func (c *Client) GetSessions(ctx context.Context) (sessions Sessions, err error) {
-	err = c.call(ctx, "/status/sessions", &sessions)
-	return
+// GetTitle returns the title of the movie, tv episode being played.  For movies, this is just the title.
+// For TV Shows, it returns the show, season & episode title.
+func (s Session) GetTitle() string {
+	if s.Type == "episode" {
+		return s.GrandparentTitle + " / " + s.ParentTitle + " / " + s.Title
+	}
+	return s.Title
+
+}
+
+// GetProgress returns the progress of the session, i.e. how much of the movie / tv episode has been watched.
+// Returns a percentage between 0.0 and 1.0
+func (s Session) GetProgress() float64 {
+	return float64(s.ViewOffset) / float64(s.Duration)
 }

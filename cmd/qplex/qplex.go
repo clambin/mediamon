@@ -245,17 +245,19 @@ func getSessions(_ *cobra.Command, _ []string) {
 	}
 
 	if len(sessions.Metadata) > 0 {
-		fmt.Printf("%-10s %-40s %-5s %-5s\n", "USER", "TITLE", "LOCATION", "VIDEO MODE")
+		fmt.Printf("%-10s %-40s %-8s %-10s %-10s %s\n", "USER", "TITLE", "LOCATION", "VIDEO MODE", "STATE", "PROGRESS")
 		for _, session := range sessions.Metadata {
 			video := session.TranscodeSession.VideoDecision
 			if video == "" {
 				video = "direct"
 			}
-			fmt.Printf("%-10s %-40s %-5s %-5s\n",
+			fmt.Printf("%-10s %-40s %-8s %-10s %-10s %.2f%%\n",
 				session.User.Title,
-				session.Title,
+				session.GetTitle(),
 				session.Session.Location,
 				video,
+				session.Player.State,
+				100.0*session.GetProgress(),
 			)
 		}
 	}

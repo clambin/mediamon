@@ -100,10 +100,10 @@ scrape_configs:
 mediamon exposes the following metrics:
 
 ```
-mediamon_plex_session_location_count:       Active plex sessions by location
-mediamon_plex_transcoder_active_count:      Number of active transcode sessions
-mediamon_plex_transcoder_speed_total:       Total speed of active transcoders
-mediamon_plex_transcoder_total_count:       Number of transcode sessions
+mediamon_plex_session_count:                Active plex sessions by location (value indicates progress in the movie / episode)
+mediamon_plex_transcoder_count:             Number of active transcode sessions
+mediamon_plex_transcoder_speed:             Total speed of active transcoders
+mediamon_plex_transcoder_count:             Number of transcode sessions
 mediamon_plex_version:                      version info
 mediamon_transmission_active_torrent_count: Number of active torrents
 mediamon_transmission_download_speed:       Transmission download speed in bytes / sec
