@@ -43,3 +43,95 @@ func TestPlexClient_GetStats(t *testing.T) {
 		}
 	}
 }
+
+func TestSession_GetTitle(t *testing.T) {
+	type fields struct {
+		GrandparentTitle string
+		ParentTitle      string
+		Title            string
+		Type             string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name: "movie",
+			fields: fields{
+				GrandparentTitle: "foo",
+				ParentTitle:      "season 1",
+				Title:            "bar",
+				Type:             "movie",
+			},
+			want: "bar",
+		},
+		{
+			name: "episode",
+			fields: fields{
+				GrandparentTitle: "foo",
+				ParentTitle:      "season 1",
+				Title:            "bar",
+				Type:             "episode",
+			},
+			want: "foo / season 1 / bar",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := plex.Session{
+				GrandparentTitle: tt.fields.GrandparentTitle,
+				ParentTitle:      tt.fields.ParentTitle,
+				Title:            tt.fields.Title,
+				Type:             tt.fields.Type,
+			}
+			assert.Equal(t, tt.want, s.GetTitle())
+		})
+	}
+}
+
+func TestSession_GetProgress(t *testing.T) {
+	type fields struct {
+		Duration   int
+		ViewOffset int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   float64
+	}{
+		{
+			name: "start",
+			fields: fields{
+				Duration:   100,
+				ViewOffset: 0,
+			},
+			want: 0,
+		},
+		{
+			name: "half",
+			fields: fields{
+				Duration:   100,
+				ViewOffset: 50,
+			},
+			want: 0.5,
+		},
+		{
+			name: "full",
+			fields: fields{
+				Duration:   100,
+				ViewOffset: 100,
+			},
+			want: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := plex.Session{
+				Duration:   tt.fields.Duration,
+				ViewOffset: tt.fields.ViewOffset,
+			}
+			assert.Equal(t, tt.want, s.GetProgress())
+		})
+	}
+}

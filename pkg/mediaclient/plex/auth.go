@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-	"github.com/clambin/mediamon/v2/version"
 	"io"
 	"net/http"
 	"net/url"
@@ -45,8 +44,8 @@ func (c *Client) authenticate(ctx context.Context) error {
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, authURL, bytes.NewBufferString(authBody))
 	req.Header.Add("X-Plex-Product", product)
-	req.Header.Add("X-Plex-Version", version.BuildVersion)
-	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+version.BuildVersion)
+	req.Header.Add("X-Plex-Version", c.Version)
+	req.Header.Add("X-Plex-Client-Identifier", "github.com/clambin/mediamon-v"+c.Version)
 
 	httpClient := c.HTTPClient
 	if httpClient == nil {

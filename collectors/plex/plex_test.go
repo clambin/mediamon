@@ -13,7 +13,7 @@ import (
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := plex.NewCollector("http://localhost:8888", "username", "password")
+	c := plex.NewCollector("1.0", "http://localhost:8888", "username", "password")
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -29,7 +29,7 @@ func TestCollector_Describe(t *testing.T) {
 }
 
 func TestCollector_Collect(t *testing.T) {
-	c := plex.NewCollector("", "", "")
+	c := plex.NewCollector("1.0", "", "", "")
 	l := mocks.NewIPLocator(t)
 	p := mocks.NewAPI(t)
 	c.API = p
@@ -44,26 +44,37 @@ func TestCollector_Collect(t *testing.T) {
 	var sessions = plexClient.Sessions{}
 	sessions.Metadata = []plexClient.Session{
 		{
-			Title:   "foo",
-			User:    plexClient.SessionUser{Title: "bar"},
-			Player:  plexClient.SessionPlayer{Product: "Plex Web", Address: "192.168.0.1"},
-			Session: plexClient.SessionStats{ID: "1", Location: "lan"},
+			Title:      "foo",
+			Type:       "movie",
+			Duration:   100,
+			ViewOffset: 50,
+			User:       plexClient.SessionUser{Title: "bar"},
+			Player:     plexClient.SessionPlayer{Product: "Plex Web", Address: "192.168.0.1"},
+			Session:    plexClient.SessionStats{ID: "1", Location: "lan"},
 		},
 		{
-			Title:   "foo",
-			User:    plexClient.SessionUser{Title: "bar"},
-			Player:  plexClient.SessionPlayer{Product: "Plex Web", Address: "1.2.3.4"},
-			Session: plexClient.SessionStats{ID: "2", Location: "wan"},
+			GrandparentTitle: "foo",
+			ParentTitle:      "season 1",
+			Title:            "bar",
+			Type:             "episode",
+			Duration:         100,
+			ViewOffset:       75,
+			User:             plexClient.SessionUser{Title: "bar"},
+			Player:           plexClient.SessionPlayer{Product: "Plex Web", Address: "1.2.3.4"},
+			Session:          plexClient.SessionStats{ID: "2", Location: "wan"},
 			TranscodeSession: plexClient.SessionTranscoder{
 				VideoDecision: "transcode",
 				Speed:         21.0,
 			},
 		},
 		{
-			Title:   "foo",
-			User:    plexClient.SessionUser{Title: "bar"},
-			Player:  plexClient.SessionPlayer{Product: "Plex Web", Address: "1.2.3.4"},
-			Session: plexClient.SessionStats{ID: "3", Location: "wan"},
+			Title:      "foo",
+			Type:       "movie",
+			Duration:   100,
+			ViewOffset: 10,
+			User:       plexClient.SessionUser{Title: "bar"},
+			Player:     plexClient.SessionPlayer{Product: "Plex Web", Address: "1.2.3.4"},
+			Session:    plexClient.SessionStats{ID: "3", Location: "wan"},
 			TranscodeSession: plexClient.SessionTranscoder{
 				VideoDecision: "transcode",
 				Throttled:     true,
@@ -75,9 +86,9 @@ func TestCollector_Collect(t *testing.T) {
 
 	e := strings.NewReader(`# HELP mediamon_plex_session_count Active Plex session
 # TYPE mediamon_plex_session_count gauge
-mediamon_plex_session_count{address="1.2.3.4",id="2",lat="20.00",location="wan",lon="10.00",player="Plex Web",title="foo",url="",user="bar"} 1
-mediamon_plex_session_count{address="1.2.3.4",id="3",lat="20.00",location="wan",lon="10.00",player="Plex Web",title="foo",url="",user="bar"} 1
-mediamon_plex_session_count{address="192.168.0.1",id="1",lat="",location="lan",lon="",player="Plex Web",title="foo",url="",user="bar"} 1
+mediamon_plex_session_count{address="1.2.3.4",id="2",lat="20.00",location="wan",lon="10.00",player="Plex Web",title="foo / season 1 / bar",url="",user="bar"} 0.75
+mediamon_plex_session_count{address="1.2.3.4",id="3",lat="20.00",location="wan",lon="10.00",player="Plex Web",title="foo",url="",user="bar"} 0.1
+mediamon_plex_session_count{address="192.168.0.1",id="1",lat="",location="lan",lon="",player="Plex Web",title="foo",url="",user="bar"} 0.5
 # HELP mediamon_plex_transcoder_count Video transcode session
 # TYPE mediamon_plex_transcoder_count gauge
 mediamon_plex_transcoder_count{state="throttled",url=""} 1
