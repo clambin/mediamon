@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 3353,
+  "id": 3367,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -1749,10 +1749,12 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "sum by (user) (mediamon_plex_session_count)",
+          "expr": "count by (user) (mediamon_plex_session_count)",
           "interval": "",
           "legendFormat": "{{location}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -1981,10 +1983,12 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "sum by (location) (mediamon_plex_session_count)",
+          "expr": "count by (location) (mediamon_plex_session_count)",
           "interval": "",
           "legendFormat": "{{location}}",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -2251,7 +2255,7 @@
     "list": []
   },
   "time": {
-    "from": "now-24h",
+    "from": "now-12h",
     "to": "now"
   },
   "timepicker": {
@@ -2271,6 +2275,6 @@
   "timezone": "",
   "title": "Media Server",
   "uid": "8C0N81WRl",
-  "version": 4,
+  "version": 2,
   "weekStart": ""
 }
