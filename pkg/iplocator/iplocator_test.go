@@ -29,7 +29,7 @@ func TestClient_Locate(t *testing.T) {
 	c := New()
 	c.URL = ts.URL
 
-	c.Logger = slog.New(slog.HandlerOptions{Level: slog.LevelDebug}.NewTextHandler(os.Stderr))
+	c.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	lon, lat, err := c.Locate("8.8.8.8")
 	require.NoError(t, err)

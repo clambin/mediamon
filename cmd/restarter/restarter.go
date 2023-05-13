@@ -44,9 +44,8 @@ func main() {
 	var opts slog.HandlerOptions
 	if *debug {
 		opts.Level = slog.LevelDebug
-		opts.AddSource = true
 	}
-	slog.SetDefault(slog.New(opts.NewTextHandler(os.Stdout)))
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &opts)))
 
 	slog.Info("restarter", "version", version)
 	go runPrometheusServer()

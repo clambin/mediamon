@@ -47,7 +47,7 @@ func Main(cmd *cobra.Command, _ []string) {
 		opts.Level = slog.LevelDebug
 		//opts.AddSource = true
 	}
-	slog.SetDefault(slog.New(opts.NewTextHandler(os.Stderr)))
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &opts)))
 
 	slog.Info("mediamon starting", "version", cmd.Version)
 
