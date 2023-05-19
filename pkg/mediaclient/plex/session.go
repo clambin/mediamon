@@ -206,7 +206,7 @@ type SessionTranscoder struct {
 // For TV Shows, it returns the show, season & episode title.
 func (s Session) GetTitle() string {
 	if s.Type == "episode" {
-		return fmt.Sprintf("%s / S%02dE%02d - %s", s.GrandparentTitle, s.ParentIndex, s.Index, s.Title)
+		return fmt.Sprintf("%s - S%02dE%02d - %s", s.GrandparentTitle, s.ParentIndex, s.Index, s.Title)
 	}
 	return s.Title
 

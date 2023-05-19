@@ -70,7 +70,7 @@ func TestSession_GetTitle(t *testing.T) {
 				Title:            "bar",
 				Type:             "episode",
 			},
-			want: "foo / S01E10 - bar",
+			want: "foo - S01E10 - bar",
 		},
 	}
 	for _, tt := range tests {
