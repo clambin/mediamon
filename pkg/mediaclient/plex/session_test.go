@@ -45,22 +45,17 @@ func TestPlexClient_GetStats(t *testing.T) {
 }
 
 func TestSession_GetTitle(t *testing.T) {
-	type fields struct {
-		GrandparentTitle string
-		ParentTitle      string
-		Title            string
-		Type             string
-	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   string
+		name    string
+		session plex.Session
+		want    string
 	}{
 		{
 			name: "movie",
-			fields: fields{
+			session: plex.Session{
 				GrandparentTitle: "foo",
-				ParentTitle:      "season 1",
+				ParentIndex:      1,
+				Index:            1,
 				Title:            "bar",
 				Type:             "movie",
 			},
@@ -68,24 +63,19 @@ func TestSession_GetTitle(t *testing.T) {
 		},
 		{
 			name: "episode",
-			fields: fields{
+			session: plex.Session{
 				GrandparentTitle: "foo",
-				ParentTitle:      "season 1",
+				ParentIndex:      1,
+				Index:            10,
 				Title:            "bar",
 				Type:             "episode",
 			},
-			want: "foo / season 1 / bar",
+			want: "foo / S01E10 - bar",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := plex.Session{
-				GrandparentTitle: tt.fields.GrandparentTitle,
-				ParentTitle:      tt.fields.ParentTitle,
-				Title:            tt.fields.Title,
-				Type:             tt.fields.Type,
-			}
-			assert.Equal(t, tt.want, s.GetTitle())
+			assert.Equal(t, tt.want, tt.session.GetTitle())
 		})
 	}
 }

@@ -54,7 +54,8 @@ func TestCollector_Collect(t *testing.T) {
 		},
 		{
 			GrandparentTitle: "foo",
-			ParentTitle:      "season 1",
+			ParentIndex:      1,
+			Index:            10,
 			Title:            "bar",
 			Type:             "episode",
 			Duration:         100,
@@ -86,7 +87,7 @@ func TestCollector_Collect(t *testing.T) {
 
 	e := strings.NewReader(`# HELP mediamon_plex_session_count Active Plex session
 # TYPE mediamon_plex_session_count gauge
-mediamon_plex_session_count{address="1.2.3.4",id="2",lat="20.00",location="wan",lon="10.00",player="Plex Web",title="foo / season 1 / bar",url="",user="bar"} 0.75
+mediamon_plex_session_count{address="1.2.3.4",id="2",lat="20.00",location="wan",lon="10.00",player="Plex Web",title="foo / S01E10 - bar",url="",user="bar"} 0.75
 mediamon_plex_session_count{address="1.2.3.4",id="3",lat="20.00",location="wan",lon="10.00",player="Plex Web",title="foo",url="",user="bar"} 0.1
 mediamon_plex_session_count{address="192.168.0.1",id="1",lat="",location="lan",lon="",player="Plex Web",title="foo",url="",user="bar"} 0.5
 # HELP mediamon_plex_transcoder_count Video transcode session
@@ -102,18 +103,3 @@ mediamon_plex_version{url="",version="foo"} 1
 `)
 	assert.NoError(t, testutil.CollectAndCompare(c, e))
 }
-
-/*
-func TestCollector_Collect_Fail(t *testing.T) {
-	c := plex.NewCollector("", "", "")
-	m := &plexMock.API{}
-	c.API = m
-
-	m.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(plexClient.Identity{}, fmt.Errorf("failure"))
-	m.On("GetSessions", mock.AnythingOfType("*context.emptyCtx")).Return(plexClient.Sessions{}, fmt.Errorf("failure"))
-
-	err := testutil.CollectAndCompare(c, nil)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), `Desc{fqName: "mediamon_error", help: "Error getting Plex version", constLabels: {}, variableLabels: []}`)
-}
-*/

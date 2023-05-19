@@ -29,8 +29,8 @@ func New() *Client {
 		HTTPClient: &http.Client{
 			Transport: httpclient.NewRoundTripper(httpclient.WithCache(httpclient.DefaultCacheTable, 24*time.Hour, 36*time.Hour)),
 		},
-		URL: ipAPIURL,
-		//Logger: slog.Default(),
+		URL:    ipAPIURL,
+		Logger: slog.Default(),
 	}
 }
 
@@ -51,10 +51,8 @@ func (c Client) Locate(ipAddress string) (lon, lat float64, err error) {
 		return
 	}
 
-	if c.Logger != nil {
-		c.Logger.Debug("ip located", "ip", ipAPIURL, "location", response)
-	}
-	//c.ipCache.Add(ipAddress, response)
+	c.Logger.Debug("ip located", "ip", ipAPIURL, "location", response)
+
 	return response.Lon, response.Lat, err
 }
 
