@@ -7,7 +7,7 @@ require (
 	github.com/prometheus/client_golang v1.15.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	golang.org/x/exp v0.0.0-20230519143937-03e91628a987
 	golang.org/x/sys v0.8.0
 	k8s.io/api v0.27.2
