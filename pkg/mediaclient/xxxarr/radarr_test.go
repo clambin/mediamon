@@ -25,7 +25,7 @@ var radarrResponses = Responses{
 }
 
 func TestNewRadarrClient_GetURL(t *testing.T) {
-	c := xxxarr.RadarrClient{Client: http.DefaultClient, URL: "foo", APIKey: "1234"}
+	c := xxxarr.NewRadarrClient("foo", "1234", nil)
 	assert.Equal(t, "foo", c.GetURL())
 }
 
@@ -33,18 +33,17 @@ func TestRadarrClient_SystemStatus(t *testing.T) {
 	s := NewTestServer(radarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.RadarrClient{Client: http.DefaultClient, URL: s.server.URL, APIKey: "1234"}
+	c := xxxarr.NewRadarrClient(s.server.URL, "1234", nil)
 	response, err := c.GetSystemStatus(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "1.2.3.4444", response.Version)
-
 }
 
 func TestRadarrClient_GetCalendar(t *testing.T) {
 	s := NewTestServer(radarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.RadarrClient{Client: http.DefaultClient, URL: s.server.URL, APIKey: "1234"}
+	c := xxxarr.NewRadarrClient(s.server.URL, "1234", nil)
 	_, err := c.GetCalendar(context.Background())
 	require.NoError(t, err)
 
@@ -54,7 +53,7 @@ func TestRadarrClient_GetQueuePage(t *testing.T) {
 	s := NewTestServer(radarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.RadarrClient{Client: http.DefaultClient, URL: s.server.URL, APIKey: "1234"}
+	c := xxxarr.NewRadarrClient(s.server.URL, "1234", nil)
 	queue, err := c.GetQueuePage(context.Background(), 2)
 	require.NoError(t, err)
 	require.Len(t, queue.Records, 1)
@@ -65,7 +64,7 @@ func TestRadarrClient_GetQueue(t *testing.T) {
 	s := NewTestServer(radarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.RadarrClient{Client: http.DefaultClient, URL: s.server.URL, APIKey: "1234"}
+	c := xxxarr.NewRadarrClient(s.server.URL, "1234", nil)
 	queue, err := c.GetQueue(context.Background())
 	require.NoError(t, err)
 	require.Len(t, queue.Records, 2)
@@ -77,7 +76,7 @@ func TestRadarrClient_GetMovies(t *testing.T) {
 	s := NewTestServer(radarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.RadarrClient{Client: http.DefaultClient, URL: s.server.URL, APIKey: "1234"}
+	c := xxxarr.NewRadarrClient(s.server.URL, "1234", nil)
 	movies, err := c.GetMovies(context.Background())
 	require.NoError(t, err)
 	require.Len(t, movies, 3)
@@ -87,10 +86,20 @@ func TestRadarrClient_GetMovieByID(t *testing.T) {
 	s := NewTestServer(radarrResponses, "1234")
 	defer s.server.Close()
 
-	c := xxxarr.RadarrClient{Client: http.DefaultClient, URL: s.server.URL, APIKey: "1234"}
+	c := xxxarr.NewRadarrClient(s.server.URL, "1234", nil)
 	movie, err := c.GetMovieByID(context.Background(), 11)
 	require.NoError(t, err)
 	assert.Equal(t, "foo", movie.Title)
+}
+
+func TestRadarrClient_BadKey(t *testing.T) {
+	s := NewTestServer(radarrResponses, "1234")
+	defer s.server.Close()
+
+	c := xxxarr.NewRadarrClient(s.server.URL, "4321", nil)
+	_, err := c.GetSystemStatus(context.Background())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "403 Forbidden")
 }
 
 func TestRadarrClient_BadOutput(t *testing.T) {
@@ -99,7 +108,7 @@ func TestRadarrClient_BadOutput(t *testing.T) {
 	}))
 	defer s.Close()
 
-	c := xxxarr.RadarrClient{Client: http.DefaultClient, URL: s.URL}
+	c := xxxarr.NewRadarrClient(s.URL, "1234", nil)
 	_, err := c.GetHealth(context.Background())
 	assert.Error(t, err)
 	var err2 *xxxarr.ErrInvalidJSON

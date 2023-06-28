@@ -8,17 +8,12 @@ import (
 	"net/http"
 )
 
-func call[T any](ctx context.Context, client *http.Client, target, key string) (T, error) {
+func call[T any](ctx context.Context, client *http.Client, target string) (T, error) {
 	var response T
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	if err != nil {
 		return response, fmt.Errorf("unable to create request: %w", err)
 	}
-
-	// TODO: does this fix the EOF errors? Is radarr/sonarr closing the connection?
-	// req.Close = true
-	req.Header.Set("X-Api-Key", key)
-	// req.Header.Set(headers.AcceptEncoding, "identity")
 
 	resp, err := client.Do(req)
 	if err != nil {
