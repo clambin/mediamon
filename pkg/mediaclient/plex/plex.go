@@ -3,39 +3,43 @@ package plex
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
 	"net/http"
+	"time"
 )
 
 // Client calls the Plex APIs
 type Client struct {
 	HTTPClient *http.Client
-	Version    string
+	plexAuth   *Auth
 	URL        string
-	AuthToken  string
-	AuthURL    string
-	UserName   string
-	Password   string
-	Product    string
+}
+
+func New(username, password, product, version, url string) *Client {
+	auth := &Auth{
+		HTTPClient: &http.Client{Timeout: 10 * time.Second},
+		Username:   username,
+		Password:   password,
+		AuthURL:    AuthURL,
+		Product:    product,
+		Version:    version,
+		Next:       http.DefaultTransport,
+	}
+
+	return &Client{
+		URL:        url,
+		HTTPClient: &http.Client{Transport: auth},
+		plexAuth:   auth,
+	}
 }
 
 func (c *Client) call(ctx context.Context, endpoint string, response any) error {
-	if err := c.authenticate(ctx); err != nil {
-		return err
-	}
-
 	target := c.URL + endpoint
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("X-Plex-Token", c.AuthToken)
 
-	httpClient := c.HTTPClient
-	if httpClient == nil {
-		httpClient = http.DefaultClient
-	}
-
-	resp, err := httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -44,22 +48,16 @@ func (c *Client) call(ctx context.Context, endpoint string, response any) error 
 		_ = resp.Body.Close()
 	}()
 
-	var body []byte
-	if body, err = io.ReadAll(resp.Body); err != nil {
-		return fmt.Errorf("read: %w", err)
-	}
-
 	if resp.StatusCode != http.StatusOK {
-		//return fmt.Errorf("%s: %s", req.URL.Path, resp.Status)
-		return fmt.Errorf("%s", resp.Status)
+		return errors.New(resp.Status)
 	}
 
 	mediaContainer := struct {
 		MediaContainer any `json:"MediaContainer"`
 	}{MediaContainer: response}
 
-	if err = json.Unmarshal(body, &mediaContainer); err != nil {
-		return fmt.Errorf("decode: %w", err)
+	if err = json.NewDecoder(resp.Body).Decode(&mediaContainer); err != nil {
+		err = fmt.Errorf("decode: %w", err)
 	}
 
 	return err

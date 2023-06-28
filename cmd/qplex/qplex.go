@@ -21,7 +21,7 @@ var (
 	configFilename string
 )
 
-var version = "change_me"
+var BuildVersion = "change_me"
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
@@ -34,7 +34,7 @@ func init() {
 	rootCmd = &cobra.Command{
 		Use:     "qplex",
 		Short:   "Plex utility",
-		Version: version,
+		Version: BuildVersion,
 	}
 	rootCmd.PersistentFlags().StringVarP(&configFilename, "config", "c", "qplex.yaml", "configuration file")
 	rootCmd.PersistentFlags().Bool("debug", false, "Log debug messages")
@@ -92,15 +92,16 @@ func initConfig() {
 	}
 }
 
-func getAuthToken(_ *cobra.Command, _ []string) {
-	c := plex.Client{
-		HTTPClient: http.DefaultClient,
-		Version:    version,
-		URL:        viper.GetString("url"),
-		AuthToken:  viper.GetString("auth.token"),
-		UserName:   viper.GetString("auth.username"),
-		Password:   viper.GetString("auth.password"),
-		Product:    "qplex",
+func getAuthToken(cmd *cobra.Command, _ []string) {
+	c := plex.New(
+		viper.GetString("auth.username"),
+		viper.GetString("auth.password"),
+		"qplex",
+		cmd.Version,
+		viper.GetString("url"),
+	)
+	if authToken := viper.GetString("auth.token"); authToken != "" {
+		c.SetAuthToken(authToken)
 	}
 
 	token, err := c.GetAuthToken(context.Background())
@@ -111,16 +112,22 @@ func getAuthToken(_ *cobra.Command, _ []string) {
 	fmt.Printf("authToken: %s\n", token)
 }
 
-func getViews(_ *cobra.Command, _ []string) {
+func getViews(cmd *cobra.Command, _ []string) {
 	ctx := context.Background()
 	tokens, err := getTokens(ctx, viper.GetBool("views.server"))
 	if err != nil {
 		slog.Error("failed to get tokens", "err", err)
 		return
 	}
+	c := plex.New(
+		"",
+		"",
+		"qplex",
+		cmd.Version,
+		viper.GetString("url"),
+	)
 
-	c := plex.Client{URL: viper.GetString("url"), Version: version}
-	views, err := qplex.GetViews(ctx, &c, tokens, viper.GetBool("views.reverse"))
+	views, err := qplex.GetViews(ctx, c, tokens, viper.GetBool("views.reverse"))
 	if err != nil {
 		slog.Error("failed to get views", "err", err)
 		return
@@ -139,7 +146,17 @@ func getTokens(ctx context.Context, server bool) ([]string, error) {
 		return getServerTokens(ctx)
 	}
 
-	c := plex.Client{Version: version, UserName: viper.GetString("auth.username"), Password: viper.GetString("auth.password")}
+	c := plex.New(
+		viper.GetString("auth.username"),
+		viper.GetString("auth.password"),
+		"qplex",
+		BuildVersion,
+		viper.GetString("url"),
+	)
+	if authToken := viper.GetString("auth.token"); authToken != "" {
+		c.SetAuthToken(authToken)
+	}
+
 	token, err := c.GetAuthToken(ctx)
 	return []string{token}, err
 }
@@ -230,14 +247,16 @@ type AccessToken struct {
 	} `json:"sections,omitempty"`
 }
 
-func getSessions(_ *cobra.Command, _ []string) {
-	c := plex.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        viper.GetString("url"),
-		AuthToken:  viper.GetString("auth.token"),
-		UserName:   viper.GetString("auth.username"),
-		Password:   viper.GetString("auth.password"),
-		Product:    "qplex",
+func getSessions(cmd *cobra.Command, _ []string) {
+	c := plex.New(
+		viper.GetString("auth.username"),
+		viper.GetString("auth.password"),
+		"qplex",
+		cmd.Version,
+		viper.GetString("url"),
+	)
+	if authToken := viper.GetString("auth.token"); authToken != "" {
+		c.SetAuthToken(authToken)
 	}
 
 	sessions, err := c.GetSessions(context.Background())
