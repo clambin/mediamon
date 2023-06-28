@@ -6,7 +6,6 @@ import (
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
-	"net/http"
 	"time"
 )
 
@@ -47,9 +46,17 @@ var (
 	)
 )
 
+// API interface
+//
+//go:generate mockery --name API
+type API interface {
+	GetSessionParameters(ctx context.Context) (transmission.SessionParameters, error)
+	GetSessionStatistics(ctx context.Context) (stats transmission.SessionStats, err error)
+}
+
 // Collector presents Transmission statistics as Prometheus metrics
 type Collector struct {
-	transmission.API
+	API
 	url       string
 	transport *httpclient.RoundTripper
 }
@@ -81,10 +88,7 @@ func (s transmissionStats) collect(ch chan<- prometheus.Metric, url string) {
 func NewCollector(url string) *Collector {
 	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "transmission"))
 	return &Collector{
-		API: &transmission.Client{
-			HTTPClient: &http.Client{Transport: r},
-			URL:        url,
-		},
+		API:       transmission.NewClient(url, r),
 		url:       url,
 		transport: r,
 	}
@@ -116,33 +120,18 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 
 func (coll *Collector) getStats() (stats transmissionStats, err error) {
 	ctx := context.Background()
-
-	stats.version, err = coll.getVersion(ctx)
-
-	if err == nil {
+	if stats.version, err = coll.getVersion(ctx); err == nil {
 		stats.active, stats.paused, stats.download, stats.upload, err = coll.getSessionStats(ctx)
 	}
-
 	return stats, err
 }
 
-func (coll *Collector) getVersion(ctx context.Context) (version string, err error) {
-	var params transmission.SessionParameters
-	params, err = coll.API.GetSessionParameters(ctx)
-	if err == nil {
-		version = params.Arguments.Version
-	}
-	return
+func (coll *Collector) getVersion(ctx context.Context) (string, error) {
+	params, err := coll.API.GetSessionParameters(ctx)
+	return params.Arguments.Version, err
 }
 
-func (coll *Collector) getSessionStats(ctx context.Context) (active int, paused int, download int, upload int, err error) {
-	var stats transmission.SessionStats
-	stats, err = coll.API.GetSessionStatistics(ctx)
-	if err == nil {
-		active = stats.Arguments.ActiveTorrentCount
-		paused = stats.Arguments.PausedTorrentCount
-		download = stats.Arguments.DownloadSpeed
-		upload = stats.Arguments.UploadSpeed
-	}
-	return
+func (coll *Collector) getSessionStats(ctx context.Context) (int, int, int, int, error) {
+	stats, err := coll.API.GetSessionStatistics(ctx)
+	return stats.Arguments.ActiveTorrentCount, stats.Arguments.PausedTorrentCount, stats.Arguments.DownloadSpeed, stats.Arguments.UploadSpeed, err
 }

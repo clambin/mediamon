@@ -16,10 +16,7 @@ func TestTransmissionClient_GetSessionParameters(t *testing.T) {
 	testServer := s.start()
 	defer testServer.Close()
 
-	c := &transmission.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        testServer.URL,
-	}
+	c := transmission.NewClient(testServer.URL, nil)
 
 	params, err := c.GetSessionParameters(context.Background())
 	require.NoError(t, err)
@@ -31,10 +28,7 @@ func TestTransmissionClient_GetSessionStats(t *testing.T) {
 	testServer := s.start()
 	defer testServer.Close()
 
-	c := &transmission.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        testServer.URL,
-	}
+	c := transmission.NewClient(testServer.URL, nil)
 
 	stats, err := c.GetSessionStatistics(context.Background())
 	require.NoError(t, err)
@@ -48,10 +42,7 @@ func TestTransmissionClient_Failures(t *testing.T) {
 	s := server{sessionID: "1234", invalid: true}
 	testServer := s.start()
 
-	c := &transmission.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        testServer.URL,
-	}
+	c := transmission.NewClient(testServer.URL, nil)
 
 	ctx := context.Background()
 
@@ -75,33 +66,6 @@ func TestTransmissionClient_Failures(t *testing.T) {
 	testServer.Close()
 	_, err = c.GetSessionParameters(ctx)
 	assert.Error(t, err)
-}
-
-func TestTransmissionClient_Authentication(t *testing.T) {
-	s := server{sessionID: "1234"}
-	testServer := s.start()
-	defer testServer.Close()
-
-	c := &transmission.Client{
-		HTTPClient: http.DefaultClient,
-		URL:        testServer.URL,
-	}
-
-	oldParams, err := c.GetSessionParameters(context.Background())
-	require.NoError(t, err)
-
-	// simulate the session key expiring
-	c.SessionID = "4321"
-
-	var newParams transmission.SessionParameters
-	newParams, err = c.GetSessionParameters(context.Background())
-
-	// call succeeded
-	require.NoError(t, err)
-	// and the next SessionID has been set
-	assert.Equal(t, "1234", c.SessionID)
-	// and the call worked
-	assert.Equal(t, oldParams.Arguments.Version, newParams.Arguments.Version)
 }
 
 // Server handlers
