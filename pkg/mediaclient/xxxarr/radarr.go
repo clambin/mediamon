@@ -6,28 +6,12 @@ import (
 	"net/http"
 )
 
-// RadarrAPI contains all supported Radarr APIs
-//
-//go:generate mockery --name RadarrAPI
-type RadarrAPI interface {
-	GetURL() (url string)
-	GetSystemStatus(ctx context.Context) (response RadarrSystemStatusResponse, err error)
-	GetHealth(ctx context.Context) (response []RadarrHealthResponse, err error)
-	GetCalendar(ctx context.Context) (response []RadarrCalendarResponse, err error)
-	GetQueuePage(ctx context.Context, pageNr int) (response RadarrQueueResponse, err error)
-	GetQueue(ctx context.Context) (response RadarrQueueResponse, err error)
-	GetMovies(ctx context.Context) (response []RadarrMovieResponse, err error)
-	GetMovieByID(ctx context.Context, movieID int) (response RadarrMovieResponse, err error)
-}
-
 // RadarrClient calls Radarr endpoints
 type RadarrClient struct {
 	Client *http.Client
 	URL    string
 	APIKey string
 }
-
-var _ RadarrAPI = &RadarrClient{}
 
 const radarrAPIPrefix = "/api/v3"
 

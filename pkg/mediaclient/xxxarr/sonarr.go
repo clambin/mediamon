@@ -6,29 +6,12 @@ import (
 	"net/http"
 )
 
-// SonarrAPI contains all supported Sonarr APIs
-//
-//go:generate mockery --name SonarrAPI
-type SonarrAPI interface {
-	GetURL() string
-	GetSystemStatus(ctx context.Context) (response SonarrSystemStatusResponse, err error)
-	GetHealth(ctx context.Context) (response []SonarrHealthResponse, err error)
-	GetCalendar(ctx context.Context) (response []SonarrCalendarResponse, err error)
-	GetQueuePage(ctx context.Context, pageNr int) (response SonarrQueueResponse, err error)
-	GetQueue(ctx context.Context) (response SonarrQueueResponse, err error)
-	GetSeries(ctx context.Context) (response []SonarrSeriesResponse, err error)
-	GetSeriesByID(ctx context.Context, seriesID int) (response SonarrSeriesResponse, err error)
-	GetEpisodeByID(ctx context.Context, episodeID int) (response SonarrEpisodeResponse, err error)
-}
-
 // SonarrClient calls Sonarr endpoints
 type SonarrClient struct {
 	Client *http.Client
 	URL    string
 	APIKey string
 }
-
-var _ SonarrAPI = &SonarrClient{}
 
 const sonarrAPIPrefix = "/api/v3"
 

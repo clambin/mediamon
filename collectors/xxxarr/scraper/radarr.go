@@ -5,9 +5,23 @@ import (
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
 )
 
+// RadarrAPI contains all supported Radarr APIs
+//
+//go:generate mockery --name RadarrAPI
+type RadarrAPI interface {
+	GetURL() (url string)
+	GetSystemStatus(ctx context.Context) (response xxxarr.RadarrSystemStatusResponse, err error)
+	GetHealth(ctx context.Context) (response []xxxarr.RadarrHealthResponse, err error)
+	GetCalendar(ctx context.Context) (response []xxxarr.RadarrCalendarResponse, err error)
+	GetQueuePage(ctx context.Context, pageNr int) (response xxxarr.RadarrQueueResponse, err error)
+	GetQueue(ctx context.Context) (response xxxarr.RadarrQueueResponse, err error)
+	GetMovies(ctx context.Context) (response []xxxarr.RadarrMovieResponse, err error)
+	GetMovieByID(ctx context.Context, movieID int) (response xxxarr.RadarrMovieResponse, err error)
+}
+
 // RadarrScraper collects Stats from a Radarr instance
 type RadarrScraper struct {
-	Client xxxarr.RadarrAPI
+	Client RadarrAPI
 }
 
 // Scrape returns Stats from a Radarr instance

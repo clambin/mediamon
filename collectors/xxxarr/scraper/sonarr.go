@@ -6,9 +6,24 @@ import (
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
 )
 
+// SonarrAPI contains all supported Sonarr APIs
+//
+//go:generate mockery --name SonarrAPI
+type SonarrAPI interface {
+	GetURL() string
+	GetSystemStatus(ctx context.Context) (response xxxarr.SonarrSystemStatusResponse, err error)
+	GetHealth(ctx context.Context) (response []xxxarr.SonarrHealthResponse, err error)
+	GetCalendar(ctx context.Context) (response []xxxarr.SonarrCalendarResponse, err error)
+	GetQueuePage(ctx context.Context, pageNr int) (response xxxarr.SonarrQueueResponse, err error)
+	GetQueue(ctx context.Context) (response xxxarr.SonarrQueueResponse, err error)
+	GetSeries(ctx context.Context) (response []xxxarr.SonarrSeriesResponse, err error)
+	GetSeriesByID(ctx context.Context, seriesID int) (response xxxarr.SonarrSeriesResponse, err error)
+	GetEpisodeByID(ctx context.Context, episodeID int) (response xxxarr.SonarrEpisodeResponse, err error)
+}
+
 // SonarrScraper collects Stats from a Sonarr instance
 type SonarrScraper struct {
-	Client xxxarr.SonarrAPI
+	Client SonarrAPI
 }
 
 // Scrape returns Stats from a Sonarr instance
