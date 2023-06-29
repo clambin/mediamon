@@ -44,7 +44,11 @@ openvpn_client_status 0
 `), "mediamon_api_errors_total", "openvpn_client_status"))
 }
 
-func up(w http.ResponseWriter, _ *http.Request) {
+func up(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("token") == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	_, _ = w.Write([]byte(`{}`))
 }
 

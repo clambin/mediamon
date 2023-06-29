@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-const AuthURL = "https://plex.tv/users/sign_in.xml"
+const authURL = "https://plex.tv/users/sign_in.xml"
 
 // SetAuthToken sets the AuthToken
 func (c *Client) SetAuthToken(s string) {
@@ -32,9 +32,9 @@ func (c *Client) GetAuthToken(ctx context.Context) (string, error) {
 	return c.plexAuth.authToken, nil
 }
 
-var _ http.RoundTripper = &Auth{}
+var _ http.RoundTripper = &Authenticator{}
 
-type Auth struct {
+type Authenticator struct {
 	HTTPClient *http.Client
 	Username   string
 	Password   string
@@ -46,7 +46,7 @@ type Auth struct {
 	lock       sync.Mutex
 }
 
-func (a *Auth) RoundTrip(request *http.Request) (*http.Response, error) {
+func (a *Authenticator) RoundTrip(request *http.Request) (*http.Response, error) {
 	if err := a.authenticate(request.Context()); err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (a *Auth) RoundTrip(request *http.Request) (*http.Response, error) {
 	return a.Next.RoundTrip(request)
 }
 
-func (a *Auth) authenticate(ctx context.Context) error {
+func (a *Authenticator) authenticate(ctx context.Context) error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -79,7 +79,7 @@ func (a *Auth) authenticate(ctx context.Context) error {
 	return err
 }
 
-func (a *Auth) makeAuthRequest(ctx context.Context) (*http.Request, error) {
+func (a *Authenticator) makeAuthRequest(ctx context.Context) (*http.Request, error) {
 	v := make(url.Values)
 	v.Set("user[login]", a.Username)
 	v.Set("user[password]", a.Password)

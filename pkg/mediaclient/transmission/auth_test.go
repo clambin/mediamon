@@ -21,6 +21,7 @@ func TestAuthenticator_RoundTrip(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "1234", resp.Header.Get(transmissionSessionIDHeader))
 
+	// simulate an expired session ID
 	h.sessionID = "4321"
 	resp, err = c.Post(s.URL, "application/json", io.NopCloser(strings.NewReader("foo")))
 	require.NoError(t, err)

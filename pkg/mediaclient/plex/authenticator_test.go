@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestPlexAuth(t *testing.T) {
+func TestAuthenticator_RoundTrip(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
 	defer authServer.Close()
 
@@ -18,7 +18,7 @@ func TestPlexAuth(t *testing.T) {
 	defer server.Client()
 
 	c := plex.New("user@example.com", "somepassword", "", "", server.URL)
-	c.HTTPClient.Transport.(*plex.Auth).AuthURL = authServer.URL
+	c.HTTPClient.Transport.(*plex.Authenticator).AuthURL = authServer.URL
 
 	resp, err := c.GetIdentity(context.Background())
 	require.NoError(t, err)
@@ -29,7 +29,7 @@ func TestPlexAuth(t *testing.T) {
 	}, resp)
 
 	c.SetAuthToken("")
-	c.HTTPClient.Transport.(*plex.Auth).Password = "badpassword"
+	c.HTTPClient.Transport.(*plex.Authenticator).Password = "badpassword"
 
 	_, err = c.GetIdentity(context.Background())
 	assert.Error(t, err)
@@ -73,7 +73,7 @@ func TestClient_GetAuthToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := plex.New(tt.fields.UserName, tt.fields.Password, "", "", "")
-			c.HTTPClient.Transport.(*plex.Auth).AuthURL = authServer.URL
+			c.HTTPClient.Transport.(*plex.Authenticator).AuthURL = authServer.URL
 			if tt.fields.AuthToken != "" {
 				c.SetAuthToken(tt.fields.AuthToken)
 			}

@@ -12,16 +12,16 @@ import (
 // Client calls the Plex APIs
 type Client struct {
 	HTTPClient *http.Client
-	plexAuth   *Auth
+	plexAuth   *Authenticator
 	URL        string
 }
 
 func New(username, password, product, version, url string) *Client {
-	auth := &Auth{
+	auth := &Authenticator{
 		HTTPClient: &http.Client{Timeout: 10 * time.Second},
 		Username:   username,
 		Password:   password,
-		AuthURL:    AuthURL,
+		AuthURL:    authURL,
 		Product:    product,
 		Version:    version,
 		Next:       http.DefaultTransport,
