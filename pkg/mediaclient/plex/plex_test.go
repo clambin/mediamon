@@ -14,16 +14,10 @@ import (
 )
 
 func TestClient_Failures(t *testing.T) {
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
-	defer authServer.Close()
 	testServer := httptest.NewServer(http.HandlerFunc(plexBadHandler))
 
-	c := &plex.Client{
-		URL:      testServer.URL,
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "somepassword",
-	}
+	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL)
+	c.HTTPClient.Transport = http.DefaultTransport
 
 	_, err := c.GetIdentity(context.Background())
 	require.Error(t, err)
@@ -36,17 +30,11 @@ func TestClient_Failures(t *testing.T) {
 }
 
 func TestClient_Decode_Failure(t *testing.T) {
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
-	defer authServer.Close()
 	testServer := httptest.NewServer(http.HandlerFunc(plexGarbageHandler))
 	defer testServer.Close()
 
-	c := &plex.Client{
-		URL:      testServer.URL,
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "somepassword",
-	}
+	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL)
+	c.HTTPClient.Transport = http.DefaultTransport
 
 	_, err := c.GetIdentity(context.Background())
 	require.Error(t, err)
@@ -79,22 +67,6 @@ func plexAuthHandler(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	_, _ = w.Write([]byte(authResponse))
-}
-
-func plexHandler(w http.ResponseWriter, req *http.Request) {
-	token := req.Header.Get("X-Plex-Token")
-	if token != "some_token" {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
-	}
-
-	response, ok := plexResponses[req.URL.Path]
-
-	if ok == false {
-		http.Error(w, "endpoint not implemented: "+req.URL.Path, http.StatusNotFound)
-	} else {
-		_, _ = w.Write([]byte(response))
-	}
 }
 
 func plexBadHandler(w http.ResponseWriter, _ *http.Request) {
@@ -154,54 +126,3 @@ const (
   <authentication-token>some_token</authentication-token>
 </user>`
 )
-
-func TestClient_GetAuthToken(t *testing.T) {
-	type fields struct {
-		AuthToken string
-		UserName  string
-		Password  string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		want    string
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name:    "authToken",
-			fields:  fields{AuthToken: "1234"},
-			want:    "1234",
-			wantErr: assert.NoError,
-		},
-		{
-			name:    "username / password",
-			fields:  fields{UserName: "user@example.com", Password: "somepassword"},
-			want:    "some_token",
-			wantErr: assert.NoError,
-		},
-		{
-			name:    "bad password",
-			fields:  fields{UserName: "user@example.com", Password: "bad-password"},
-			wantErr: assert.Error,
-		},
-	}
-
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
-	defer authServer.Close()
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &plex.Client{
-				AuthToken: tt.fields.AuthToken,
-				AuthURL:   authServer.URL,
-				UserName:  tt.fields.UserName,
-				Password:  tt.fields.Password,
-			}
-			got, err := c.GetAuthToken(context.Background())
-			if !tt.wantErr(t, err) {
-				return
-			}
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}

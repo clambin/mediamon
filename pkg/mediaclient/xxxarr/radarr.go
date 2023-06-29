@@ -6,28 +6,26 @@ import (
 	"net/http"
 )
 
-// RadarrAPI contains all supported Radarr APIs
-//
-//go:generate mockery --name RadarrAPI
-type RadarrAPI interface {
-	GetURL() (url string)
-	GetSystemStatus(ctx context.Context) (response RadarrSystemStatusResponse, err error)
-	GetHealth(ctx context.Context) (response []RadarrHealthResponse, err error)
-	GetCalendar(ctx context.Context) (response []RadarrCalendarResponse, err error)
-	GetQueuePage(ctx context.Context, pageNr int) (response RadarrQueueResponse, err error)
-	GetQueue(ctx context.Context) (response RadarrQueueResponse, err error)
-	GetMovies(ctx context.Context) (response []RadarrMovieResponse, err error)
-	GetMovieByID(ctx context.Context, movieID int) (response RadarrMovieResponse, err error)
-}
-
 // RadarrClient calls Radarr endpoints
 type RadarrClient struct {
 	Client *http.Client
 	URL    string
-	APIKey string
 }
 
-var _ RadarrAPI = &RadarrClient{}
+func NewRadarrClient(url, apiKey string, roundtripper http.RoundTripper) *RadarrClient {
+	if roundtripper == nil {
+		roundtripper = http.DefaultTransport
+	}
+	return &RadarrClient{
+		URL: url,
+		Client: &http.Client{
+			Transport: &authentication{
+				apiKey: apiKey,
+				next:   roundtripper,
+			},
+		},
+	}
+}
 
 const radarrAPIPrefix = "/api/v3"
 
@@ -37,27 +35,27 @@ func (c RadarrClient) GetURL() string {
 
 // GetSystemStatus calls Radarr's  /api/v3/system/status endpoint. It returns the system status of the Radarr instance
 func (c RadarrClient) GetSystemStatus(ctx context.Context) (response RadarrSystemStatusResponse, err error) {
-	return call[RadarrSystemStatusResponse](ctx, c.Client, c.URL+radarrAPIPrefix+"/system/status", c.APIKey)
+	return call[RadarrSystemStatusResponse](ctx, c.Client, c.URL+radarrAPIPrefix+"/system/status")
 }
 
 // GetHealth calls Radarr's /api/v3/health endpoint. It returns the health of the Radarr instance
 func (c RadarrClient) GetHealth(ctx context.Context) (response []RadarrHealthResponse, err error) {
-	return call[[]RadarrHealthResponse](ctx, c.Client, c.URL+radarrAPIPrefix+"/health", c.APIKey)
+	return call[[]RadarrHealthResponse](ctx, c.Client, c.URL+radarrAPIPrefix+"/health")
 }
 
 // GetCalendar calls Radarr's /api/v3/calendar endpoint. It returns all movies that will become available in the next 24 hours
 func (c RadarrClient) GetCalendar(ctx context.Context) (response []RadarrCalendarResponse, err error) {
-	return call[[]RadarrCalendarResponse](ctx, c.Client, c.URL+radarrAPIPrefix+"/calendar", c.APIKey)
+	return call[[]RadarrCalendarResponse](ctx, c.Client, c.URL+radarrAPIPrefix+"/calendar")
 }
 
 // GetQueuePage calls Radarr's /api/v3/queue/page=:pageNr endpoint. It returns one page of movies currently queued for download
 func (c RadarrClient) GetQueuePage(ctx context.Context, pageNr int) (response RadarrQueueResponse, err error) {
-	return call[RadarrQueueResponse](ctx, c.Client, fmt.Sprintf(c.URL+radarrAPIPrefix+"/queue?page=%d", pageNr), c.APIKey)
+	return call[RadarrQueueResponse](ctx, c.Client, fmt.Sprintf(c.URL+radarrAPIPrefix+"/queue?page=%d", pageNr))
 }
 
 // GetQueue calls Radarr's /api/v3/queue endpoint. It returns all movies currently queued for download
 func (c RadarrClient) GetQueue(ctx context.Context) (response RadarrQueueResponse, err error) {
-	response, err = call[RadarrQueueResponse](ctx, c.Client, c.URL+radarrAPIPrefix+"/queue", c.APIKey)
+	response, err = call[RadarrQueueResponse](ctx, c.Client, c.URL+radarrAPIPrefix+"/queue")
 
 	for err == nil && len(response.Records) < response.TotalRecords {
 		var tmp RadarrQueueResponse
@@ -73,10 +71,10 @@ func (c RadarrClient) GetQueue(ctx context.Context) (response RadarrQueueRespons
 
 // GetMovies calls Radarr's /api/v3/movie endpoint. It returns all movies added to Radarr
 func (c RadarrClient) GetMovies(ctx context.Context) (response []RadarrMovieResponse, err error) {
-	return call[[]RadarrMovieResponse](ctx, c.Client, c.URL+radarrAPIPrefix+"/movie", c.APIKey)
+	return call[[]RadarrMovieResponse](ctx, c.Client, c.URL+radarrAPIPrefix+"/movie")
 }
 
 // GetMovieByID calls Radar's "/api/v3/movie/:movieID endpoint. It returns details for the specified movieID
 func (c RadarrClient) GetMovieByID(ctx context.Context, movieID int) (response RadarrMovieResponse, err error) {
-	return call[RadarrMovieResponse](ctx, c.Client, fmt.Sprintf(c.URL+radarrAPIPrefix+"/movie/%d", movieID), c.APIKey)
+	return call[RadarrMovieResponse](ctx, c.Client, fmt.Sprintf(c.URL+radarrAPIPrefix+"/movie/%d", movieID))
 }

@@ -9,16 +9,18 @@ import (
 
 func TestTimestamp_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   string
-		want    plex.Timestamp
-		wantErr assert.ErrorAssertionFunc
+		name       string
+		input      string
+		want       plex.Timestamp
+		wantErr    assert.ErrorAssertionFunc
+		wantString string
 	}{
 		{
-			name:    "valid",
-			input:   "1655899131",
-			want:    plex.Timestamp(time.Date(2022, time.June, 22, 11, 58, 51, 0, time.UTC)),
-			wantErr: assert.NoError,
+			name:       "valid",
+			input:      "1655899131",
+			want:       plex.Timestamp(time.Date(2022, time.June, 22, 11, 58, 51, 0, time.UTC)),
+			wantErr:    assert.NoError,
+			wantString: "2022-06-22 11:58:51 +0000 UTC",
 		},
 		{
 			name:    "empty",
@@ -36,6 +38,9 @@ func TestTimestamp_UnmarshalJSON(t *testing.T) {
 			var ts plex.Timestamp
 			tt.wantErr(t, (&ts).UnmarshalJSON([]byte(tt.input)))
 			assert.Equal(t, tt.want, ts)
+			if tt.wantString != "" {
+				assert.Equal(t, tt.wantString, ts.String())
+			}
 		})
 	}
 }

@@ -14,15 +14,8 @@ func TestPlexClient_GetIdentity(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
 	defer testServer.Close()
 
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
-	defer authServer.Close()
-
-	c := plex.Client{
-		URL:      testServer.URL,
-		AuthURL:  authServer.URL,
-		UserName: "user@example.com",
-		Password: "somepassword",
-	}
+	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL)
+	c.HTTPClient.Transport = http.DefaultTransport
 
 	identity, err := c.GetIdentity(context.Background())
 	require.NoError(t, err)

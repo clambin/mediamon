@@ -38,7 +38,7 @@ type SonarrHealthResponse struct {
 	Source  string `json:"source"`
 	Type    string `json:"type"`
 	Message string `json:"message"`
-	WikiUrl string `json:"wikiUrl"`
+	WikiURL string `json:"wikiUrl"`
 }
 
 // SonarrCalendarResponse contains the response of Sonarr's /api/v3/calendar endpoint

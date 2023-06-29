@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - progress
+      - plexauth
   pull_request_target:
 
 jobs:

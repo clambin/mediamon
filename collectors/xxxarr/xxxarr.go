@@ -8,7 +8,6 @@ import (
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
-	"net/http"
 	"time"
 )
 
@@ -64,13 +63,7 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 	)
 
 	return &Collector{
-		Scraper: &scraper.RadarrScraper{
-			Client: xxxarr.RadarrClient{
-				Client: &http.Client{Transport: r},
-				URL:    url,
-				APIKey: apiKey,
-			},
-		},
+		Scraper:     &scraper.RadarrScraper{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
 		application: "radarr",
 		metrics:     createMetrics("radarr", url),
 		transport:   r,
@@ -86,13 +79,7 @@ func NewSonarrCollector(url, apiKey string) *Collector {
 	)
 
 	return &Collector{
-		Scraper: &scraper.SonarrScraper{
-			Client: xxxarr.SonarrClient{
-				Client: &http.Client{Transport: r},
-				URL:    url,
-				APIKey: apiKey,
-			},
-		},
+		Scraper:     &scraper.SonarrScraper{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
 		application: "sonarr",
 		metrics:     createMetrics("sonarr", url),
 		transport:   r,

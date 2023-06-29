@@ -7,7 +7,6 @@ import (
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
-	"net/http"
 	"strconv"
 	"time"
 )
@@ -44,13 +43,7 @@ type Config struct {
 func NewCollector(version, url, username, password string) *Collector {
 	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "plex"))
 	return &Collector{
-		API: &plex.Client{
-			HTTPClient: &http.Client{Transport: r},
-			Version:    version,
-			URL:        url,
-			UserName:   username,
-			Password:   password,
-		},
+		API:       plex.New(username, password, "github.com/clambin/mediamon", version, url),
 		IPLocator: iplocator.New(),
 		url:       url,
 		transport: r,
