@@ -41,7 +41,7 @@ const httpTimeout = 10 * time.Second
 
 // NewCollector creates a new Collector
 func NewCollector(token string, proxyURL *url.URL, expiry time.Duration) *Collector {
-	options := []httpclient.RoundTripperOption{
+	options := []httpclient.Option{
 		httpclient.WithCache(httpclient.DefaultCacheTable, expiry, 2*expiry),
 		httpclient.WithMetrics("mediamon", "", "connectivity"),
 	}
