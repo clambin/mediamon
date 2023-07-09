@@ -13,10 +13,41 @@ import (
 	"testing"
 )
 
+func TestClient_WithRoundTripper(t *testing.T) {
+	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	defer authServer.Close()
+
+	server := httptest.NewServer(authenticated("some_token", func(writer http.ResponseWriter, request *http.Request) {
+		if request.Header.Get("X-Dummy") != "foo" {
+			http.Error(writer, "missing X-Dummy header", http.StatusBadRequest)
+			return
+		}
+		plexHandler(writer, request)
+	}))
+	defer server.Client()
+
+	c := plex.New("user@example.com", "somepassword", "", "", server.URL, &dummyRoundTripper{next: http.DefaultTransport})
+	c.HTTPClient.Transport.(*plex.Authenticator).AuthURL = authServer.URL
+
+	_, err := c.GetSessions(context.Background())
+	assert.NoError(t, err)
+}
+
+var _ http.RoundTripper = &dummyRoundTripper{}
+
+type dummyRoundTripper struct {
+	next http.RoundTripper
+}
+
+func (d *dummyRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	request.Header.Set("X-Dummy", "foo")
+	return d.next.RoundTrip(request)
+}
+
 func TestClient_Failures(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(plexBadHandler))
 
-	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL)
+	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL, nil)
 	c.HTTPClient.Transport = http.DefaultTransport
 
 	_, err := c.GetIdentity(context.Background())
@@ -33,7 +64,7 @@ func TestClient_Decode_Failure(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(plexGarbageHandler))
 	defer testServer.Close()
 
-	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL)
+	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL, nil)
 	c.HTTPClient.Transport = http.DefaultTransport
 
 	_, err := c.GetIdentity(context.Background())

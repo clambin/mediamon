@@ -14,7 +14,7 @@ func TestPlexClient_GetIdentity(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
 	defer testServer.Close()
 
-	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL)
+	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL, nil)
 	c.HTTPClient.Transport = http.DefaultTransport
 
 	identity, err := c.GetIdentity(context.Background())

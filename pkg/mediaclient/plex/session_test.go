@@ -14,7 +14,7 @@ func TestPlexClient_GetStats(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
 	defer testServer.Close()
 
-	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL)
+	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL, nil)
 	c.HTTPClient.Transport = http.DefaultTransport
 
 	sessions, err := c.GetSessions(context.Background())

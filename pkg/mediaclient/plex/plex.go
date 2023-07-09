@@ -11,12 +11,15 @@ import (
 
 // Client calls the Plex APIs
 type Client struct {
+	URL        string
 	HTTPClient *http.Client
 	plexAuth   *Authenticator
-	URL        string
 }
 
-func New(username, password, product, version, url string) *Client {
+func New(username, password, product, version, url string, roundTripper http.RoundTripper) *Client {
+	if roundTripper == nil {
+		roundTripper = http.DefaultTransport
+	}
 	auth := &Authenticator{
 		HTTPClient: &http.Client{Timeout: 10 * time.Second},
 		Username:   username,
@@ -24,7 +27,7 @@ func New(username, password, product, version, url string) *Client {
 		AuthURL:    authURL,
 		Product:    product,
 		Version:    version,
-		Next:       http.DefaultTransport,
+		Next:       roundTripper,
 	}
 
 	return &Client{

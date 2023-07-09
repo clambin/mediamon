@@ -17,7 +17,7 @@ func TestAuthenticator_RoundTrip(t *testing.T) {
 	server := httptest.NewServer(authenticated("some_token", plexHandler))
 	defer server.Client()
 
-	c := plex.New("user@example.com", "somepassword", "", "", server.URL)
+	c := plex.New("user@example.com", "somepassword", "", "", server.URL, nil)
 	c.HTTPClient.Transport.(*plex.Authenticator).AuthURL = authServer.URL
 
 	resp, err := c.GetIdentity(context.Background())
@@ -72,7 +72,7 @@ func TestClient_GetAuthToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := plex.New(tt.fields.UserName, tt.fields.Password, "", "", "")
+			c := plex.New(tt.fields.UserName, tt.fields.Password, "", "", "", nil)
 			c.HTTPClient.Transport.(*plex.Authenticator).AuthURL = authServer.URL
 			if tt.fields.AuthToken != "" {
 				c.SetAuthToken(tt.fields.AuthToken)
