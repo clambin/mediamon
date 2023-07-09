@@ -18,7 +18,7 @@ func TestAuthenticator_RoundTrip(t *testing.T) {
 	defer server.Client()
 
 	c := New("user@example.com", "somepassword", "", "", server.URL, nil)
-	c.HTTPClient.Transport.(*authenticator).authURL = authServer.URL
+	c.authenticator.authURL = authServer.URL
 
 	resp, err := c.GetIdentity(context.Background())
 	require.NoError(t, err)
@@ -34,6 +34,43 @@ func TestAuthenticator_RoundTrip(t *testing.T) {
 	_, err = c.GetIdentity(context.Background())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "plex auth: 403 Forbidden")
+}
+
+func TestAuthenticator_Custom_RoundTripper(t *testing.T) {
+	authServer := httptest.NewServer(http.HandlerFunc(testutil.AuthHandler))
+	defer authServer.Close()
+
+	server := httptest.NewServer(testutil.WithToken("some_token", testutil.Handler))
+	defer server.Client()
+
+	c := New("user@example.com", "somepassword", "", "", server.URL, &dummyRoundTripper{next: http.DefaultTransport})
+	c.authenticator.authURL = authServer.URL
+
+	resp, err := c.GetIdentity(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, Identity{
+		Claimed:           true,
+		MachineIdentifier: "SomeUUID",
+		Version:           "SomeVersion",
+	}, resp)
+
+	c.SetAuthToken("")
+	c.HTTPClient.Transport.(*authenticator).password = "badpassword"
+
+	_, err = c.GetIdentity(context.Background())
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "plex auth: 403 Forbidden")
+}
+
+var _ http.RoundTripper = &dummyRoundTripper{}
+
+type dummyRoundTripper struct {
+	next http.RoundTripper
+}
+
+func (d *dummyRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	request.Header.Set("X-Dummy", "foo")
+	return d.next.RoundTrip(request)
 }
 
 func TestClient_GetAuthToken(t *testing.T) {
@@ -73,7 +110,7 @@ func TestClient_GetAuthToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := New(tt.fields.UserName, tt.fields.Password, "", "", "", nil)
-			c.HTTPClient.Transport.(*authenticator).authURL = authServer.URL
+			c.authenticator.authURL = authServer.URL
 			if tt.fields.AuthToken != "" {
 				c.SetAuthToken(tt.fields.AuthToken)
 			}

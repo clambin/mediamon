@@ -27,11 +27,8 @@ func TestClient_GetLibraries(t *testing.T) {
 }
 
 func TestClient_GetMovieLibrary(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(testutil.Handler))
-	defer testServer.Close()
-
-	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL, nil)
-	c.HTTPClient.Transport = http.DefaultTransport
+	c, s := makeClientAndServer(nil)
+	defer s.Close()
 
 	movies, err := c.GetMovieLibrary(context.Background(), "1")
 	require.NoError(t, err)
@@ -39,11 +36,8 @@ func TestClient_GetMovieLibrary(t *testing.T) {
 }
 
 func TestClient_GetShowLibrary(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(testutil.Handler))
-	defer testServer.Close()
-
-	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL, nil)
-	c.HTTPClient.Transport = http.DefaultTransport
+	c, s := makeClientAndServer(nil)
+	defer s.Close()
 
 	movies, err := c.GetShowLibrary(context.Background(), "2")
 	require.NoError(t, err)

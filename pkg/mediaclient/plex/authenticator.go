@@ -13,25 +13,6 @@ import (
 
 const authURL = "https://plex.tv/users/sign_in.xml"
 
-// SetAuthToken sets the AuthToken
-func (c *Client) SetAuthToken(s string) {
-	c.plexAuth.lock.Lock()
-	defer c.plexAuth.lock.Unlock()
-	c.plexAuth.authToken = s
-}
-
-// GetAuthToken logs into plex.tv and returns the current authToken.
-func (c *Client) GetAuthToken(ctx context.Context) (string, error) {
-	err := c.plexAuth.authenticate(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	c.plexAuth.lock.Lock()
-	defer c.plexAuth.lock.Unlock()
-	return c.plexAuth.authToken, nil
-}
-
 var _ http.RoundTripper = &authenticator{}
 
 type authenticator struct {
@@ -51,8 +32,26 @@ func (a *authenticator) RoundTrip(request *http.Request) (*http.Response, error)
 		return nil, err
 	}
 	request.Header.Add("X-Plex-Token", a.authToken)
-
 	return a.next.RoundTrip(request)
+}
+
+// SetAuthToken sets the AuthToken
+func (a *authenticator) SetAuthToken(s string) {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+	a.authToken = s
+}
+
+// GetAuthToken logs into plex.tv and returns the current authToken.
+func (a *authenticator) GetAuthToken(ctx context.Context) (string, error) {
+	err := a.authenticate(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	a.lock.Lock()
+	defer a.lock.Unlock()
+	return a.authToken, nil
 }
 
 func (a *authenticator) authenticate(ctx context.Context) error {
