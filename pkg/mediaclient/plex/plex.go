@@ -13,21 +13,21 @@ import (
 type Client struct {
 	URL        string
 	HTTPClient *http.Client
-	plexAuth   *Authenticator
+	plexAuth   *authenticator
 }
 
 func New(username, password, product, version, url string, roundTripper http.RoundTripper) *Client {
 	if roundTripper == nil {
 		roundTripper = http.DefaultTransport
 	}
-	auth := &Authenticator{
-		HTTPClient: &http.Client{Timeout: 10 * time.Second},
-		Username:   username,
-		Password:   password,
-		AuthURL:    authURL,
-		Product:    product,
-		Version:    version,
-		Next:       roundTripper,
+	auth := &authenticator{
+		httpClient: &http.Client{Timeout: 10 * time.Second},
+		username:   username,
+		password:   password,
+		authURL:    authURL,
+		product:    product,
+		version:    version,
+		next:       roundTripper,
 	}
 
 	return &Client{
