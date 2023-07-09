@@ -13,49 +13,48 @@ import (
 
 const authURL = "https://plex.tv/users/sign_in.xml"
 
-// SetAuthToken sets the AuthToken
-func (c *Client) SetAuthToken(s string) {
-	c.plexAuth.lock.Lock()
-	defer c.plexAuth.lock.Unlock()
-	c.plexAuth.authToken = s
-}
+var _ http.RoundTripper = &authenticator{}
 
-// GetAuthToken logs into plex.tv and returns the current authToken.
-func (c *Client) GetAuthToken(ctx context.Context) (string, error) {
-	err := c.plexAuth.authenticate(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	c.plexAuth.lock.Lock()
-	defer c.plexAuth.lock.Unlock()
-	return c.plexAuth.authToken, nil
-}
-
-var _ http.RoundTripper = &Authenticator{}
-
-type Authenticator struct {
-	HTTPClient *http.Client
-	Username   string
-	Password   string
-	AuthURL    string
-	Product    string
-	Version    string
-	Next       http.RoundTripper
-	authToken  string
+type authenticator struct {
+	httpClient *http.Client
+	username   string
+	password   string
+	authURL    string
+	product    string
+	version    string
+	next       http.RoundTripper
 	lock       sync.Mutex
+	authToken  string
 }
 
-func (a *Authenticator) RoundTrip(request *http.Request) (*http.Response, error) {
+func (a *authenticator) RoundTrip(request *http.Request) (*http.Response, error) {
 	if err := a.authenticate(request.Context()); err != nil {
 		return nil, err
 	}
 	request.Header.Add("X-Plex-Token", a.authToken)
-
-	return a.Next.RoundTrip(request)
+	return a.next.RoundTrip(request)
 }
 
-func (a *Authenticator) authenticate(ctx context.Context) error {
+// SetAuthToken sets the AuthToken
+func (a *authenticator) SetAuthToken(s string) {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+	a.authToken = s
+}
+
+// GetAuthToken logs into plex.tv and returns the current authToken.
+func (a *authenticator) GetAuthToken(ctx context.Context) (string, error) {
+	err := a.authenticate(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	a.lock.Lock()
+	defer a.lock.Unlock()
+	return a.authToken, nil
+}
+
+func (a *authenticator) authenticate(ctx context.Context) error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -64,7 +63,7 @@ func (a *Authenticator) authenticate(ctx context.Context) error {
 	}
 
 	req, _ := a.makeAuthRequest(ctx)
-	resp, err := a.HTTPClient.Do(req)
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -79,16 +78,16 @@ func (a *Authenticator) authenticate(ctx context.Context) error {
 	return err
 }
 
-func (a *Authenticator) makeAuthRequest(ctx context.Context) (*http.Request, error) {
+func (a *authenticator) makeAuthRequest(ctx context.Context) (*http.Request, error) {
 	v := make(url.Values)
-	v.Set("user[login]", a.Username)
-	v.Set("user[password]", a.Password)
+	v.Set("user[login]", a.username)
+	v.Set("user[password]", a.password)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, a.AuthURL, bytes.NewBufferString(v.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, a.authURL, bytes.NewBufferString(v.Encode()))
 	if err == nil {
-		req.Header.Add("X-Plex-Product", a.Product)
-		req.Header.Add("X-Plex-Version", a.Version)
-		req.Header.Add("X-Plex-Client-Identifier", a.Product+"-v"+a.Version)
+		req.Header.Add("X-Plex-Product", a.product)
+		req.Header.Add("X-Plex-Version", a.version)
+		req.Header.Add("X-Plex-Client-Identifier", a.product+"-v"+a.version)
 	}
 	return req, err
 }

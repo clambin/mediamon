@@ -1,8 +1,8 @@
-package plex_test
+package plex
 
 import (
 	"context"
-	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
+	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -11,29 +11,71 @@ import (
 )
 
 func TestAuthenticator_RoundTrip(t *testing.T) {
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
-	defer authServer.Close()
+	authServer := httptest.NewServer(http.HandlerFunc(testutil.AuthHandler))
 
-	server := httptest.NewServer(authenticated("some_token", plexHandler))
+	server := httptest.NewServer(testutil.WithToken("some_token", testutil.Handler))
 	defer server.Client()
 
-	c := plex.New("user@example.com", "somepassword", "", "", server.URL)
-	c.HTTPClient.Transport.(*plex.Authenticator).AuthURL = authServer.URL
+	c := New("user@example.com", "somepassword", "", "", server.URL, nil)
+	c.authenticator.authURL = authServer.URL
 
 	resp, err := c.GetIdentity(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, plex.Identity{
+	assert.Equal(t, Identity{
 		Claimed:           true,
 		MachineIdentifier: "SomeUUID",
 		Version:           "SomeVersion",
 	}, resp)
 
 	c.SetAuthToken("")
-	c.HTTPClient.Transport.(*plex.Authenticator).Password = "badpassword"
+	c.HTTPClient.Transport.(*authenticator).password = "badpassword"
 
 	_, err = c.GetIdentity(context.Background())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "plex auth: 403 Forbidden")
+
+	authServer.Close()
+	_, err = c.GetIdentity(context.Background())
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "connect: connection refused")
+
+}
+
+func TestAuthenticator_Custom_RoundTripper(t *testing.T) {
+	authServer := httptest.NewServer(http.HandlerFunc(testutil.AuthHandler))
+	defer authServer.Close()
+
+	server := httptest.NewServer(testutil.WithToken("some_token", testutil.Handler))
+	defer server.Client()
+
+	c := New("user@example.com", "somepassword", "", "", server.URL, &dummyRoundTripper{next: http.DefaultTransport})
+	c.authenticator.authURL = authServer.URL
+
+	resp, err := c.GetIdentity(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, Identity{
+		Claimed:           true,
+		MachineIdentifier: "SomeUUID",
+		Version:           "SomeVersion",
+	}, resp)
+
+	c.SetAuthToken("")
+	c.HTTPClient.Transport.(*authenticator).password = "badpassword"
+
+	_, err = c.GetIdentity(context.Background())
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "plex auth: 403 Forbidden")
+}
+
+var _ http.RoundTripper = &dummyRoundTripper{}
+
+type dummyRoundTripper struct {
+	next http.RoundTripper
+}
+
+func (d *dummyRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	request.Header.Set("X-Dummy", "foo")
+	return d.next.RoundTrip(request)
 }
 
 func TestClient_GetAuthToken(t *testing.T) {
@@ -67,13 +109,13 @@ func TestClient_GetAuthToken(t *testing.T) {
 		},
 	}
 
-	authServer := httptest.NewServer(http.HandlerFunc(plexAuthHandler))
+	authServer := httptest.NewServer(http.HandlerFunc(testutil.AuthHandler))
 	defer authServer.Close()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := plex.New(tt.fields.UserName, tt.fields.Password, "", "", "")
-			c.HTTPClient.Transport.(*plex.Authenticator).AuthURL = authServer.URL
+			c := New(tt.fields.UserName, tt.fields.Password, "", "", "", nil)
+			c.authenticator.authURL = authServer.URL
 			if tt.fields.AuthToken != "" {
 				c.SetAuthToken(tt.fields.AuthToken)
 			}
@@ -84,23 +126,5 @@ func TestClient_GetAuthToken(t *testing.T) {
 			}
 			assert.Equal(t, tt.want, got)
 		})
-	}
-}
-
-func authenticated(token string, next http.HandlerFunc) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		if request.Header.Get("X-Plex-Token") != token {
-			writer.WriteHeader(http.StatusForbidden)
-			return
-		}
-		next(writer, request)
-	}
-}
-
-func plexHandler(w http.ResponseWriter, req *http.Request) {
-	if response, ok := plexResponses[req.URL.Path]; ok {
-		_, _ = w.Write([]byte(response))
-	} else {
-		http.Error(w, "endpoint not implemented: "+req.URL.Path, http.StatusNotFound)
 	}
 }

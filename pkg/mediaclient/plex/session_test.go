@@ -5,17 +5,12 @@ import (
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
 func TestPlexClient_GetStats(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(plexHandler))
-	defer testServer.Close()
-
-	c := plex.New("user@example.com", "somepassword", "", "", testServer.URL)
-	c.HTTPClient.Transport = http.DefaultTransport
+	c, s := makeClientAndServer(nil)
+	defer s.Close()
 
 	sessions, err := c.GetSessions(context.Background())
 	require.NoError(t, err)

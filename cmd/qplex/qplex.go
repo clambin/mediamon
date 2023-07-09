@@ -99,6 +99,7 @@ func getAuthToken(cmd *cobra.Command, _ []string) {
 		"qplex",
 		cmd.Version,
 		viper.GetString("url"),
+		nil,
 	)
 	if authToken := viper.GetString("auth.token"); authToken != "" {
 		c.SetAuthToken(authToken)
@@ -125,6 +126,7 @@ func getViews(cmd *cobra.Command, _ []string) {
 		"qplex",
 		cmd.Version,
 		viper.GetString("url"),
+		nil,
 	)
 
 	views, err := qplex.GetViews(ctx, c, tokens, viper.GetBool("views.reverse"))
@@ -152,6 +154,7 @@ func getTokens(ctx context.Context, server bool) ([]string, error) {
 		"qplex",
 		BuildVersion,
 		viper.GetString("url"),
+		nil,
 	)
 	if authToken := viper.GetString("auth.token"); authToken != "" {
 		c.SetAuthToken(authToken)
@@ -254,6 +257,7 @@ func getSessions(cmd *cobra.Command, _ []string) {
 		"qplex",
 		cmd.Version,
 		viper.GetString("url"),
+		nil,
 	)
 	if authToken := viper.GetString("auth.token"); authToken != "" {
 		c.SetAuthToken(authToken)
