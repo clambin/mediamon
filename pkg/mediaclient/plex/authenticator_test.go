@@ -12,7 +12,6 @@ import (
 
 func TestAuthenticator_RoundTrip(t *testing.T) {
 	authServer := httptest.NewServer(http.HandlerFunc(testutil.AuthHandler))
-	defer authServer.Close()
 
 	server := httptest.NewServer(testutil.WithToken("some_token", testutil.Handler))
 	defer server.Client()
@@ -34,6 +33,12 @@ func TestAuthenticator_RoundTrip(t *testing.T) {
 	_, err = c.GetIdentity(context.Background())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "plex auth: 403 Forbidden")
+
+	authServer.Close()
+	_, err = c.GetIdentity(context.Background())
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "connect: connection refused")
+
 }
 
 func TestAuthenticator_Custom_RoundTripper(t *testing.T) {
