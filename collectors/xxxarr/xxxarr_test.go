@@ -137,10 +137,7 @@ mediamon_xxxarr_version{application="radarr",url="",version="foo"} 1
 			c.Scraper = s
 			s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(tt.stats, tt.statsErr).Once()
 
-			r := prometheus.NewPedanticRegistry()
-			r.MustRegister(c)
-
-			err := testutil.GatherAndCompare(r, bytes.NewBufferString(tt.want))
+			err := testutil.CollectAndCompare(c, bytes.NewBufferString(tt.want))
 			assert.NoError(t, err)
 		})
 	}

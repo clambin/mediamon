@@ -42,7 +42,7 @@ const httpTimeout = 10 * time.Second
 // NewCollector creates a new Collector
 func NewCollector(token string, proxyURL *url.URL, expiry time.Duration) *Collector {
 	options := []httpclient.Option{
-		httpclient.WithCache(httpclient.DefaultCacheTable, expiry, 2*expiry),
+		httpclient.WithInstrumentedCache(httpclient.DefaultCacheTable, expiry, 2*expiry, "mediamon", "", "connectivity"),
 		httpclient.WithMetrics("mediamon", "", "connectivity"),
 	}
 	if proxyURL != nil {

@@ -27,9 +27,9 @@ func TestClient_Locate(t *testing.T) {
 	}
 	ts := httptest.NewServer(http.HandlerFunc(s.handle))
 	c := New()
-	c.URL = ts.URL
+	c.url = ts.URL
 
-	c.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	c.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	lon, lat, err := c.Locate("8.8.8.8")
 	require.NoError(t, err)
