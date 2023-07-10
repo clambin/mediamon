@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Locator finds the geographic coordinates of an IP address
+// Locator finds the geographical coordinates of an IP address
 //
 //go:generate mockery --name Locator
 type Locator interface {
@@ -18,19 +18,19 @@ type Locator interface {
 
 // Client finds the geographic coordinates of an IP address.  It uses https://ip-api.com to look an IP address' location.
 type Client struct {
-	HTTPClient *http.Client
-	URL        string
-	Logger     *slog.Logger
+	httpClient *http.Client
+	url        string
+	logger     *slog.Logger
 }
 
 // New creates a new Client
 func New() *Client {
 	return &Client{
-		HTTPClient: &http.Client{
+		httpClient: &http.Client{
 			Transport: httpclient.NewRoundTripper(httpclient.WithCache(httpclient.DefaultCacheTable, 24*time.Hour, 36*time.Hour)),
 		},
-		URL:    ipAPIURL,
-		Logger: slog.Default(),
+		url:    ipAPIURL,
+		logger: slog.Default(),
 	}
 }
 
@@ -40,26 +40,23 @@ const ipAPIURL = "http://ip-api.com"
 
 // Locate finds the longitude and latitude of the specified IP address. No internal validation of the provided IP address is done.
 // This is left up entirely to the underlying API.
-func (c Client) Locate(ipAddress string) (lon, lat float64, err error) {
+func (c Client) Locate(ipAddress string) (float64, float64, error) {
 	response, err := c.lookup(ipAddress)
 	if err != nil {
-		err = fmt.Errorf("ip locate failed: %w", err)
-		return
+		return 0, 0, fmt.Errorf("ip locate failed: %w", err)
 	}
 	if response.Status != "success" {
-		err = fmt.Errorf("ip locate failed: %s", response.Message)
-		return
+		return 0, 0, fmt.Errorf("ip locate failed: %s", response.Message)
 	}
 
-	c.Logger.Debug("ip located", "ip", ipAPIURL, "location", response)
+	c.logger.Debug("ip located", "ip", ipAddress, "location", response)
 
 	return response.Lon, response.Lat, err
 }
 
 func (c Client) lookup(ipAddress string) (ipAPIResponse, error) {
 	var response ipAPIResponse
-	req, _ := http.NewRequest(http.MethodGet, c.URL+"/json/"+ipAddress, nil)
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Get(c.url + "/json/" + ipAddress)
 	if err != nil {
 		return response, err
 	}
