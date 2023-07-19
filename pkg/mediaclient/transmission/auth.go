@@ -35,7 +35,9 @@ func (a *authenticator) RoundTrip(request *http.Request) (*http.Response, error)
 		return resp, err
 	}
 
-	_ = resp.Body.Close()
+	if err == nil && resp != nil && resp.Body != nil {
+		_ = resp.Body.Close()
+	}
 	a.sessionID = resp.Header.Get(transmissionSessionIDHeader)
 	request.Header.Set(transmissionSessionIDHeader, a.sessionID)
 	request.Body = io.NopCloser(&bodyCopy)
