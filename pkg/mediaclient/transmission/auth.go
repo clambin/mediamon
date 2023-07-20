@@ -35,7 +35,7 @@ func (a *authenticator) RoundTrip(request *http.Request) (*http.Response, error)
 		return resp, err
 	}
 
-	if err == nil && resp != nil && resp.Body != nil {
+	if resp.Body != nil {
 		_ = resp.Body.Close()
 	}
 	a.sessionID = resp.Header.Get(transmissionSessionIDHeader)

@@ -6,7 +6,7 @@ func Handler(w http.ResponseWriter, req *http.Request) {
 	if response, ok := plexResponses[req.URL.Path]; ok {
 		_, _ = w.Write([]byte(response))
 	} else {
-		http.Error(w, "endpoint not implemented: "+req.URL.Path, http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
 	}
 }
 
