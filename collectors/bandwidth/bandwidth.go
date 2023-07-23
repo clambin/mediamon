@@ -29,6 +29,7 @@ var (
 // Collector reads an openvpn status file and provides Prometheus metrics
 type Collector struct {
 	Filename string
+	logger   *slog.Logger
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -45,7 +46,10 @@ type bandwidthStats struct {
 
 // NewCollector creates a new Collector
 func NewCollector(filename string) *Collector {
-	return &Collector{Filename: filename}
+	return &Collector{
+		Filename: filename,
+		logger:   slog.Default().With("collector", "bandwidth"),
+	}
 }
 
 // Describe implements the prometheus.Collector interface
@@ -61,12 +65,12 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := coll.getStats()
 	if err != nil {
 		// ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting bandwidth statistics", nil, nil), err)
-		slog.Error("failed to collect bandwidth metrics", "err", err)
+		coll.logger.Error("failed to collect bandwidth metrics", "err", err)
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(stats.read))
 	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
-	slog.Debug("bandwidth stats collected", "duration", time.Since(start))
+	coll.logger.Debug("bandwidth stats collected", "duration", time.Since(start))
 }
 
 var (

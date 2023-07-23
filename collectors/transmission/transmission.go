@@ -59,6 +59,7 @@ type Collector struct {
 	API
 	url       string
 	transport *httpclient.RoundTripper
+	logger    *slog.Logger
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -91,6 +92,7 @@ func NewCollector(url string) *Collector {
 		API:       transmission.NewClient(url, r),
 		url:       url,
 		transport: r,
+		logger:    slog.Default().With(slog.String("collector", "transmission")),
 	}
 }
 

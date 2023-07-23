@@ -26,6 +26,7 @@ type Collector struct {
 	URL        string
 	token      string
 	transport  *httpclient.RoundTripper
+	logger     *slog.Logger
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -55,8 +56,9 @@ func NewCollector(token string, proxyURL *url.URL, expiry time.Duration) *Collec
 			Transport: r,
 			Timeout:   httpTimeout,
 		},
-		transport: r,
 		token:     token,
+		transport: r,
+		logger:    slog.Default().With("collector", "connectivity"),
 	}
 }
 
@@ -77,7 +79,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
 	coll.transport.Collect(ch)
-	slog.Debug("connectivity stats collected", "duration", time.Since(start))
+	coll.logger.Debug("connectivity stats collected", "duration", time.Since(start))
 }
 
 func (coll *Collector) ping() error {

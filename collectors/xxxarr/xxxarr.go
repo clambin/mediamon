@@ -67,7 +67,7 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 		application: "radarr",
 		metrics:     createMetrics("radarr", url),
 		transport:   r,
-		logger:      slog.Default().With(slog.String("application", "radarr")),
+		logger:      slog.Default().With(slog.String("collector", "radarr")),
 	}
 }
 
@@ -83,7 +83,7 @@ func NewSonarrCollector(url, apiKey string) *Collector {
 		application: "sonarr",
 		metrics:     createMetrics("sonarr", url),
 		transport:   r,
-		logger:      slog.Default().With(slog.String("application", "sonarr")),
+		logger:      slog.Default().With(slog.String("collector", "sonarr")),
 	}
 }
 
@@ -142,5 +142,5 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(coll.metrics["unmonitored"], prometheus.GaugeValue, float64(stats.Unmonitored))
 	coll.transport.Collect(ch)
 
-	slog.Debug(coll.application+" stats collected", "duration", time.Since(start))
+	coll.logger.Debug(" tats collected", "duration", time.Since(start))
 }

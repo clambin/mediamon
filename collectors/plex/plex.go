@@ -17,6 +17,7 @@ type Collector struct {
 	IPLocator
 	url       string
 	transport *httpclient.RoundTripper
+	logger    *slog.Logger
 }
 
 //go:generate mockery --name API
@@ -47,6 +48,7 @@ func NewCollector(version, url, username, password string) *Collector {
 		IPLocator: iplocator.New(),
 		url:       url,
 		transport: r,
+		logger:    slog.Default().With("collector", "plex"),
 	}
 }
 
@@ -65,14 +67,14 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	coll.collectVersion(ch)
 	coll.collectSessionStats(ch)
 	coll.transport.Collect(ch)
-	slog.Debug("plex stats collected", "duration", time.Since(start))
+	coll.logger.Debug("stats collected", "duration", time.Since(start))
 }
 
 func (coll *Collector) collectVersion(ch chan<- prometheus.Metric) {
 	identity, err := coll.API.GetIdentity(context.Background())
 	if err != nil {
 		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting Plex version", nil, nil),err)
-		slog.Error("failed to collect Plex version", "err", err)
+		coll.logger.Error("failed to collect version", "err", err)
 		return
 	}
 
@@ -83,8 +85,12 @@ func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 	sessions, err := coll.API.GetSessions(context.Background())
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting Plex session stats", nil, nil), err)
-		slog.Error("failed to collect Plex session stats", "err", err)
+		coll.logger.Error("failed to collect session stats", "err", err)
 		return
+	}
+
+	for _, session := range sessions.Metadata {
+		coll.log(session)
 	}
 
 	var active, throttled, speed float64
@@ -145,8 +151,6 @@ func parseSessions(input plex.Sessions) map[string]plexSession {
 	output := make(map[string]plexSession)
 
 	for _, session := range input.Metadata {
-		log(session)
-
 		output[session.Session.ID] = plexSession{
 			user:      session.User.Title,
 			player:    session.Player.Product,
@@ -178,7 +182,7 @@ type streamInfo struct {
 	location string
 }
 
-func log(session plex.Session) {
+func (coll *Collector) log(session plex.Session) {
 	var sessionInfos []sessionInfo
 	for _, media := range session.Media {
 		var parts []partInfo
@@ -202,7 +206,7 @@ func log(session plex.Session) {
 		})
 	}
 
-	slog.Info("plex session found",
+	coll.logger.Info("session found",
 		"title", session.GetTitle(),
 		"media.part.decisions", sessionInfos,
 		"transcode.videoDecision", session.TranscodeSession.VideoDecision,
