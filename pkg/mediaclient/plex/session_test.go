@@ -115,8 +115,13 @@ func TestSession_GetProgress(t *testing.T) {
 }
 
 func TestSession_GetMediaMode(t *testing.T) {
+	// media.part.decisions="[{parts:[{decision:directplay streamInfo:[{decision: kind:1 codec:h264 location:direct} {decision: kind:2 codec:eac3 location:direct} {decision:ignore kind:3 codec:srt location:}]}]}]" transcode.videoDecision=""
+	// media.part.decisions="[{parts:[{decision:transcode streamInfo:[{decision:transcode kind:1 codec:h264 location:segments-av} {decision:transcode kind:2 codec:aac location:segments-av} {decision:transcode kind:3 codec:webvtt location:segments-subs}]}]}]" transcode.videoDecision=transcode
+	// media.part.decisions="[{parts:[{decision:transcode streamInfo:[{decision:copy kind:1 codec:h264 location:segments-video} {decision:copy kind:2 codec:aac location:segments-audio} {decision:transcode kind:3 codec:ass location:segments-subs}]}]}]" transcode.videoDecision=copy
+	// media.part.decisions="[{parts:[{decision: streamInfo:[{decision: kind:1 codec:h264 location:} {decision: kind:2 codec:aac location:} {decision: kind:3 codec:srt location:} {decision: kind:3 codec:srt location:}]}]}]" transcode.videoDecision=""
 	type fields struct {
-		media []plex.SessionMedia
+		media     []plex.SessionMedia
+		transcode plex.SessionTranscoder
 	}
 	tests := []struct {
 		name   string
@@ -126,36 +131,57 @@ func TestSession_GetMediaMode(t *testing.T) {
 		{
 			name: "directplay",
 			fields: fields{
-				media: []plex.SessionMedia{
-					{Part: []plex.MediaSessionPart{{Decision: "directplay"}}},
-				},
+				media: []plex.SessionMedia{{Part: []plex.MediaSessionPart{{Decision: "directplay"}}}},
 			},
 			want: "directplay",
 		},
 		{
-			name: "transcoding",
+			name: "copy",
 			fields: fields{
-				media: []plex.SessionMedia{
-					{Part: []plex.MediaSessionPart{{Decision: "transcoding"}}},
-				},
+				media:     []plex.SessionMedia{{Part: []plex.MediaSessionPart{{Decision: "transcode"}}}},
+				transcode: plex.SessionTranscoder{VideoDecision: "copy"},
 			},
-			want: "transcoding",
+			want: "copy",
+		},
+		{
+			name: "transcode",
+			fields: fields{
+				media:     []plex.SessionMedia{{Part: []plex.MediaSessionPart{{Decision: "transcode"}}}},
+				transcode: plex.SessionTranscoder{VideoDecision: "transcode"},
+			},
+			want: "transcode",
+		},
+		{
+			name: "unknown",
+			fields: fields{
+				media: []plex.SessionMedia{{Part: []plex.MediaSessionPart{{}}}},
+			},
+			want: "unknown",
+		},
+		{
+			name: "empty",
+			fields: fields{
+				media: []plex.SessionMedia{},
+			},
+			want: "unknown",
 		},
 		{
 			name: "multiple",
 			fields: fields{
 				media: []plex.SessionMedia{
 					{Part: []plex.MediaSessionPart{{Decision: "directplay"}}},
-					{Part: []plex.MediaSessionPart{{Decision: "transcoding"}}},
+					{Part: []plex.MediaSessionPart{{Decision: "transcode"}}},
 				},
+				transcode: plex.SessionTranscoder{VideoDecision: "transcode"},
 			},
-			want: "directplay,transcoding",
+			want: "directplay,transcode",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := plex.Session{
-				Media: tt.fields.media,
+				Media:            tt.fields.media,
+				TranscodeSession: tt.fields.transcode,
 			}
 			assert.Equal(t, tt.want, s.GetMediaMode())
 		})

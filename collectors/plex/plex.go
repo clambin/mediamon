@@ -210,6 +210,6 @@ func (coll *Collector) log(session plex.Session) {
 		"title", session.GetTitle(),
 		"mode", session.GetMediaMode(),
 		"media.part.decisions", sessionInfos,
-		"transcode.videoDecision", session.TranscodeSession.VideoDecision,
+		"transcode", session.TranscodeSession,
 	)
 }

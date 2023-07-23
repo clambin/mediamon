@@ -110,44 +110,47 @@ type SessionMedia struct {
 
 // MediaSessionPart contains one record in a MediaSession's Part list
 type MediaSessionPart struct {
-	AudioProfile          string `json:"audioProfile"`
-	ID                    string `json:"id"`
-	VideoProfile          string `json:"videoProfile"`
-	Bitrate               int    `json:"bitrate"`
-	Container             string `json:"container"`
-	Duration              int    `json:"duration"`
-	Height                int    `json:"height"`
-	OptimizedForStreaming bool   `json:"optimizedForStreaming"`
-	Protocol              string `json:"protocol"`
-	Width                 int    `json:"width"`
-	Decision              string `json:"decision"`
-	Selected              bool   `json:"selected"`
-	Stream                []struct {
-		Bitrate              int     `json:"bitrate,omitempty"`
-		Codec                string  `json:"codec"`
-		Default              bool    `json:"default"`
-		DisplayTitle         string  `json:"displayTitle"`
-		ExtendedDisplayTitle string  `json:"extendedDisplayTitle"`
-		FrameRate            float64 `json:"frameRate,omitempty"`
-		Height               int     `json:"height,omitempty"`
-		ID                   string  `json:"id"`
-		Language             string  `json:"language"`
-		LanguageCode         string  `json:"languageCode"`
-		LanguageTag          string  `json:"languageTag"`
-		StreamType           int     `json:"streamType"`
-		Width                int     `json:"width,omitempty"`
-		Decision             string  `json:"decision"`
-		Location             string  `json:"location"`
-		AudioChannelLayout   string  `json:"audioChannelLayout,omitempty"`
-		BitrateMode          string  `json:"bitrateMode,omitempty"`
-		Channels             int     `json:"channels,omitempty"`
-		Profile              string  `json:"profile,omitempty"`
-		SamplingRate         int     `json:"samplingRate,omitempty"`
-		Selected             bool    `json:"selected,omitempty"`
-		Title                string  `json:"title,omitempty"`
-		Container            string  `json:"container,omitempty"`
-		Format               string  `json:"format,omitempty"`
-	} `json:"Stream"`
+	AudioProfile          string                   `json:"audioProfile"`
+	ID                    string                   `json:"id"`
+	VideoProfile          string                   `json:"videoProfile"`
+	Bitrate               int                      `json:"bitrate"`
+	Container             string                   `json:"container"`
+	Duration              int                      `json:"duration"`
+	Height                int                      `json:"height"`
+	OptimizedForStreaming bool                     `json:"optimizedForStreaming"`
+	Protocol              string                   `json:"protocol"`
+	Width                 int                      `json:"width"`
+	Decision              string                   `json:"decision"`
+	Selected              bool                     `json:"selected"`
+	Stream                []MediaSessionPartStream `json:"Stream"`
+}
+
+// MediaSessionPartStream contains one stream (video, audio, subtitles) in a MediaSession's Part list
+type MediaSessionPartStream struct {
+	Bitrate              int     `json:"bitrate,omitempty"`
+	Codec                string  `json:"codec"`
+	Default              bool    `json:"default"`
+	DisplayTitle         string  `json:"displayTitle"`
+	ExtendedDisplayTitle string  `json:"extendedDisplayTitle"`
+	FrameRate            float64 `json:"frameRate,omitempty"`
+	Height               int     `json:"height,omitempty"`
+	ID                   string  `json:"id"`
+	Language             string  `json:"language"`
+	LanguageCode         string  `json:"languageCode"`
+	LanguageTag          string  `json:"languageTag"`
+	StreamType           int     `json:"streamType"`
+	Width                int     `json:"width,omitempty"`
+	Decision             string  `json:"decision"`
+	Location             string  `json:"location"`
+	AudioChannelLayout   string  `json:"audioChannelLayout,omitempty"`
+	BitrateMode          string  `json:"bitrateMode,omitempty"`
+	Channels             int     `json:"channels,omitempty"`
+	Profile              string  `json:"profile,omitempty"`
+	SamplingRate         int     `json:"samplingRate,omitempty"`
+	Selected             bool    `json:"selected,omitempty"`
+	Title                string  `json:"title,omitempty"`
+	Container            string  `json:"container,omitempty"`
+	Format               string  `json:"format,omitempty"`
 }
 
 // SessionUser contains the user details inside a Session
@@ -232,10 +235,20 @@ func (s Session) GetMediaMode() string {
 	decisions := set.Create[string]()
 	for _, media := range s.Media {
 		for _, part := range media.Part {
-			decisions.Add(part.Decision)
+			videoDecision := part.Decision
+			if videoDecision == "transcode" {
+				videoDecision = s.TranscodeSession.VideoDecision
+			}
+			if videoDecision == "" {
+				videoDecision = "unknown"
+			}
+			decisions.Add(videoDecision)
 		}
 	}
 	modes := decisions.List()
+	if len(modes) == 0 {
+		return "unknown"
+	}
 	sort.Strings(modes)
 	return strings.Join(modes, ",")
 }
