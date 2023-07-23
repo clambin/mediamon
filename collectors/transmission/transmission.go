@@ -97,43 +97,43 @@ func NewCollector(url string) *Collector {
 }
 
 // Describe implements the prometheus.Collector interface
-func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
+func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- versionMetric
 	ch <- activeTorrentsMetric
 	ch <- pausedTorrentsMetric
 	ch <- downloadSpeedMetric
 	ch <- uploadSpeedMetric
-	coll.transport.Describe(ch)
+	c.transport.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface
-func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	start := time.Now()
-	stats, err := coll.getStats()
+	stats, err := c.getStats()
 	if err != nil {
 		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting transmission metrics", nil, nil),err)
-		coll.logger.Error("failed to collect stats", "err", err)
+		c.logger.Error("failed to collect stats", "err", err)
 		return
 	}
-	stats.collect(ch, coll.url)
-	coll.transport.Collect(ch)
-	coll.logger.Debug("stats collected", "duration", time.Since(start))
+	stats.collect(ch, c.url)
+	c.transport.Collect(ch)
+	c.logger.Debug("stats collected", "duration", time.Since(start))
 }
 
-func (coll *Collector) getStats() (stats transmissionStats, err error) {
+func (c *Collector) getStats() (stats transmissionStats, err error) {
 	ctx := context.Background()
-	if stats.version, err = coll.getVersion(ctx); err == nil {
-		stats.active, stats.paused, stats.download, stats.upload, err = coll.getSessionStats(ctx)
+	if stats.version, err = c.getVersion(ctx); err == nil {
+		stats.active, stats.paused, stats.download, stats.upload, err = c.getSessionStats(ctx)
 	}
 	return stats, err
 }
 
-func (coll *Collector) getVersion(ctx context.Context) (string, error) {
-	params, err := coll.API.GetSessionParameters(ctx)
+func (c *Collector) getVersion(ctx context.Context) (string, error) {
+	params, err := c.API.GetSessionParameters(ctx)
 	return params.Arguments.Version, err
 }
 
-func (coll *Collector) getSessionStats(ctx context.Context) (int, int, int, int, error) {
-	stats, err := coll.API.GetSessionStatistics(ctx)
+func (c *Collector) getSessionStats(ctx context.Context) (int, int, int, int, error) {
+	stats, err := c.API.GetSessionStatistics(ctx)
 	return stats.Arguments.ActiveTorrentCount, stats.Arguments.PausedTorrentCount, stats.Arguments.DownloadSpeed, stats.Arguments.UploadSpeed, err
 }

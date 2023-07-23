@@ -53,33 +53,33 @@ func NewCollector(filename string) *Collector {
 }
 
 // Describe implements the prometheus.Collector interface
-func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
+func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- readMetric
 	ch <- writeMetric
 }
 
 // Collect implements the prometheus.Collector interface
-func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	start := time.Now()
 
-	stats, err := coll.getStats()
+	stats, err := c.getStats()
 	if err != nil {
 		// ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting bandwidth statistics", nil, nil), err)
-		coll.logger.Error("failed to collect bandwidth metrics", "err", err)
+		c.logger.Error("failed to collect bandwidth metrics", "err", err)
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(stats.read))
 	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
-	coll.logger.Debug("stats collected", "duration", time.Since(start))
+	c.logger.Debug("stats collected", "duration", time.Since(start))
 }
 
 var (
 	statusFileRegEx = regexp.MustCompile(`^(.+),(\d+)$`)
 )
 
-func (coll *Collector) getStats() (bandwidthStats, error) {
+func (c *Collector) getStats() (bandwidthStats, error) {
 	var stats bandwidthStats
-	statusFile, err := os.Open(coll.Filename)
+	statusFile, err := os.Open(c.Filename)
 	if err != nil {
 		return stats, err
 	}

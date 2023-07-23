@@ -63,7 +63,7 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 	)
 
 	return &Collector{
-		Scraper:     &scraper.RadarrScraper{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
+		Scraper:     scraper.RadarrScraper{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
 		application: "radarr",
 		metrics:     createMetrics("radarr", url),
 		transport:   r,
@@ -79,7 +79,7 @@ func NewSonarrCollector(url, apiKey string) *Collector {
 	)
 
 	return &Collector{
-		Scraper:     &scraper.SonarrScraper{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
+		Scraper:     scraper.SonarrScraper{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
 		application: "sonarr",
 		metrics:     createMetrics("sonarr", url),
 		transport:   r,
@@ -88,44 +88,44 @@ func NewSonarrCollector(url, apiKey string) *Collector {
 }
 
 // Describe implements the prometheus.Collector interface
-func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
-	for _, metric := range coll.metrics {
+func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
+	for _, metric := range c.metrics {
 		ch <- metric
 	}
-	coll.transport.Describe(ch)
+	c.transport.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface
-func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	// TODO: http response's body.Close() sometimes panics in mediaclient/xxxarr ???
 	defer func() {
 		if err := recover(); err != nil {
-			coll.logger.Warn("scrape panicked", "err", err)
+			c.logger.Warn("scrape panicked", "err", err)
 		}
 	}()
 
 	start := time.Now()
-	stats, err := coll.Scraper.Scrape(context.Background())
+	stats, err := c.Scraper.Scrape(context.Background())
 	if err != nil {
-		// ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting "+coll.application+" metrics", nil, nil), err)
+		// ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting "+c.application+" metrics", nil, nil), err)
 		var err2 *xxxarr.ErrInvalidJSON
 		if errors.As(err, &err2) {
-			coll.logger.Error("server returned invalid output", "err", err, "body", string(err2.Body))
+			c.logger.Error("server returned invalid output", "err", err, "body", string(err2.Body))
 		} else {
-			coll.logger.Error("failed to collect metrics", "err", err)
+			c.logger.Error("failed to collect metrics", "err", err)
 		}
 		return
 	}
 
-	ch <- prometheus.MustNewConstMetric(coll.metrics["version"], prometheus.GaugeValue, float64(1), stats.Version)
+	ch <- prometheus.MustNewConstMetric(c.metrics["version"], prometheus.GaugeValue, float64(1), stats.Version)
 	for key, value := range stats.Health {
-		ch <- prometheus.MustNewConstMetric(coll.metrics["health"], prometheus.GaugeValue, float64(value), key)
+		ch <- prometheus.MustNewConstMetric(c.metrics["health"], prometheus.GaugeValue, float64(value), key)
 	}
 	for _, title := range stats.Calendar {
-		ch <- prometheus.MustNewConstMetric(coll.metrics["calendar"], prometheus.GaugeValue, 1.0, title)
+		ch <- prometheus.MustNewConstMetric(c.metrics["calendar"], prometheus.GaugeValue, 1.0, title)
 	}
 
-	ch <- prometheus.MustNewConstMetric(coll.metrics["queued_count"], prometheus.GaugeValue, float64(len(stats.Queued)))
+	ch <- prometheus.MustNewConstMetric(c.metrics["queued_count"], prometheus.GaugeValue, float64(len(stats.Queued)))
 
 	totalBytes := make(map[string]float64)
 	downloadedBytes := make(map[string]float64)
@@ -134,13 +134,13 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 		downloadedBytes[queued.Name] += queued.DownloadedBytes
 	}
 	for name := range totalBytes {
-		ch <- prometheus.MustNewConstMetric(coll.metrics["queued_total"], prometheus.GaugeValue, totalBytes[name], name)
-		ch <- prometheus.MustNewConstMetric(coll.metrics["queued_downloaded"], prometheus.GaugeValue, downloadedBytes[name], name)
+		ch <- prometheus.MustNewConstMetric(c.metrics["queued_total"], prometheus.GaugeValue, totalBytes[name], name)
+		ch <- prometheus.MustNewConstMetric(c.metrics["queued_downloaded"], prometheus.GaugeValue, downloadedBytes[name], name)
 	}
 
-	ch <- prometheus.MustNewConstMetric(coll.metrics["monitored"], prometheus.GaugeValue, float64(stats.Monitored))
-	ch <- prometheus.MustNewConstMetric(coll.metrics["unmonitored"], prometheus.GaugeValue, float64(stats.Unmonitored))
-	coll.transport.Collect(ch)
+	ch <- prometheus.MustNewConstMetric(c.metrics["monitored"], prometheus.GaugeValue, float64(stats.Monitored))
+	ch <- prometheus.MustNewConstMetric(c.metrics["unmonitored"], prometheus.GaugeValue, float64(stats.Unmonitored))
+	c.transport.Collect(ch)
 
-	coll.logger.Debug("stats collected", "duration", time.Since(start))
+	c.logger.Debug("stats collected", "duration", time.Since(start))
 }

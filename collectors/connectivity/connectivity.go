@@ -63,38 +63,38 @@ func NewCollector(token string, proxyURL *url.URL, expiry time.Duration) *Collec
 }
 
 // Describe implements the prometheus.Collector interface
-func (coll *Collector) Describe(ch chan<- *prometheus.Desc) {
+func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- upMetric
-	coll.transport.Describe(ch)
+	c.transport.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface
-func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
+func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	start := time.Now()
-	err := coll.ping()
+	err := c.ping()
 
 	value := 0.0
 	if err == nil {
 		value = 1.0
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
-	coll.transport.Collect(ch)
-	coll.logger.Debug("stats collected", "duration", time.Since(start))
+	c.transport.Collect(ch)
+	c.logger.Debug("stats collected", "duration", time.Since(start))
 }
 
-func (coll *Collector) ping() error {
+func (c *Collector) ping() error {
 	URL := "https://ipinfo.io/"
-	if coll.URL != "" {
-		URL = coll.URL
+	if c.URL != "" {
+		URL = c.URL
 	}
 	req, _ := http.NewRequest(http.MethodGet, URL, nil)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	q := req.URL.Query()
-	q.Add("token", coll.token)
+	q.Add("token", c.token)
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := coll.HTTPClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return err
 	}
