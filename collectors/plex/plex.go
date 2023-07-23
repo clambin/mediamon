@@ -145,6 +145,8 @@ func parseSessions(input plex.Sessions) map[string]plexSession {
 	output := make(map[string]plexSession)
 
 	for _, session := range input.Metadata {
+		log(session)
+
 		output[session.Session.ID] = plexSession{
 			user:      session.User.Title,
 			player:    session.Player.Product,
@@ -158,4 +160,51 @@ func parseSessions(input plex.Sessions) map[string]plexSession {
 		}
 	}
 	return output
+}
+
+type sessionInfo struct {
+	parts []partInfo
+}
+
+type partInfo struct {
+	decision   string
+	streamInfo []streamInfo
+}
+
+type streamInfo struct {
+	decision string
+	kind     int
+	codec    string
+	location string
+}
+
+func log(session plex.Session) {
+	var sessionInfos []sessionInfo
+	for _, media := range session.Media {
+		var parts []partInfo
+		for _, part := range media.Part {
+			var streams []streamInfo
+			for _, stream := range part.Stream {
+				streams = append(streams, streamInfo{
+					decision: stream.Decision,
+					kind:     stream.StreamType,
+					codec:    stream.Codec,
+					location: stream.Location,
+				})
+			}
+			parts = append(parts, partInfo{
+				decision:   part.Decision,
+				streamInfo: streams,
+			})
+		}
+		sessionInfos = append(sessionInfos, sessionInfo{
+			parts: parts,
+		})
+	}
+
+	slog.Info("plex session found",
+		"title", session.GetTitle(),
+		"media.part.decisions", sessionInfos,
+		"transcode.videoDecision", session.TranscodeSession.VideoDecision,
+	)
 }
