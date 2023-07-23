@@ -142,5 +142,5 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(coll.metrics["unmonitored"], prometheus.GaugeValue, float64(stats.Unmonitored))
 	coll.transport.Collect(ch)
 
-	coll.logger.Debug(" tats collected", "duration", time.Since(start))
+	coll.logger.Debug("stats collected", "duration", time.Since(start))
 }

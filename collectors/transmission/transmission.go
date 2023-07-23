@@ -112,12 +112,12 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := coll.getStats()
 	if err != nil {
 		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting transmission metrics", nil, nil),err)
-		slog.Error("failed to collect transmission metrics", "err", err)
+		coll.logger.Error("failed to collect stats", "err", err)
 		return
 	}
 	stats.collect(ch, coll.url)
 	coll.transport.Collect(ch)
-	defer slog.Debug("transmission stats collected", "duration", time.Since(start))
+	coll.logger.Debug("stats collected", "duration", time.Since(start))
 }
 
 func (coll *Collector) getStats() (stats transmissionStats, err error) {

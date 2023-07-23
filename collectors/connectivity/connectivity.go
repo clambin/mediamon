@@ -79,7 +79,7 @@ func (coll *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
 	coll.transport.Collect(ch)
-	coll.logger.Debug("connectivity stats collected", "duration", time.Since(start))
+	coll.logger.Debug("stats collected", "duration", time.Since(start))
 }
 
 func (coll *Collector) ping() error {
