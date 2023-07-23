@@ -13,7 +13,7 @@ var (
 	sessionMetric = prometheus.NewDesc(
 		prometheus.BuildFQName("mediamon", "plex", "session_count"),
 		"Active Plex session",
-		[]string{"url", "id", "user", "player", "title", "location", "address", "lon", "lat"},
+		[]string{"url", "id", "user", "player", "title", "mode", "location", "address", "lon", "lat"},
 		nil,
 	)
 

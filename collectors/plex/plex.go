@@ -102,10 +102,10 @@ func (coll *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 		}
 
 		ch <- prometheus.MustNewConstMetric(sessionMetric, prometheus.GaugeValue, stats.progress,
-			coll.url, id, stats.user, stats.player, stats.title, stats.location, stats.address, lon, lat,
+			coll.url, id, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat,
 		)
 
-		if stats.transcode {
+		if stats.videoMode == "transcode" {
 			if stats.throttled {
 				throttled++
 			} else {
@@ -142,7 +142,7 @@ type plexSession struct {
 	title     string
 	address   string
 	progress  float64
-	transcode bool
+	videoMode string
 	throttled bool
 	speed     float64
 }
@@ -158,7 +158,7 @@ func parseSessions(input plex.Sessions) map[string]plexSession {
 			title:     session.GetTitle(),
 			address:   session.Player.Address,
 			progress:  session.GetProgress(),
-			transcode: session.TranscodeSession.VideoDecision == "transcode",
+			videoMode: session.GetVideoMode(),
 			throttled: session.TranscodeSession.Throttled,
 			speed:     session.TranscodeSession.Speed,
 		}
@@ -208,7 +208,7 @@ func (coll *Collector) log(session plex.Session) {
 
 	coll.logger.Debug("session found",
 		"title", session.GetTitle(),
-		"mode", session.GetMediaMode(),
+		"mode", session.GetVideoMode(),
 		"media.part.decisions", sessionInfos,
 		"transcode", session.TranscodeSession,
 	)

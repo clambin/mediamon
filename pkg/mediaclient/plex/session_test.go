@@ -183,7 +183,7 @@ func TestSession_GetMediaMode(t *testing.T) {
 				Media:            tt.fields.media,
 				TranscodeSession: tt.fields.transcode,
 			}
-			assert.Equal(t, tt.want, s.GetMediaMode())
+			assert.Equal(t, tt.want, s.GetVideoMode())
 		})
 	}
 }

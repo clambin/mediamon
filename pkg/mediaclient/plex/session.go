@@ -230,8 +230,8 @@ func (s Session) GetProgress() float64 {
 	return float64(s.ViewOffset) / float64(s.Duration)
 }
 
-// GetMediaMode returns the session's video mode (transcoding, direct play, etc).
-func (s Session) GetMediaMode() string {
+// GetVideoMode returns the session's video mode (transcoding, direct play, etc).
+func (s Session) GetVideoMode() string {
 	decisions := set.Create[string]()
 	for _, media := range s.Media {
 		for _, part := range media.Part {
