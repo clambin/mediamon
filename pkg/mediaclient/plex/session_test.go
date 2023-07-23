@@ -113,3 +113,51 @@ func TestSession_GetProgress(t *testing.T) {
 		})
 	}
 }
+
+func TestSession_GetMediaMode(t *testing.T) {
+	type fields struct {
+		media []plex.SessionMedia
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name: "directplay",
+			fields: fields{
+				media: []plex.SessionMedia{
+					{Part: []plex.MediaSessionPart{{Decision: "directplay"}}},
+				},
+			},
+			want: "directplay",
+		},
+		{
+			name: "transcoding",
+			fields: fields{
+				media: []plex.SessionMedia{
+					{Part: []plex.MediaSessionPart{{Decision: "transcoding"}}},
+				},
+			},
+			want: "transcoding",
+		},
+		{
+			name: "multiple",
+			fields: fields{
+				media: []plex.SessionMedia{
+					{Part: []plex.MediaSessionPart{{Decision: "directplay"}}},
+					{Part: []plex.MediaSessionPart{{Decision: "transcoding"}}},
+				},
+			},
+			want: "directplay,transcoding",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := plex.Session{
+				Media: tt.fields.media,
+			}
+			assert.Equal(t, tt.want, s.GetMediaMode())
+		})
+	}
+}

@@ -206,8 +206,9 @@ func (coll *Collector) log(session plex.Session) {
 		})
 	}
 
-	coll.logger.Info("session found",
+	coll.logger.Debug("session found",
 		"title", session.GetTitle(),
+		"mode", session.GetMediaMode(),
 		"media.part.decisions", sessionInfos,
 		"transcode.videoDecision", session.TranscodeSession.VideoDecision,
 	)
