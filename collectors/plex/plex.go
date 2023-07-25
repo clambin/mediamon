@@ -97,14 +97,14 @@ func (c *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 
 	var active, throttled, speed float64
 
-	for id, stats := range parseSessions(sessions) {
+	for _, stats := range parseSessions(sessions) {
 		var lon, lat string
 		if stats.location != "lan" {
 			lon, lat = c.locateAddress(stats.address)
 		}
 
 		ch <- prometheus.MustNewConstMetric(sessionMetric, prometheus.GaugeValue, stats.progress,
-			c.url, id, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat,
+			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat,
 		)
 
 		if stats.videoMode == "transcode" {
