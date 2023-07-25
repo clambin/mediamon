@@ -3,6 +3,7 @@ package plex
 import (
 	"context"
 	"github.com/clambin/go-common/httpclient"
+	"github.com/clambin/mediamon/v2/internal/roundtripper"
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
@@ -42,7 +43,7 @@ type Config struct {
 
 // NewCollector creates a new Collector
 func NewCollector(version, url, username, password string) *Collector {
-	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "plex"))
+	r := httpclient.NewRoundTripper(roundtripper.WithMetrics("mediamon", "", "plex"))
 	return &Collector{
 		API:       plex.New(username, password, "github.com/clambin/mediamon", version, url, r),
 		IPLocator: iplocator.New(),

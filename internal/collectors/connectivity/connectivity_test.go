@@ -1,7 +1,7 @@
 package connectivity_test
 
 import (
-	"github.com/clambin/mediamon/v2/collectors/connectivity"
+	"github.com/clambin/mediamon/v2/internal/collectors/connectivity"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"net/http"

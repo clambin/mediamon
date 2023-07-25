@@ -2,8 +2,8 @@ package scraper_test
 
 import (
 	"context"
-	"github.com/clambin/mediamon/v2/collectors/xxxarr/scraper"
-	"github.com/clambin/mediamon/v2/collectors/xxxarr/scraper/mocks"
+	scraper2 "github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper"
+	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper/mocks"
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -13,7 +13,7 @@ import (
 
 func TestSonarrScraper_Scrape(t *testing.T) {
 	c := mocks.NewSonarrAPI(t)
-	u := scraper.SonarrScraper{Client: c}
+	u := scraper2.SonarrScraper{Client: c}
 
 	c.On("GetURL").Return("http://localhost:8080")
 	c.On("GetSystemStatus", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrSystemStatus, nil)
@@ -35,7 +35,7 @@ func TestSonarrScraper_Scrape(t *testing.T) {
 	assert.Equal(t, 1, stats.Health["error"])
 	assert.Equal(t, "1.2.3.4444", stats.Version)
 	assert.Equal(t, []string{"Series 11 - S01E02 - bar", "Series 11 - S01E03 - snafu"}, stats.Calendar)
-	assert.Equal(t, []scraper.QueuedFile{
+	assert.Equal(t, []scraper2.QueuedFile{
 		{Name: "series - S01E01 - Pilot", TotalBytes: 100, DownloadedBytes: 50},
 		{Name: "series - S01E02 - Seconds", TotalBytes: 100, DownloadedBytes: 100},
 		{Name: "series - S01E03 - End", TotalBytes: 100, DownloadedBytes: 75},

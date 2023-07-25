@@ -1,8 +1,8 @@
 package plex_test
 
 import (
-	"github.com/clambin/mediamon/v2/collectors/plex"
-	"github.com/clambin/mediamon/v2/collectors/plex/mocks"
+	"github.com/clambin/mediamon/v2/internal/collectors/plex"
+	mocks2 "github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
 	plexClient "github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -30,8 +30,8 @@ func TestCollector_Describe(t *testing.T) {
 
 func TestCollector_Collect(t *testing.T) {
 	c := plex.NewCollector("1.0", "", "", "")
-	l := mocks.NewIPLocator(t)
-	p := mocks.NewAPI(t)
+	l := mocks2.NewIPLocator(t)
+	p := mocks2.NewAPI(t)
 	c.API = p
 	c.IPLocator = l
 
