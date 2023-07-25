@@ -89,9 +89,11 @@ func (c *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	for _, session := range sessions.Metadata {
-		c.log(session)
-	}
+	/*
+		for _, session := range sessions.Metadata {
+			c.log(session)
+		}
+	*/
 
 	var active, throttled, speed float64
 
@@ -166,6 +168,7 @@ func parseSessions(input plex.Sessions) map[string]plexSession {
 	return output
 }
 
+/*
 type sessionInfo struct {
 	parts []partInfo
 }
@@ -202,3 +205,4 @@ func (c *Collector) log(session plex.Session) {
 		"transcode", session.TranscodeSession,
 	)
 }
+*/
