@@ -19,7 +19,7 @@ func TestCollector_Collect_Up(t *testing.T) {
 	c.URL = testServer.URL
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
-# HELP mediamon_api_errors_total Number of failed Reporter API calls
+# HELP mediamon_api_errors_total Number of failed HTTP calls
 # TYPE mediamon_api_errors_total counter
 mediamon_api_errors_total{application="connectivity",method="GET",path=""} 0
 # HELP openvpn_client_status OpenVPN client status
@@ -35,7 +35,7 @@ func TestCollector_Collect_Down(t *testing.T) {
 	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
 	c.URL = testServer.URL
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
-# HELP mediamon_api_errors_total Number of failed Reporter API calls
+# HELP mediamon_api_errors_total Number of failed HTTP calls
 # TYPE mediamon_api_errors_total counter
 mediamon_api_errors_total{application="connectivity",method="GET",path=""} 0
 # HELP openvpn_client_status OpenVPN client status

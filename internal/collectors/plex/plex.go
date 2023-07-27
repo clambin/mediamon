@@ -43,7 +43,9 @@ type Config struct {
 
 // NewCollector creates a new Collector
 func NewCollector(version, url, username, password string) *Collector {
-	r := httpclient.NewRoundTripper(roundtripper.WithMetrics("mediamon", "", "plex"))
+	r := httpclient.NewRoundTripper(
+		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "plex")),
+	)
 	return &Collector{
 		API:       plex.New(username, password, "github.com/clambin/mediamon", version, url, r),
 		IPLocator: iplocator.New(),

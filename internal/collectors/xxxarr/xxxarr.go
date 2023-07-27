@@ -60,7 +60,7 @@ const (
 func NewRadarrCollector(url, apiKey string) *Collector {
 	r := httpclient.NewRoundTripper(
 		httpclient.WithInstrumentedCache(radarrCacheTable, cacheExpiry, cleanupInterval, "mediamon", "", "radarr"),
-		roundtripper.WithMetrics("mediamon", "", "radarr"),
+		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "radarr")),
 	)
 
 	return &Collector{
@@ -76,7 +76,7 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 func NewSonarrCollector(url, apiKey string) *Collector {
 	r := httpclient.NewRoundTripper(
 		httpclient.WithInstrumentedCache(sonarrCacheTable, cacheExpiry, cleanupInterval, "mediamon", "", "sonarr"),
-		roundtripper.WithMetrics("mediamon", "", "sonarr"),
+		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "sonarr")),
 	)
 
 	return &Collector{
