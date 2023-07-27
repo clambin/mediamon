@@ -19,12 +19,12 @@ func NewRequestMeasurer(namespace, subsystem, application string) httpclient.Req
 	return RequestMeasurer{
 		latency: prometheus.NewSummaryVec(prometheus.SummaryOpts{
 			Name:        prometheus.BuildFQName(namespace, subsystem, "api_latency"),
-			Help:        "latency of Reporter API calls",
+			Help:        "latency of HTTP calls",
 			ConstLabels: map[string]string{"application": application},
 		}, []string{"method", "path"}),
 		errors: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name:        prometheus.BuildFQName(namespace, subsystem, "api_errors_total"),
-			Help:        "Number of failed Reporter API calls",
+			Help:        "Number of failed HTTP calls",
 			ConstLabels: map[string]string{"application": application},
 		}, []string{"method", "path"}),
 	}
