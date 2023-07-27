@@ -26,7 +26,7 @@ func TestRequestMetrics(t *testing.T) {
 
 	assert.Equal(t, 1, testutil.CollectAndCount(r, `foo_bar_api_latency`))
 	assert.NoError(t, testutil.CollectAndCompare(r, bytes.NewBufferString(`
-# HELP foo_bar_api_errors_total Number of failed Reporter API calls
+# HELP foo_bar_api_errors_total Number of failed HTTP calls
 # TYPE foo_bar_api_errors_total counter
 foo_bar_api_errors_total{application="snafu",method="GET",path="/test"} 0
 `), `foo_bar_api_errors_total`))
