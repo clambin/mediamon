@@ -9,13 +9,6 @@ import (
 	"time"
 )
 
-// Locator finds the geographical coordinates of an IP address
-//
-//go:generate mockery --name Locator
-type Locator interface {
-	Locate(ipAddress string) (lon, lat float64, err error)
-}
-
 // Client finds the geographic coordinates of an IP address.  It uses https://ip-api.com to look an IP address' location.
 type Client struct {
 	httpClient *http.Client
@@ -33,8 +26,6 @@ func New() *Client {
 		logger: slog.Default(),
 	}
 }
-
-var _ Locator = &Client{}
 
 const ipAPIURL = "http://ip-api.com"
 
