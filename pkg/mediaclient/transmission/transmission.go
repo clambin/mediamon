@@ -15,12 +15,12 @@ type Client struct {
 	URL        string
 }
 
-func NewClient(url string, roundtripper http.RoundTripper) *Client {
-	if roundtripper == nil {
-		roundtripper = http.DefaultTransport
+func NewClient(url string, roundTripper http.RoundTripper) *Client {
+	if roundTripper == nil {
+		roundTripper = http.DefaultTransport
 	}
 	return &Client{
-		HTTPClient: &http.Client{Transport: &authenticator{next: roundtripper}},
+		HTTPClient: &http.Client{Transport: &authenticator{next: roundTripper}},
 		URL:        url,
 	}
 }

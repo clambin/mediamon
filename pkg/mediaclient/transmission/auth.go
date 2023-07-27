@@ -29,8 +29,8 @@ func (a *authenticator) RoundTrip(request *http.Request) (*http.Response, error)
 	request.Body = io.NopCloser(origBody)
 
 	request.Header.Set(transmissionSessionIDHeader, a.sessionID)
-	resp, err := a.next.RoundTrip(request)
 
+	resp, err := a.next.RoundTrip(request)
 	if err != nil || resp.StatusCode != http.StatusConflict {
 		return resp, err
 	}
@@ -38,6 +38,7 @@ func (a *authenticator) RoundTrip(request *http.Request) (*http.Response, error)
 	if resp.Body != nil {
 		_ = resp.Body.Close()
 	}
+
 	a.sessionID = resp.Header.Get(transmissionSessionIDHeader)
 	request.Header.Set(transmissionSessionIDHeader, a.sessionID)
 	request.Body = io.NopCloser(&bodyCopy)
