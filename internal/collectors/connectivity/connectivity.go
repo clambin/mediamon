@@ -51,6 +51,7 @@ func NewCollector(token string, proxyURL *url.URL, expiry time.Duration) *Collec
 	}
 
 	r := httpclient.NewRoundTripper(options...)
+
 	return &Collector{
 		HTTPClient: &http.Client{
 			Transport: r,

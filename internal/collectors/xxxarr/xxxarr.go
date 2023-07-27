@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/clambin/go-common/httpclient"
-	"github.com/clambin/mediamon/v2/collectors/xxxarr/scraper"
+	scraper2 "github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper"
+	"github.com/clambin/mediamon/v2/internal/roundtripper"
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slog"
@@ -24,7 +25,7 @@ type Collector struct {
 //
 //go:generate mockery --name Scraper
 type Scraper interface {
-	Scrape(ctx context.Context) (scraper.Stats, error)
+	Scrape(ctx context.Context) (scraper2.Stats, error)
 }
 
 // Config to create a collector
@@ -59,11 +60,11 @@ const (
 func NewRadarrCollector(url, apiKey string) *Collector {
 	r := httpclient.NewRoundTripper(
 		httpclient.WithInstrumentedCache(radarrCacheTable, cacheExpiry, cleanupInterval, "mediamon", "", "radarr"),
-		httpclient.WithMetrics("mediamon", "", "radarr"),
+		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "radarr")),
 	)
 
 	return &Collector{
-		Scraper:     scraper.RadarrScraper{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
+		Scraper:     scraper2.RadarrScraper{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
 		application: "radarr",
 		metrics:     createMetrics("radarr", url),
 		transport:   r,
@@ -75,11 +76,11 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 func NewSonarrCollector(url, apiKey string) *Collector {
 	r := httpclient.NewRoundTripper(
 		httpclient.WithInstrumentedCache(sonarrCacheTable, cacheExpiry, cleanupInterval, "mediamon", "", "sonarr"),
-		httpclient.WithMetrics("mediamon", "", "sonarr"),
+		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "sonarr")),
 	)
 
 	return &Collector{
-		Scraper:     scraper.SonarrScraper{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
+		Scraper:     scraper2.SonarrScraper{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
 		application: "sonarr",
 		metrics:     createMetrics("sonarr", url),
 		transport:   r,

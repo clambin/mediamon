@@ -3,7 +3,7 @@ package transmission_test
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/mediamon/v2/collectors/transmission"
+	"github.com/clambin/mediamon/v2/internal/collectors/transmission"
 	transmission2 "github.com/clambin/mediamon/v2/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"

@@ -3,6 +3,7 @@ package plex
 import (
 	"context"
 	"github.com/clambin/go-common/httpclient"
+	"github.com/clambin/mediamon/v2/internal/roundtripper"
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
@@ -42,7 +43,9 @@ type Config struct {
 
 // NewCollector creates a new Collector
 func NewCollector(version, url, username, password string) *Collector {
-	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "plex"))
+	r := httpclient.NewRoundTripper(
+		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "plex")),
+	)
 	return &Collector{
 		API:       plex.New(username, password, "github.com/clambin/mediamon", version, url, r),
 		IPLocator: iplocator.New(),
@@ -97,14 +100,14 @@ func (c *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 
 	var active, throttled, speed float64
 
-	for id, stats := range parseSessions(sessions) {
+	for _, stats := range parseSessions(sessions) {
 		var lon, lat string
 		if stats.location != "lan" {
 			lon, lat = c.locateAddress(stats.address)
 		}
 
 		ch <- prometheus.MustNewConstMetric(sessionMetric, prometheus.GaugeValue, stats.progress,
-			c.url, id, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat,
+			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat,
 		)
 
 		if stats.videoMode == "transcode" {
