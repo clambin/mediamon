@@ -2,9 +2,9 @@ package scraper_test
 
 import (
 	"context"
-	scraper2 "github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper"
+	"github.com/clambin/mediaclients/xxxarr"
+	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper/mocks"
-	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -13,7 +13,7 @@ import (
 
 func TestRadarrScraper_Scrape(t *testing.T) {
 	c := mocks.NewRadarrAPI(t)
-	u := scraper2.RadarrScraper{Client: c}
+	u := scraper.RadarrScraper{Client: c}
 
 	c.On("GetURL").Return("http://localhost:8080")
 	c.On("GetSystemStatus", mock.AnythingOfType("*context.emptyCtx")).Return(radarrSystemStatus, nil)
@@ -34,7 +34,7 @@ func TestRadarrScraper_Scrape(t *testing.T) {
 	assert.Equal(t, 1, stats.Health["warning"])
 	assert.Equal(t, "1.2.3.4444", stats.Version)
 	assert.Equal(t, []string{"movie 1", "movie 2"}, stats.Calendar)
-	assert.Equal(t, []scraper2.QueuedFile{
+	assert.Equal(t, []scraper.QueuedFile{
 		{Name: "movie 1", TotalBytes: 100, DownloadedBytes: 50},
 		{Name: "movie 3", TotalBytes: 100, DownloadedBytes: 100},
 		{Name: "movie 4", TotalBytes: 100, DownloadedBytes: 75},

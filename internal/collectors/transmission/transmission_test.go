@@ -3,8 +3,8 @@ package transmission_test
 import (
 	"context"
 	"fmt"
+	transmissionClient "github.com/clambin/mediaclients/transmission"
 	"github.com/clambin/mediamon/v2/internal/collectors/transmission"
-	transmission2 "github.com/clambin/mediamon/v2/pkg/mediaclient/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -67,7 +67,7 @@ type server struct {
 	fail bool
 }
 
-func (server server) GetSessionParameters(_ context.Context) (response transmission2.SessionParameters, err error) {
+func (server server) GetSessionParameters(_ context.Context) (response transmissionClient.SessionParameters, err error) {
 	if server.fail {
 		err = fmt.Errorf("failed")
 		return
@@ -76,7 +76,7 @@ func (server server) GetSessionParameters(_ context.Context) (response transmiss
 	return
 }
 
-func (server server) GetSessionStatistics(_ context.Context) (stats transmission2.SessionStats, err error) {
+func (server server) GetSessionStatistics(_ context.Context) (stats transmissionClient.SessionStats, err error) {
 	if server.fail {
 		err = fmt.Errorf("failed")
 		return

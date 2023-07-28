@@ -3,8 +3,8 @@ package qplex_test
 import (
 	"context"
 	"fmt"
-	qplex2 "github.com/clambin/mediamon/v2/internal/qplex"
-	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
+	"github.com/clambin/mediaclients/plex"
+	"github.com/clambin/mediamon/v2/internal/qplex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -17,7 +17,7 @@ func TestGetViews(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []qplex2.ViewCountEntry
+		want    []qplex.ViewCountEntry
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -26,7 +26,7 @@ func TestGetViews(t *testing.T) {
 				tokens:  []string{"1"},
 				reverse: false,
 			},
-			want: []qplex2.ViewCountEntry{
+			want: []qplex.ViewCountEntry{
 				{Library: "Movies", Title: "foo", Views: 1},
 				{Library: "Shows", Title: "bar", Views: 2},
 			},
@@ -38,7 +38,7 @@ func TestGetViews(t *testing.T) {
 				tokens:  []string{"1"},
 				reverse: true,
 			},
-			want: []qplex2.ViewCountEntry{
+			want: []qplex.ViewCountEntry{
 				{Library: "Shows", Title: "bar", Views: 2},
 				{Library: "Movies", Title: "foo", Views: 1},
 			},
@@ -50,7 +50,7 @@ func TestGetViews(t *testing.T) {
 				tokens:  []string{"1", "2", "3"},
 				reverse: true,
 			},
-			want: []qplex2.ViewCountEntry{
+			want: []qplex.ViewCountEntry{
 				{Library: "Shows", Title: "bar", Views: 6},
 				{Library: "Movies", Title: "foo", Views: 3},
 			},
@@ -60,7 +60,7 @@ func TestGetViews(t *testing.T) {
 	c := fakeClient{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := qplex2.GetViews(context.Background(), c, tt.args.tokens, tt.args.reverse)
+			got, err := qplex.GetViews(context.Background(), c, tt.args.tokens, tt.args.reverse)
 			tt.wantErr(t, err)
 			//sort.Slice(got, func(i, j int) bool {
 			//	return got[i].Title < got[j].Title
@@ -73,7 +73,7 @@ func TestGetViews(t *testing.T) {
 type fakeClient struct {
 }
 
-var _ qplex2.PlexGetter = &fakeClient{}
+var _ qplex.PlexGetter = &fakeClient{}
 
 func (f fakeClient) SetAuthToken(_ string) {
 }

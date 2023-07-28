@@ -1,9 +1,9 @@
 package plex_test
 
 import (
+	plexClient "github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	plexClient "github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"

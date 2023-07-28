@@ -2,7 +2,7 @@ package scraper
 
 import (
 	"context"
-	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
+	"github.com/clambin/mediaclients/xxxarr"
 )
 
 // RadarrAPI contains all supported Radarr APIs

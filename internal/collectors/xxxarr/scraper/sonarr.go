@@ -3,7 +3,7 @@ package scraper
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/mediamon/v2/pkg/mediaclient/xxxarr"
+	"github.com/clambin/mediaclients/xxxarr"
 )
 
 // SonarrAPI contains all supported Sonarr APIs

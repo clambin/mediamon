@@ -2,7 +2,7 @@ package qplex
 
 import (
 	"context"
-	"github.com/clambin/mediamon/v2/pkg/mediaclient/plex"
+	"github.com/clambin/mediaclients/plex"
 	"golang.org/x/exp/slog"
 	"sort"
 	"time"
