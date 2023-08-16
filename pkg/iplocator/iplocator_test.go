@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"

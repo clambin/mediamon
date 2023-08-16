@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"os"
 	"regexp"
 	"strconv"

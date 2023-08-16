@@ -5,7 +5,7 @@ import (
 	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/mediaclients/transmission"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"time"
 )
 

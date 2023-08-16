@@ -7,7 +7,7 @@ import (
 
 // RadarrAPI contains all supported Radarr APIs
 //
-//go:generate mockery --name RadarrAPI
+//go:generate mockery --name RadarrAPI --with-expecter=true
 type RadarrAPI interface {
 	GetURL() (url string)
 	GetSystemStatus(ctx context.Context) (response xxxarr.RadarrSystemStatusResponse, err error)

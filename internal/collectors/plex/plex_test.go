@@ -35,11 +35,11 @@ func TestCollector_Collect(t *testing.T) {
 	c.API = p
 	c.IPLocator = l
 
-	l.On("Locate", "1.2.3.4").Return(10.0, 20.0, nil)
+	l.EXPECT().Locate("1.2.3.4").Return(10.0, 20.0, nil)
 
 	idResp := plexClient.Identity{}
 	idResp.Version = "foo"
-	p.On("GetIdentity", mock.AnythingOfType("*context.emptyCtx")).Return(idResp, nil)
+	p.EXPECT().GetIdentity(mock.Anything).Return(idResp, nil)
 
 	var sessions = plexClient.Sessions{}
 	sessions.Metadata = []plexClient.Session{
@@ -86,7 +86,7 @@ func TestCollector_Collect(t *testing.T) {
 		},
 	}
 
-	p.On("GetSessions", mock.AnythingOfType("*context.emptyCtx")).Return(sessions, nil)
+	p.EXPECT().GetSessions(mock.Anything).Return(sessions, nil)
 
 	e := strings.NewReader(`# HELP mediamon_plex_session_count Active Plex session
 # TYPE mediamon_plex_session_count gauge

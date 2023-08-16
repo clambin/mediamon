@@ -135,7 +135,7 @@ mediamon_xxxarr_version{application="radarr",url="",version="foo"} 1
 			}
 			s := mocks2.NewScraper(t)
 			c.Scraper = s
-			s.On("Scrape", mock.AnythingOfType("*context.emptyCtx")).Return(tt.stats, tt.statsErr).Once()
+			s.EXPECT().Scrape(mock.Anything).Return(tt.stats, tt.statsErr).Once()
 
 			err := testutil.CollectAndCompare(c, bytes.NewBufferString(tt.want))
 			assert.NoError(t, err)

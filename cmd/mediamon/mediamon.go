@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"

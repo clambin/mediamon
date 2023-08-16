@@ -3,7 +3,7 @@ package qplex
 import (
 	"context"
 	"github.com/clambin/mediaclients/plex"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"sort"
 	"time"
 )

@@ -8,7 +8,7 @@ import (
 	scraper2 "github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/v2/internal/roundtripper"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"time"
 )
 
@@ -23,7 +23,7 @@ type Collector struct {
 
 // Scraper provides a generic means of getting stats from Sonarr or Radarr
 //
-//go:generate mockery --name Scraper
+//go:generate mockery --name Scraper --with-expecter=true
 type Scraper interface {
 	Scrape(ctx context.Context) (scraper2.Stats, error)
 }

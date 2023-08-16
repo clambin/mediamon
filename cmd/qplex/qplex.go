@@ -9,7 +9,7 @@ import (
 	"github.com/clambin/mediamon/v2/internal/qplex"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"

@@ -7,7 +7,7 @@ import (
 	"github.com/clambin/mediamon/v2/internal/roundtripper"
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"strconv"
 	"time"
 )
@@ -21,13 +21,13 @@ type Collector struct {
 	logger    *slog.Logger
 }
 
-//go:generate mockery --name API
+//go:generate mockery --name API --with-expecter=true
 type API interface {
 	GetIdentity(context.Context) (plex.Identity, error)
 	GetSessions(context.Context) (plex.Sessions, error)
 }
 
-//go:generate mockery --name IPLocator
+//go:generate mockery --name IPLocator --with-expecter=true
 type IPLocator interface {
 	Locate(string) (float64, float64, error)
 }

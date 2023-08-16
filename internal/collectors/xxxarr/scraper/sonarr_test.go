@@ -15,15 +15,15 @@ func TestSonarrScraper_Scrape(t *testing.T) {
 	c := mocks.NewSonarrAPI(t)
 	u := scraper.SonarrScraper{Client: c}
 
-	c.On("GetURL").Return("http://localhost:8080")
-	c.On("GetSystemStatus", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrSystemStatus, nil)
-	c.On("GetHealth", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrSystemHealth, nil)
-	c.On("GetCalendar", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrCalendar, nil)
-	c.On("GetQueue", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrQueue, nil)
-	c.On("GetSeries", mock.AnythingOfType("*context.emptyCtx")).Return(sonarrSeries, nil)
-	c.On("GetSeriesByID", mock.AnythingOfType("*context.emptyCtx"), 11).Return(sonarrSeriesByID11, nil)
+	c.EXPECT().GetURL().Return("http://localhost:8080")
+	c.EXPECT().GetSystemStatus(mock.Anything).Return(sonarrSystemStatus, nil)
+	c.EXPECT().GetHealth(mock.Anything).Return(sonarrSystemHealth, nil)
+	c.EXPECT().GetCalendar(mock.Anything).Return(sonarrCalendar, nil)
+	c.EXPECT().GetQueue(mock.Anything).Return(sonarrQueue, nil)
+	c.EXPECT().GetSeries(mock.Anything).Return(sonarrSeries, nil)
+	c.EXPECT().GetSeriesByID(mock.Anything, 11).Return(sonarrSeriesByID11, nil)
 	for id, entry := range sonarrEpisodes {
-		c.On("GetEpisodeByID", mock.AnythingOfType("*context.emptyCtx"), id).Return(entry, nil)
+		c.EXPECT().GetEpisodeByID(mock.Anything, id).Return(entry, nil)
 	}
 
 	stats, err := u.Scrape(context.Background())

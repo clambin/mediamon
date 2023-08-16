@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/clambin/go-common/httpclient"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"net/http"
 	"time"
 )

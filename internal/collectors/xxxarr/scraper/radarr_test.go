@@ -15,15 +15,14 @@ func TestRadarrScraper_Scrape(t *testing.T) {
 	c := mocks.NewRadarrAPI(t)
 	u := scraper.RadarrScraper{Client: c}
 
-	c.On("GetURL").Return("http://localhost:8080")
-	c.On("GetSystemStatus", mock.AnythingOfType("*context.emptyCtx")).Return(radarrSystemStatus, nil)
-	c.On("GetHealth", mock.AnythingOfType("*context.emptyCtx")).Return(radarrSystemHealth, nil)
-	c.On("GetCalendar", mock.AnythingOfType("*context.emptyCtx")).Return(radarrCalendar, nil)
-	c.On("GetQueue", mock.AnythingOfType("*context.emptyCtx")).Return(radarrQueue, nil)
-	c.On("GetMovies", mock.AnythingOfType("*context.emptyCtx")).Return(radarrMovies, nil)
+	c.EXPECT().GetURL().Return("http://localhost:8080")
+	c.EXPECT().GetSystemStatus(mock.Anything).Return(radarrSystemStatus, nil)
+	c.EXPECT().GetHealth(mock.Anything).Return(radarrSystemHealth, nil)
+	c.EXPECT().GetCalendar(mock.Anything).Return(radarrCalendar, nil)
+	c.EXPECT().GetQueue(mock.Anything).Return(radarrQueue, nil)
+	c.EXPECT().GetMovies(mock.Anything).Return(radarrMovies, nil)
 	for id, entry := range radarrMoviesByID {
-		c.On("GetMovieByID", mock.AnythingOfType("*context.emptyCtx"), id).Return(entry, nil).Once()
-
+		c.EXPECT().GetMovieByID(mock.Anything, id).Return(entry, nil).Once()
 	}
 
 	stats, err := u.Scrape(context.Background())

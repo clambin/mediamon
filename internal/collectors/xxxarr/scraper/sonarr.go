@@ -8,7 +8,7 @@ import (
 
 // SonarrAPI contains all supported Sonarr APIs
 //
-//go:generate mockery --name SonarrAPI
+//go:generate mockery --name SonarrAPI --with-expecter=true
 type SonarrAPI interface {
 	GetURL() string
 	GetSystemStatus(ctx context.Context) (response xxxarr.SonarrSystemStatusResponse, err error)
