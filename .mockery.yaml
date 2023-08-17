@@ -1,0 +1,26 @@
+with-expecter: true
+outpkg: mocks
+mockname: "{{.InterfaceName}}"
+packages:
+  github.com/clambin/mediamon/v2/internal/collectors/plex:
+    interfaces:
+      API:
+      IPLocator:
+    config:
+      dir: internal/collectors/plex/mocks
+  github.com/clambin/mediamon/v2/internal/collectors/transmission:
+    interfaces:
+      API:
+    config:
+      dir: internal/collectors/transmission/mocks
+  github.com/clambin/mediamon/v2/internal/collectors/xxxarr:
+    interfaces:
+      Scraper:
+    config:
+      dir: internal/collectors/xxxarr/mocks
+  github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper:
+    interfaces:
+      RadarrAPI:
+      SonarrAPI:
+    config:
+      dir: internal/collectors/xxxarr/scraper/mocks
