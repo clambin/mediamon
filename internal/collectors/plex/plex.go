@@ -14,15 +14,14 @@ import (
 
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
-	API
+	Getter
 	IPLocator
 	url       string
 	transport *httpclient.RoundTripper
 	logger    *slog.Logger
 }
 
-//go:generate mockery --name API --with-expecter=true
-type API interface {
+type Getter interface {
 	GetIdentity(context.Context) (plex.Identity, error)
 	GetSessions(context.Context) (plex.Sessions, error)
 }
@@ -47,7 +46,7 @@ func NewCollector(version, url, username, password string) *Collector {
 		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "plex")),
 	)
 	return &Collector{
-		API:       plex.New(username, password, "github.com/clambin/mediamon", version, url, r),
+		Getter:    plex.New(username, password, "github.com/clambin/mediamon", version, url, r),
 		IPLocator: iplocator.New(),
 		url:       url,
 		transport: r,
@@ -74,7 +73,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
-	identity, err := c.API.GetIdentity(context.Background())
+	identity, err := c.Getter.GetIdentity(context.Background())
 	if err != nil {
 		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting Plex version", nil, nil),err)
 		c.logger.Error("failed to collect version", "err", err)
@@ -85,7 +84,7 @@ func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
 }
 
 func (c *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
-	sessions, err := c.API.GetSessions(context.Background())
+	sessions, err := c.Getter.GetSessions(context.Background())
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting Plex session stats", nil, nil), err)
 		c.logger.Error("failed to collect session stats", "err", err)

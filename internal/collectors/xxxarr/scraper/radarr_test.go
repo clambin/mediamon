@@ -12,7 +12,7 @@ import (
 )
 
 func TestRadarrScraper_Scrape(t *testing.T) {
-	c := mocks.NewRadarrAPI(t)
+	c := mocks.NewRadarrGetter(t)
 	u := scraper.RadarrScraper{Client: c}
 
 	c.EXPECT().GetURL().Return("http://localhost:8080")

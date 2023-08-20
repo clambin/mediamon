@@ -5,10 +5,8 @@ import (
 	"github.com/clambin/mediaclients/xxxarr"
 )
 
-// RadarrAPI contains all supported Radarr APIs
-//
-//go:generate mockery --name RadarrAPI --with-expecter=true
-type RadarrAPI interface {
+// RadarrGetter contains all required Radarr API calls
+type RadarrGetter interface {
 	GetURL() (url string)
 	GetSystemStatus(ctx context.Context) (response xxxarr.RadarrSystemStatusResponse, err error)
 	GetHealth(ctx context.Context) (response []xxxarr.RadarrHealthResponse, err error)
@@ -21,7 +19,7 @@ type RadarrAPI interface {
 
 // RadarrScraper collects Stats from a Radarr instance
 type RadarrScraper struct {
-	Client RadarrAPI
+	Client RadarrGetter
 }
 
 // Scrape returns Stats from a Radarr instance

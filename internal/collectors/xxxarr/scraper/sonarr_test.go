@@ -12,7 +12,7 @@ import (
 )
 
 func TestSonarrScraper_Scrape(t *testing.T) {
-	c := mocks.NewSonarrAPI(t)
+	c := mocks.NewSonarrGetter(t)
 	u := scraper.SonarrScraper{Client: c}
 
 	c.EXPECT().GetURL().Return("http://localhost:8080")

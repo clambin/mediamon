@@ -31,8 +31,8 @@ func TestCollector_Describe(t *testing.T) {
 func TestCollector_Collect(t *testing.T) {
 	c := plex.NewCollector("1.0", "", "", "")
 	l := mocks.NewIPLocator(t)
-	p := mocks.NewAPI(t)
-	c.API = p
+	p := mocks.NewGetter(t)
+	c.Getter = p
 	c.IPLocator = l
 
 	l.EXPECT().Locate("1.2.3.4").Return(10.0, 20.0, nil)

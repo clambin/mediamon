@@ -6,15 +6,15 @@ outpkg: "mocks"
 packages:
   github.com/clambin/mediamon/v2/internal/collectors/plex:
     interfaces:
-      API:
+      Getter:
       IPLocator:
   github.com/clambin/mediamon/v2/internal/collectors/transmission:
     interfaces:
-      API:
+      Getter:
   github.com/clambin/mediamon/v2/internal/collectors/xxxarr:
     interfaces:
       Scraper:
   github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper:
     interfaces:
-      RadarrAPI:
-      SonarrAPI:
+      RadarrGetter:
+      SonarrGetter:

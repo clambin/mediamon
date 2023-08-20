@@ -6,10 +6,8 @@ import (
 	"github.com/clambin/mediaclients/xxxarr"
 )
 
-// SonarrAPI contains all supported Sonarr APIs
-//
-//go:generate mockery --name SonarrAPI --with-expecter=true
-type SonarrAPI interface {
+// SonarrGetter contains all required Sonarr API calls
+type SonarrGetter interface {
 	GetURL() string
 	GetSystemStatus(ctx context.Context) (response xxxarr.SonarrSystemStatusResponse, err error)
 	GetHealth(ctx context.Context) (response []xxxarr.SonarrHealthResponse, err error)
@@ -23,7 +21,7 @@ type SonarrAPI interface {
 
 // SonarrScraper collects Stats from a Sonarr instance
 type SonarrScraper struct {
-	Client SonarrAPI
+	Client SonarrGetter
 }
 
 // Scrape returns Stats from a Sonarr instance
