@@ -26,7 +26,6 @@ type Getter interface {
 	GetSessions(context.Context) (plex.Sessions, error)
 }
 
-//go:generate mockery --name IPLocator --with-expecter=true
 type IPLocator interface {
 	Locate(string) (float64, float64, error)
 }

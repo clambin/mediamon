@@ -25,7 +25,7 @@ import (
 var (
 	namespace = flag.String("namespace", "media", "namespace")
 	name      = flag.String("name", "transmission", "deployment name")
-	interval  = flag.Duration("interval", 5*time.Minute, "scanning interval")
+	interval  = flag.Duration("interval", time.Minute, "scanning interval")
 	once      = flag.Bool("once", false, "scan once and exit")
 	debug     = flag.Bool("debug", false, "enable debug mode")
 

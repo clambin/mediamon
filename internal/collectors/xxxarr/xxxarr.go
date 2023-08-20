@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/mediaclients/xxxarr"
-	scraper2 "github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper"
+	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper"
 	"github.com/clambin/mediamon/v2/internal/roundtripper"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
@@ -22,10 +22,8 @@ type Collector struct {
 }
 
 // Scraper provides a generic means of getting stats from Sonarr or Radarr
-//
-//go:generate mockery --name Scraper --with-expecter=true
 type Scraper interface {
-	Scrape(ctx context.Context) (scraper2.Stats, error)
+	Scrape(ctx context.Context) (scraper.Stats, error)
 }
 
 // Config to create a collector
@@ -64,7 +62,7 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 	)
 
 	return &Collector{
-		Scraper:     scraper2.RadarrScraper{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
+		Scraper:     scraper.RadarrScraper{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
 		application: "radarr",
 		metrics:     createMetrics("radarr", url),
 		transport:   r,
@@ -80,7 +78,7 @@ func NewSonarrCollector(url, apiKey string) *Collector {
 	)
 
 	return &Collector{
-		Scraper:     scraper2.SonarrScraper{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
+		Scraper:     scraper.SonarrScraper{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
 		application: "sonarr",
 		metrics:     createMetrics("sonarr", url),
 		transport:   r,
@@ -98,7 +96,7 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	// TODO: http response's body.Close() sometimes panics in mediaclient/xxxarr ???
+	// TODO: panic due to scrape was due to a bug in httpclient Cache. Safe to remove now?
 	defer func() {
 		if err := recover(); err != nil {
 			c.logger.Warn("scrape panicked", "err", err)
