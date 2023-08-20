@@ -1,13 +1,13 @@
 package transmission_test
 
 import (
-	"context"
-	"fmt"
 	transmissionClient "github.com/clambin/mediaclients/transmission"
 	"github.com/clambin/mediamon/v2/internal/collectors/transmission"
+	"github.com/clambin/mediamon/v2/internal/collectors/transmission/mocks"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"strings"
 	"testing"
 )
@@ -30,8 +30,19 @@ func TestCollector_Describe(t *testing.T) {
 }
 
 func TestCollector_Collect(t *testing.T) {
+	g := mocks.NewGetter(t)
+	var sessionStats transmissionClient.SessionStats
+	sessionStats.Arguments.ActiveTorrentCount = 1
+	sessionStats.Arguments.PausedTorrentCount = 2
+	sessionStats.Arguments.UploadSpeed = 25
+	sessionStats.Arguments.DownloadSpeed = 100
+	g.EXPECT().GetSessionStatistics(mock.Anything).Return(sessionStats, nil)
+	var sessionParameters transmissionClient.SessionParameters
+	sessionParameters.Arguments.Version = "foo"
+	g.EXPECT().GetSessionParameters(mock.Anything).Return(sessionParameters, nil)
+
 	c := transmission.NewCollector("")
-	c.Getter = &server{}
+	c.Getter = g
 
 	e := strings.NewReader(`# HELP mediamon_transmission_active_torrent_count Number of active torrents
 # TYPE mediamon_transmission_active_torrent_count gauge
@@ -50,40 +61,4 @@ mediamon_transmission_upload_speed{url=""} 25
 mediamon_transmission_version{url="",version="foo"} 1
 `)
 	assert.NoError(t, testutil.CollectAndCompare(c, e))
-}
-
-/*
-func TestCollector_Collect_Fail(t *testing.T) {
-	c := transmission.NewCollector("")
-	c.Getter = &server{fail: true}
-
-	err := testutil.CollectAndCompare(c, strings.NewReader(``))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), `Desc{fqName: "mediamon_error", help: "Error getting transmission metrics", constLabels: {}, variableLabels: []}`)
-}
-*/
-
-type server struct {
-	fail bool
-}
-
-func (server server) GetSessionParameters(_ context.Context) (response transmissionClient.SessionParameters, err error) {
-	if server.fail {
-		err = fmt.Errorf("failed")
-		return
-	}
-	response.Arguments.Version = "foo"
-	return
-}
-
-func (server server) GetSessionStatistics(_ context.Context) (stats transmissionClient.SessionStats, err error) {
-	if server.fail {
-		err = fmt.Errorf("failed")
-		return
-	}
-	stats.Arguments.ActiveTorrentCount = 1
-	stats.Arguments.PausedTorrentCount = 2
-	stats.Arguments.UploadSpeed = 25
-	stats.Arguments.DownloadSpeed = 100
-	return
 }

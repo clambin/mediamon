@@ -3,7 +3,6 @@ package iplocator
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -26,31 +25,60 @@ func TestClient_Locate(t *testing.T) {
 		},
 	}
 	ts := httptest.NewServer(http.HandlerFunc(s.handle))
-	c := New()
+
+	c := New(slog.Default())
 	c.url = ts.URL
 
 	c.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	lon, lat, err := c.Locate("8.8.8.8")
-	require.NoError(t, err)
-	assert.Equal(t, -77.5, lon)
-	assert.Equal(t, 39.03, lat)
+	testCases := []struct {
+		name    string
+		address string
+		wantErr assert.ErrorAssertionFunc
+		wantLon float64
+		wantLat float64
+	}{
+		{
+			name:    "valid",
+			address: "8.8.8.8",
+			wantErr: assert.NoError,
+			wantLon: -77.5,
+			wantLat: 39.03,
+		},
+		{
+			name:    "valid",
+			address: "8.8.8.8",
+			wantErr: assert.NoError,
+			wantLon: -77.5,
+			wantLat: 39.03,
+		},
+		{
+			name:    "invalid",
+			address: "192.168.0.1",
+			wantErr: assert.Error,
+		},
+		{
+			name:    "unknown",
+			address: "unknown",
+			wantErr: assert.Error,
+		},
+	}
 
-	lon, lat, err = c.Locate("8.8.8.8")
-	require.NoError(t, err)
-	assert.Equal(t, -77.5, lon)
-	assert.Equal(t, 39.03, lat)
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			lon, lat, err := c.Locate(tt.address)
+			tt.wantErr(t, err)
+			if err == nil {
+				assert.Equal(t, tt.wantLon, lon)
+				assert.Equal(t, tt.wantLat, lat)
+			}
+		})
+	}
 
-	_, _, err = c.Locate("192.168.0.1")
-	assert.Error(t, err)
-
-	assert.Equal(t, 2, s.calls)
-
-	_, _, err = c.Locate("invalid")
-	assert.Error(t, err)
+	assert.Equal(t, 3, s.calls)
 
 	ts.Close()
-	_, _, err = c.Locate("8.8.4.4")
+	_, _, err := c.Locate("8.8.4.4")
 	assert.Error(t, err)
 }
 

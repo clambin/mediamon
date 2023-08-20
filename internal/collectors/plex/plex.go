@@ -44,12 +44,13 @@ func NewCollector(version, url, username, password string) *Collector {
 	r := httpclient.NewRoundTripper(
 		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "plex")),
 	)
+	l := slog.Default().With("collector", "plex")
 	return &Collector{
 		Getter:    plex.New(username, password, "github.com/clambin/mediamon", version, url, r),
-		IPLocator: iplocator.New(),
+		IPLocator: iplocator.New(l),
 		url:       url,
 		transport: r,
-		logger:    slog.Default().With("collector", "plex"),
+		logger:    l,
 	}
 }
 

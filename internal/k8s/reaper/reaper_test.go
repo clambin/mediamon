@@ -3,7 +3,6 @@ package reaper
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,42 +69,42 @@ func TestReaper_Reap(t *testing.T) {
 	tests := []struct {
 		name    string
 		objects []runtime.Object
-		pass    bool
-		count   int
+		wantErr assert.ErrorAssertionFunc
+		want    int
 	}{
 		{
 			name:    "no deployments",
 			objects: []runtime.Object{},
-			pass:    false,
+			wantErr: assert.Error,
 		},
 		{
 			name:    "no replica sets",
 			objects: []runtime.Object{deployment},
-			pass:    false,
+			wantErr: assert.Error,
 		},
 		{
 			name:    "no pods",
 			objects: []runtime.Object{deployment, replicasets1},
-			pass:    true,
-			count:   0,
+			wantErr: assert.NoError,
+			want:    0,
 		},
 		{
 			name:    "one running pod",
 			objects: []runtime.Object{deployment, replicasets2, pods1},
-			pass:    true,
-			count:   0,
+			wantErr: assert.NoError,
+			want:    0,
 		},
 		{
 			name:    "one failing pod",
 			objects: []runtime.Object{deployment, replicasets2, pods2},
-			pass:    true,
-			count:   1,
+			wantErr: assert.NoError,
+			want:    1,
 		},
 		{
 			name:    "one of many pods failing",
 			objects: []runtime.Object{deployment, replicasets2, pods3},
-			pass:    true,
-			count:   1,
+			wantErr: assert.NoError,
+			want:    1,
 		},
 	}
 
@@ -115,11 +114,9 @@ func TestReaper_Reap(t *testing.T) {
 				return fake.NewSimpleClientset(tt.objects...), nil
 			}}
 			count, err := r.Reap(context.Background(), "media", "transmission")
-			if tt.pass {
-				require.NoError(t, err)
-				assert.Equal(t, tt.count, count)
-			} else {
-				assert.Error(t, err)
+			tt.wantErr(t, err)
+			if err == nil {
+				assert.Equal(t, tt.want, count)
 			}
 		})
 	}

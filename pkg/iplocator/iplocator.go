@@ -17,13 +17,13 @@ type Client struct {
 }
 
 // New creates a new Client
-func New() *Client {
+func New(logger *slog.Logger) *Client {
 	return &Client{
 		httpClient: &http.Client{
 			Transport: httpclient.NewRoundTripper(httpclient.WithCache(httpclient.DefaultCacheTable, 24*time.Hour, 36*time.Hour)),
 		},
 		url:    ipAPIURL,
-		logger: slog.Default(),
+		logger: logger,
 	}
 }
 

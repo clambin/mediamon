@@ -84,14 +84,3 @@ func tempFile(content []byte) (string, error) {
 	}
 	return filename, err
 }
-
-/*
-func TestCollector_Collect_Failure(t *testing.T) {
-	c := bandwidth.NewCollector("invalid file")
-	ch := make(chan prometheus.Metric)
-
-	go c.Collect(ch)
-	metric := <-ch
-	assert.Equal(t, `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`, metric.Desc().String())
-}
-*/

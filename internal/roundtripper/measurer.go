@@ -10,6 +10,9 @@ import (
 
 var _ httpclient.RequestMeasurer = RequestMeasurer{}
 
+// RequestMeasurer provides a custom httpclient RequestMeasurer. The only different is that this implementation
+// removes the last part of the path if it is a set of numbers.  This reduces cardinality for sonarr/radarr metrics,
+// which uses paths like /api/v3/episode/1234.
 type RequestMeasurer struct {
 	latency *prometheus.SummaryVec // measures latency of an API call
 	errors  *prometheus.CounterVec // measures any errors returned by an API call

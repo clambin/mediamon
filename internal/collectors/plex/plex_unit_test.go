@@ -7,32 +7,33 @@ import (
 )
 
 func TestProcessSessions(t *testing.T) {
-	var sessions = plex.Sessions{}
-	sessions.Metadata = []plex.Session{
-		{
-			Title:   "foo",
-			User:    plex.SessionUser{Title: "bar"},
-			Player:  plex.SessionPlayer{Product: "Plex Web"},
-			Session: plex.SessionStats{ID: "1", Location: "lan"},
-		},
-		{
-			Title:   "foo",
-			User:    plex.SessionUser{Title: "bar"},
-			Player:  plex.SessionPlayer{Product: "Plex Web"},
-			Session: plex.SessionStats{ID: "2", Location: "wan"},
-			TranscodeSession: plex.SessionTranscoder{
-				VideoDecision: "transcode",
-				Speed:         10.0,
+	sessions := plex.Sessions{
+		Metadata: []plex.Session{
+			{
+				Title:   "foo",
+				User:    plex.SessionUser{Title: "bar"},
+				Player:  plex.SessionPlayer{Product: "Plex Web"},
+				Session: plex.SessionStats{ID: "1", Location: "lan"},
 			},
-		},
-		{
-			Title:   "foo",
-			User:    plex.SessionUser{Title: "bar"},
-			Player:  plex.SessionPlayer{Product: "Plex Web"},
-			Session: plex.SessionStats{ID: "3", Location: "wan"},
-			TranscodeSession: plex.SessionTranscoder{
-				VideoDecision: "transcode",
-				Throttled:     true,
+			{
+				Title:   "foo",
+				User:    plex.SessionUser{Title: "bar"},
+				Player:  plex.SessionPlayer{Product: "Plex Web"},
+				Session: plex.SessionStats{ID: "2", Location: "wan"},
+				TranscodeSession: plex.SessionTranscoder{
+					VideoDecision: "transcode",
+					Speed:         10.0,
+				},
+			},
+			{
+				Title:   "foo",
+				User:    plex.SessionUser{Title: "bar"},
+				Player:  plex.SessionPlayer{Product: "Plex Web"},
+				Session: plex.SessionStats{ID: "3", Location: "wan"},
+				TranscodeSession: plex.SessionTranscoder{
+					VideoDecision: "transcode",
+					Throttled:     true,
+				},
 			},
 		},
 	}
@@ -51,5 +52,4 @@ func TestProcessSessions(t *testing.T) {
 	entry, ok = stats["3"]
 	assert.True(t, ok)
 	assert.True(t, entry.throttled)
-
 }
