@@ -1,8 +1,9 @@
 package qplex
 
 import (
+	"cmp"
 	"github.com/stretchr/testify/assert"
-	"sort"
+	"slices"
 	"testing"
 )
 
@@ -39,8 +40,8 @@ func TestViewCount(t *testing.T) {
 	})
 
 	f := vc.flatten()
-	sort.Slice(f, func(i, j int) bool {
-		return f[i].Title < f[j].Title
+	slices.SortFunc(f, func(a, b ViewCountEntry) int {
+		return cmp.Compare(a.Title, b.Title)
 	})
 	assert.Equal(t, []ViewCountEntry{
 		{Library: "bar", Title: "bar 1", Views: 1},

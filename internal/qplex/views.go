@@ -1,10 +1,11 @@
 package qplex
 
 import (
+	"cmp"
 	"context"
 	"github.com/clambin/mediaclients/plex"
 	"log/slog"
-	"sort"
+	"slices"
 	"time"
 )
 
@@ -22,11 +23,11 @@ func GetViews(ctx context.Context, c PlexGetter, tokens []string, reverse bool) 
 	}
 
 	flattened := totalViewCount.flatten()
-	sort.Slice(flattened, func(i, j int) bool {
+	slices.SortFunc(flattened, func(a, b ViewCountEntry) int {
 		if reverse {
-			return flattened[i].Views > flattened[j].Views
+			a, b = b, a
 		}
-		return flattened[i].Views < flattened[j].Views
+		return cmp.Compare(a.Views, b.Views)
 	})
 	return flattened, nil
 }

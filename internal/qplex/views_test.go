@@ -62,9 +62,6 @@ func TestGetViews(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := qplex.GetViews(context.Background(), c, tt.args.tokens, tt.args.reverse)
 			tt.wantErr(t, err)
-			//sort.Slice(got, func(i, j int) bool {
-			//	return got[i].Title < got[j].Title
-			//})
 			assert.Equal(t, tt.want, got)
 		})
 	}
