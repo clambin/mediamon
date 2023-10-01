@@ -54,10 +54,10 @@ type Getter interface {
 
 // Collector presents Transmission statistics as Prometheus metrics
 type Collector struct {
-	Getter
-	url       string
-	transport *httpclient.RoundTripper
-	logger    *slog.Logger
+	Transmission Getter
+	url          string
+	transport    *httpclient.RoundTripper
+	logger       *slog.Logger
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -87,10 +87,10 @@ func (s transmissionStats) collect(ch chan<- prometheus.Metric, url string) {
 func NewCollector(url string) *Collector {
 	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "transmission"))
 	return &Collector{
-		Getter:    transmission.NewClient(url, r),
-		url:       url,
-		transport: r,
-		logger:    slog.Default().With(slog.String("collector", "transmission")),
+		Transmission: transmission.NewClient(url, r),
+		url:          url,
+		transport:    r,
+		logger:       slog.Default().With(slog.String("collector", "transmission")),
 	}
 }
 
@@ -127,11 +127,11 @@ func (c *Collector) getStats() (stats transmissionStats, err error) {
 }
 
 func (c *Collector) getVersion(ctx context.Context) (string, error) {
-	params, err := c.Getter.GetSessionParameters(ctx)
+	params, err := c.Transmission.GetSessionParameters(ctx)
 	return params.Arguments.Version, err
 }
 
 func (c *Collector) getSessionStats(ctx context.Context) (int, int, int, int, error) {
-	stats, err := c.Getter.GetSessionStatistics(ctx)
+	stats, err := c.Transmission.GetSessionStatistics(ctx)
 	return stats.Arguments.ActiveTorrentCount, stats.Arguments.PausedTorrentCount, stats.Arguments.DownloadSpeed, stats.Arguments.UploadSpeed, err
 }

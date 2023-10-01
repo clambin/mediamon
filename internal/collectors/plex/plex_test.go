@@ -32,7 +32,7 @@ func TestCollector_Collect(t *testing.T) {
 	c := plex.NewCollector("1.0", "", "", "")
 	l := mocks.NewIPLocator(t)
 	p := mocks.NewGetter(t)
-	c.Getter = p
+	c.Plex = p
 	c.IPLocator = l
 
 	l.EXPECT().Locate("1.2.3.4").Return(10.0, 20.0, nil)

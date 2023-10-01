@@ -72,10 +72,8 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	start := time.Now()
-	err := c.ping()
-
-	value := 0.0
-	if err == nil {
+	var value float64
+	if err := c.ping(); err == nil {
 		value = 1.0
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)

@@ -13,7 +13,7 @@ import (
 
 func TestSonarrScraper_Scrape(t *testing.T) {
 	c := mocks.NewSonarrGetter(t)
-	u := scraper.SonarrScraper{Client: c}
+	u := scraper.SonarrScraper{Sonarr: c}
 
 	c.EXPECT().GetURL().Return("http://localhost:8080")
 	c.EXPECT().GetSystemStatus(mock.Anything).Return(sonarrSystemStatus, nil)

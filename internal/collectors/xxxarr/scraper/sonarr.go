@@ -21,13 +21,13 @@ type SonarrGetter interface {
 
 // SonarrScraper collects Stats from a Sonarr instance
 type SonarrScraper struct {
-	Client SonarrGetter
+	Sonarr SonarrGetter
 }
 
 // Scrape returns Stats from a Sonarr instance
 func (s SonarrScraper) Scrape(ctx context.Context) (Stats, error) {
 	stats := Stats{
-		URL: s.Client.GetURL(),
+		URL: s.Sonarr.GetURL(),
 	}
 
 	var err error
@@ -49,7 +49,7 @@ func (s SonarrScraper) Scrape(ctx context.Context) (Stats, error) {
 }
 
 func (s SonarrScraper) getVersion(ctx context.Context) (string, error) {
-	systemStatus, err := s.Client.GetSystemStatus(ctx)
+	systemStatus, err := s.Sonarr.GetSystemStatus(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -58,7 +58,7 @@ func (s SonarrScraper) getVersion(ctx context.Context) (string, error) {
 
 func (s SonarrScraper) getHealth(ctx context.Context) (map[string]int, error) {
 	var healthEntries map[string]int
-	health, err := s.Client.GetHealth(ctx)
+	health, err := s.Sonarr.GetHealth(ctx)
 	if err == nil {
 		healthEntries = make(map[string]int)
 		for _, entry := range health {
@@ -70,7 +70,7 @@ func (s SonarrScraper) getHealth(ctx context.Context) (map[string]int, error) {
 }
 
 func (s SonarrScraper) getCalendar(ctx context.Context) ([]string, error) {
-	calendar, err := s.Client.GetCalendar(ctx)
+	calendar, err := s.Sonarr.GetCalendar(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -96,14 +96,14 @@ func (s SonarrScraper) getCalendar(ctx context.Context) ([]string, error) {
 }
 
 func (s SonarrScraper) getQueued(ctx context.Context) ([]QueuedFile, error) {
-	queued, err := s.Client.GetQueue(ctx)
+	queued, err := s.Sonarr.GetQueue(ctx)
 	if err != nil {
 		return nil, err
 	}
 	var entries []QueuedFile
 	for _, entry := range queued.Records {
 		var episode xxxarr.SonarrEpisodeResponse
-		episode, err = s.Client.GetEpisodeByID(ctx, entry.EpisodeID)
+		episode, err = s.Sonarr.GetEpisodeByID(ctx, entry.EpisodeID)
 		if err != nil {
 			return nil, fmt.Errorf("GetEpisideByID: %w", err)
 		}
@@ -120,7 +120,7 @@ func (s SonarrScraper) getQueued(ctx context.Context) ([]QueuedFile, error) {
 
 func (s SonarrScraper) getMonitored(ctx context.Context) (int, int, error) {
 	var monitored, unmonitored int
-	movies, err := s.Client.GetSeries(ctx)
+	movies, err := s.Sonarr.GetSeries(ctx)
 	if err == nil {
 		for _, entry := range movies {
 			if entry.Monitored {
@@ -135,7 +135,7 @@ func (s SonarrScraper) getMonitored(ctx context.Context) (int, int, error) {
 
 func (s SonarrScraper) getShowName(ctx context.Context, id int) (string, error) {
 	var title string
-	show, err := s.Client.GetSeriesByID(ctx, id)
+	show, err := s.Sonarr.GetSeriesByID(ctx, id)
 	if err == nil {
 		title = show.Title
 	}

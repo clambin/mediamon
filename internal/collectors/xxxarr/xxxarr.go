@@ -62,7 +62,7 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 	)
 
 	return &Collector{
-		Scraper:     scraper.RadarrScraper{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
+		Scraper:     scraper.RadarrScraper{Radarr: xxxarr.NewRadarrClient(url, apiKey, r)},
 		application: "radarr",
 		metrics:     createMetrics("radarr", url),
 		transport:   r,
@@ -78,7 +78,7 @@ func NewSonarrCollector(url, apiKey string) *Collector {
 	)
 
 	return &Collector{
-		Scraper:     scraper.SonarrScraper{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
+		Scraper:     scraper.SonarrScraper{Sonarr: xxxarr.NewSonarrClient(url, apiKey, r)},
 		application: "sonarr",
 		metrics:     createMetrics("sonarr", url),
 		transport:   r,
@@ -96,13 +96,6 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	// TODO: panic due to scrape was due to a bug in httpclient Cache. Safe to remove now?
-	defer func() {
-		if err := recover(); err != nil {
-			c.logger.Warn("scrape panicked", "err", err)
-		}
-	}()
-
 	start := time.Now()
 	stats, err := c.Scraper.Scrape(context.Background())
 	if err != nil {

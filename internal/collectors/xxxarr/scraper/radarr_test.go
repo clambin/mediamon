@@ -13,7 +13,7 @@ import (
 
 func TestRadarrScraper_Scrape(t *testing.T) {
 	c := mocks.NewRadarrGetter(t)
-	u := scraper.RadarrScraper{Client: c}
+	u := scraper.RadarrScraper{Radarr: c}
 
 	c.EXPECT().GetURL().Return("http://localhost:8080")
 	c.EXPECT().GetSystemStatus(mock.Anything).Return(radarrSystemStatus, nil)

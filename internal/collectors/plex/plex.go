@@ -14,8 +14,8 @@ import (
 
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
-	Getter
 	IPLocator
+	Plex      Getter
 	url       string
 	transport *httpclient.RoundTripper
 	logger    *slog.Logger
@@ -46,7 +46,7 @@ func NewCollector(version, url, username, password string) *Collector {
 	)
 	l := slog.Default().With("collector", "plex")
 	return &Collector{
-		Getter:    plex.New(username, password, "github.com/clambin/mediamon", version, url, r),
+		Plex:      plex.New(username, password, "github.com/clambin/mediamon", version, url, r),
 		IPLocator: iplocator.New(l),
 		url:       url,
 		transport: r,
@@ -73,7 +73,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
-	identity, err := c.Getter.GetIdentity(context.Background())
+	identity, err := c.Plex.GetIdentity(context.Background())
 	if err != nil {
 		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting Plex version", nil, nil),err)
 		c.logger.Error("failed to collect version", "err", err)
@@ -84,7 +84,7 @@ func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
 }
 
 func (c *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
-	sessions, err := c.Getter.GetSessions(context.Background())
+	sessions, err := c.Plex.GetSessions(context.Background())
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting Plex session stats", nil, nil), err)
 		c.logger.Error("failed to collect session stats", "err", err)

@@ -19,17 +19,17 @@ type RadarrGetter interface {
 
 // RadarrScraper collects Stats from a Radarr instance
 type RadarrScraper struct {
-	Client RadarrGetter
+	Radarr RadarrGetter
 }
 
 // Scrape returns Stats from a Radarr instance
 func (s RadarrScraper) Scrape(ctx context.Context) (Stats, error) {
 	stats := Stats{
-		URL: s.Client.GetURL(),
+		URL: s.Radarr.GetURL(),
 	}
 
 	var err error
-	stats.URL = s.Client.GetURL()
+	stats.URL = s.Radarr.GetURL()
 
 	stats.Version, err = s.getVersion(ctx)
 
@@ -53,12 +53,12 @@ func (s RadarrScraper) Scrape(ctx context.Context) (Stats, error) {
 }
 
 func (s RadarrScraper) getVersion(ctx context.Context) (string, error) {
-	systemStatus, err := s.Client.GetSystemStatus(ctx)
+	systemStatus, err := s.Radarr.GetSystemStatus(ctx)
 	return systemStatus.Version, err
 }
 
 func (s RadarrScraper) getHealth(ctx context.Context) (map[string]int, error) {
-	health, err := s.Client.GetHealth(ctx)
+	health, err := s.Radarr.GetHealth(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (s RadarrScraper) getHealth(ctx context.Context) (map[string]int, error) {
 }
 
 func (s RadarrScraper) getCalendar(ctx context.Context) ([]string, error) {
-	calendar, err := s.Client.GetCalendar(ctx)
+	calendar, err := s.Radarr.GetCalendar(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -85,14 +85,14 @@ func (s RadarrScraper) getCalendar(ctx context.Context) ([]string, error) {
 }
 
 func (s RadarrScraper) getQueued(ctx context.Context) ([]QueuedFile, error) {
-	queued, err := s.Client.GetQueue(ctx)
+	queued, err := s.Radarr.GetQueue(ctx)
 	if err != nil {
 		return nil, err
 	}
 	var queuedFiles []QueuedFile
 	for _, entry := range queued.Records {
 		var movie xxxarr.RadarrMovieResponse
-		movie, err = s.Client.GetMovieByID(ctx, entry.MovieID)
+		movie, err = s.Radarr.GetMovieByID(ctx, entry.MovieID)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +107,7 @@ func (s RadarrScraper) getQueued(ctx context.Context) ([]QueuedFile, error) {
 }
 
 func (s RadarrScraper) getMonitored(ctx context.Context) (int, int, error) {
-	movies, err := s.Client.GetMovies(ctx)
+	movies, err := s.Radarr.GetMovies(ctx)
 	if err != nil {
 		return 0, 0, err
 	}
