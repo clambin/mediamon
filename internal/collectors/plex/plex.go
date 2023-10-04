@@ -3,12 +3,15 @@ package plex
 import (
 	"context"
 	"github.com/clambin/go-common/httpclient"
+	"github.com/clambin/go-common/set"
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/roundtripper"
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
+	"math"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -91,12 +94,6 @@ func (c *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	/*
-		for _, session := range sessions.Metadata {
-			c.log(session)
-		}
-	*/
-
 	var active, throttled, speed float64
 
 	for _, stats := range parseSessions(sessions) {
@@ -106,7 +103,7 @@ func (c *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
 		}
 
 		ch <- prometheus.MustNewConstMetric(sessionMetric, prometheus.GaugeValue, stats.progress,
-			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat,
+			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat, stats.videoCodec, stats.audioCodec,
 		)
 
 		if stats.videoMode == "transcode" {
@@ -140,31 +137,46 @@ func (c *Collector) locateAddress(address string) (lonAsString, latAsString stri
 }
 
 type plexSession struct {
-	user      string
-	player    string
-	location  string
-	title     string
-	address   string
-	progress  float64
-	videoMode string
-	throttled bool
-	speed     float64
+	user       string
+	player     string
+	location   string
+	title      string
+	address    string
+	progress   float64
+	videoMode  string
+	throttled  bool
+	speed      float64
+	audioCodec string
+	videoCodec string
 }
 
 func parseSessions(input plex.Sessions) map[string]plexSession {
 	output := make(map[string]plexSession)
 
 	for _, session := range input.Metadata {
+		videoCodecs := set.Create[string]()
+		audioCodecs := set.Create[string]()
+		for _, media := range session.Media {
+			videoCodecs.Add(media.VideoCodec)
+			audioCodecs.Add(media.AudioCodec)
+		}
+		progress := session.GetProgress()
+		if math.IsNaN(progress) {
+			progress = 0
+		}
+
 		output[session.Session.ID] = plexSession{
-			user:      session.User.Title,
-			player:    session.Player.Product,
-			location:  session.Session.Location,
-			title:     session.GetTitle(),
-			address:   session.Player.Address,
-			progress:  session.GetProgress(),
-			videoMode: session.GetVideoMode(),
-			throttled: session.TranscodeSession.Throttled,
-			speed:     session.TranscodeSession.Speed,
+			user:       session.User.Title,
+			player:     session.Player.Product,
+			location:   session.Session.Location,
+			title:      session.GetTitle(),
+			address:    session.Player.Address,
+			progress:   progress,
+			videoMode:  session.GetVideoMode(),
+			throttled:  session.TranscodeSession.Throttled,
+			speed:      session.TranscodeSession.Speed,
+			videoCodec: strings.Join(videoCodecs.List(), ","),
+			audioCodec: strings.Join(audioCodecs.List(), ","),
 		}
 	}
 	return output

@@ -7,49 +7,58 @@ import (
 )
 
 func TestProcessSessions(t *testing.T) {
-	sessions := plex.Sessions{
-		Metadata: []plex.Session{
-			{
+	testCases := []struct {
+		name    string
+		session plex.Session
+		want    map[string]plexSession
+	}{
+		{
+			name: "direct",
+			session: plex.Session{
 				Title:   "foo",
 				User:    plex.SessionUser{Title: "bar"},
 				Player:  plex.SessionPlayer{Product: "Plex Web"},
+				Media:   []plex.SessionMedia{{VideoCodec: "hvec", AudioCodec: "aac"}},
 				Session: plex.SessionStats{ID: "1", Location: "lan"},
 			},
-			{
-				Title:   "foo",
-				User:    plex.SessionUser{Title: "bar"},
-				Player:  plex.SessionPlayer{Product: "Plex Web"},
-				Session: plex.SessionStats{ID: "2", Location: "wan"},
-				TranscodeSession: plex.SessionTranscoder{
-					VideoDecision: "transcode",
-					Speed:         10.0,
-				},
+			want: map[string]plexSession{
+				"1": {user: "bar", player: "Plex Web", location: "lan", title: "foo", videoMode: "unknown", audioCodec: "aac", videoCodec: "hvec"},
 			},
-			{
-				Title:   "foo",
-				User:    plex.SessionUser{Title: "bar"},
-				Player:  plex.SessionPlayer{Product: "Plex Web"},
-				Session: plex.SessionStats{ID: "3", Location: "wan"},
-				TranscodeSession: plex.SessionTranscoder{
-					VideoDecision: "transcode",
-					Throttled:     true,
-				},
+		},
+		{
+			name: "transcode",
+			session: plex.Session{
+				Title:            "foo",
+				User:             plex.SessionUser{Title: "bar"},
+				Player:           plex.SessionPlayer{Product: "Plex Web"},
+				Media:            []plex.SessionMedia{{VideoCodec: "hvec", AudioCodec: "aac"}},
+				Session:          plex.SessionStats{ID: "2", Location: "wan"},
+				TranscodeSession: plex.SessionTranscoder{VideoDecision: "transcode", Speed: 10.0},
+			},
+			want: map[string]plexSession{
+				"2": {user: "bar", player: "Plex Web", location: "wan", title: "foo", videoMode: "unknown", speed: 10, audioCodec: "aac", videoCodec: "hvec"},
+			},
+		},
+		{
+			name: "throttled",
+			session: plex.Session{
+				Title:            "foo",
+				User:             plex.SessionUser{Title: "bar"},
+				Player:           plex.SessionPlayer{Product: "Plex Web"},
+				Media:            []plex.SessionMedia{{VideoCodec: "hvec", AudioCodec: "aac"}},
+				Session:          plex.SessionStats{ID: "3", Location: "wan"},
+				TranscodeSession: plex.SessionTranscoder{VideoDecision: "transcode", Throttled: true},
+			},
+			want: map[string]plexSession{
+				"3": {user: "bar", player: "Plex Web", location: "wan", title: "foo", videoMode: "unknown", throttled: true, audioCodec: "aac", videoCodec: "hvec"},
 			},
 		},
 	}
 
-	stats := parseSessions(sessions)
-	assert.Len(t, stats, len(sessions.Metadata))
-
-	entry, ok := stats["1"]
-	assert.True(t, ok)
-	assert.Equal(t, "lan", entry.location)
-
-	entry, ok = stats["2"]
-	assert.True(t, ok)
-	assert.Equal(t, "wan", entry.location)
-
-	entry, ok = stats["3"]
-	assert.True(t, ok)
-	assert.True(t, entry.throttled)
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			stats := parseSessions(plex.Sessions{Size: 1, Metadata: []plex.Session{tt.session}})
+			assert.Equal(t, tt.want, stats)
+		})
+	}
 }

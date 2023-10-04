@@ -50,7 +50,7 @@ func TestCollector_Collect(t *testing.T) {
 			ViewOffset: 50,
 			User:       plexClient.SessionUser{Title: "bar"},
 			Player:     plexClient.SessionPlayer{Product: "Plex Web", Address: "192.168.0.1"},
-			Media:      []plexClient.SessionMedia{{Part: []plexClient.MediaSessionPart{{Decision: "directplay"}}}},
+			Media:      []plexClient.SessionMedia{{VideoCodec: "hvec", AudioCodec: "aac", Part: []plexClient.MediaSessionPart{{Decision: "directplay"}}}},
 			Session:    plexClient.SessionStats{ID: "1", Location: "lan"},
 		},
 		{
@@ -64,7 +64,7 @@ func TestCollector_Collect(t *testing.T) {
 			User:             plexClient.SessionUser{Title: "bar"},
 			Player:           plexClient.SessionPlayer{Product: "Plex Web", Address: "1.2.3.4"},
 			Session:          plexClient.SessionStats{ID: "2", Location: "wan"},
-			Media:            []plexClient.SessionMedia{{Part: []plexClient.MediaSessionPart{{Decision: "transcode"}}}},
+			Media:            []plexClient.SessionMedia{{VideoCodec: "hvec", AudioCodec: "aac", Part: []plexClient.MediaSessionPart{{Decision: "transcode"}}}},
 			TranscodeSession: plexClient.SessionTranscoder{
 				VideoDecision: "transcode",
 				Speed:         21.0,
@@ -78,7 +78,7 @@ func TestCollector_Collect(t *testing.T) {
 			User:       plexClient.SessionUser{Title: "bar"},
 			Player:     plexClient.SessionPlayer{Product: "Plex Web", Address: "1.2.3.4"},
 			Session:    plexClient.SessionStats{ID: "3", Location: "wan"},
-			Media:      []plexClient.SessionMedia{{Part: []plexClient.MediaSessionPart{{Decision: "transcode"}}}},
+			Media:      []plexClient.SessionMedia{{VideoCodec: "hvec", AudioCodec: "aac", Part: []plexClient.MediaSessionPart{{Decision: "transcode"}}}},
 			TranscodeSession: plexClient.SessionTranscoder{
 				VideoDecision: "transcode",
 				Throttled:     true,
@@ -90,9 +90,9 @@ func TestCollector_Collect(t *testing.T) {
 
 	e := strings.NewReader(`# HELP mediamon_plex_session_count Active Plex session
 # TYPE mediamon_plex_session_count gauge
-mediamon_plex_session_count{address="1.2.3.4",lat="20.00",location="wan",lon="10.00",mode="transcode",player="Plex Web",title="foo - S01E10 - bar",url="",user="bar"} 0.75
-mediamon_plex_session_count{address="1.2.3.4",lat="20.00",location="wan",lon="10.00",mode="transcode",player="Plex Web",title="foo",url="",user="bar"} 0.1
-mediamon_plex_session_count{address="192.168.0.1",lat="",location="lan",lon="",mode="directplay",player="Plex Web",title="foo",url="",user="bar"} 0.5
+mediamon_plex_session_count{address="1.2.3.4",audioCodec="aac",lat="20.00",location="wan",lon="10.00",mode="transcode",player="Plex Web",title="foo - S01E10 - bar",url="",user="bar",videoCodec="hvec"} 0.75
+mediamon_plex_session_count{address="1.2.3.4",audioCodec="aac",lat="20.00",location="wan",lon="10.00",mode="transcode",player="Plex Web",title="foo",url="",user="bar",videoCodec="hvec"} 0.1
+mediamon_plex_session_count{address="192.168.0.1",audioCodec="aac",lat="",location="lan",lon="",mode="directplay",player="Plex Web",title="foo",url="",user="bar",videoCodec="hvec"} 0.5
 # HELP mediamon_plex_transcoder_count Video transcode session
 # TYPE mediamon_plex_transcoder_count gauge
 mediamon_plex_transcoder_count{state="throttled",url=""} 1
