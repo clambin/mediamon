@@ -50,8 +50,8 @@ github.com/clambin/go-common/cache v0.2.2 h1:Tjb+71+/2ckrZlSbLDYgCEpkS2HwkTRkQ/1
 github.com/clambin/go-common/cache v0.2.2/go.mod h1:6DMcBIPTGckXMNQTGfdEMiLAbKqIOWzgk5KNyiJK54M=
 github.com/clambin/go-common/httpclient v0.6.0 h1:zSt9OV8ekXB/LwFwazEO4x8z+9p968nwfDQOmvF784A=
 github.com/clambin/go-common/httpclient v0.6.0/go.mod h1:77y+6LzAKdenkU+vwQFdNKyxs2HhUXEiqYwzS7Q9FKI=
-github.com/clambin/go-common/set v0.2.0 h1:s4wXxKns3sb2VPCtAmmLEDs4KiHNIiot+LcKgKcdPdw=
-github.com/clambin/go-common/set v0.2.0/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
+github.com/clambin/go-common/set v0.3.0 h1:JvLbPbmFEjhqk4wsgqa/swxD0wGOEDXLOjTrsgZLR3o=
+github.com/clambin/go-common/set v0.3.0/go.mod h1:45ZNvBGpHWw2vtfgG6pzqEJpTUUNfgUluJ1/jmM0uWI=
 github.com/clambin/mediaclients v0.2.0 h1:sFa/NB5Fx3hWTzdB/DY5RBKKZCWPDskX/1lIQNx/HZ8=
 github.com/clambin/mediaclients v0.2.0/go.mod h1:742/OB6kzUKwUtgvbviFrtmRXOUUs9KGWnQpDaT81FA=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
