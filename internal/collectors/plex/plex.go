@@ -3,7 +3,6 @@ package plex
 import (
 	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/mediaclients/plex"
-	"github.com/clambin/mediamon/v2/internal/roundtripper"
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
@@ -42,7 +41,7 @@ var plexCacheTable = httpclient.CacheTable{
 	{
 		Path:     "/library/.*",
 		IsRegExp: true,
-		Expiry:   time.Hour,
+		Expiry:   15 * time.Minute,
 	},
 }
 
@@ -50,7 +49,7 @@ var plexCacheTable = httpclient.CacheTable{
 func NewCollector(version, url, username, password string) *Collector {
 	r := httpclient.NewRoundTripper(
 		httpclient.WithCache(plexCacheTable, time.Hour, 2*time.Hour),
-		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "plex")),
+		httpclient.WithCustomMetrics(newMeasurer("mediamon", "", "plex")),
 	)
 	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, r)
 	l := slog.Default().With("collector", "plex")
