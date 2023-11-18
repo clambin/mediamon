@@ -6,6 +6,7 @@ import (
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
+	"sync"
 	"time"
 )
 
@@ -86,9 +87,12 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	start := time.Now()
-	c.versionCollector.Collect(ch)
-	c.sessionCollector.Collect(ch)
-	c.libraryCollector.Collect(ch)
+	var wg sync.WaitGroup
+	wg.Add(3)
+	go func() { defer wg.Done(); c.versionCollector.Collect(ch) }()
+	go func() { defer wg.Done(); c.sessionCollector.Collect(ch) }()
+	go func() { defer wg.Done(); c.libraryCollector.Collect(ch) }()
+	wg.Wait()
 	c.transport.Collect(ch)
 	c.logger.Debug("stats collected", "duration", time.Since(start))
 }
