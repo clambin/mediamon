@@ -40,7 +40,7 @@ type Config struct {
 
 var plexCacheTable = httpclient.CacheTable{
 	{
-		Path:     "/library/metadata/[0-9]+/children",
+		Path:     "/library/.*",
 		IsRegExp: true,
 		Expiry:   time.Hour,
 	},
