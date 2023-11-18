@@ -82,12 +82,12 @@ func (c libraryCollector) getMovieTotals(ctx context.Context, key string) ([]lib
 	if err != nil {
 		return nil, fmt.Errorf("GetMovies: %w", err)
 	}
-	entries := make([]libraryEntry, 0, len(movies))
+	entries := make([]libraryEntry, len(movies))
 	for index := range movies {
-		entries = append(entries, libraryEntry{
+		entries[index] = libraryEntry{
 			title: movies[index].Title,
 			size:  getMediaSize(movies[index].Media),
-		})
+		}
 	}
 	return entries, nil
 }

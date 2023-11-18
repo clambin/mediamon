@@ -63,11 +63,6 @@ type Collector struct {
 
 var _ prometheus.Collector = &Collector{}
 
-// Config items for Transmission collector
-type Config struct {
-	URL string
-}
-
 // NewCollector creates a new Collector
 func NewCollector(url string) *Collector {
 	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "transmission"))
@@ -98,7 +93,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	go func() { defer wg.Done(); c.collectStats(ch) }()
 	wg.Wait()
 	c.transport.Collect(ch)
-	c.logger.Debug("stats collected", "duration", time.Since(start))
+	c.logger.Debug("stats collected", slog.Duration("duration", time.Since(start)))
 }
 
 func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {

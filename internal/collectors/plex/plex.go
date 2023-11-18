@@ -53,7 +53,7 @@ func NewCollector(version, url, username, password string) *Collector {
 		httpclient.WithCustomMetrics(newMeasurer("mediamon", "", "plex")),
 	)
 	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, r)
-	l := slog.Default().With("collector", "plex")
+	l := slog.Default().With(slog.String("collector", "plex"))
 	return &Collector{
 		versionCollector: versionCollector{
 			versionGetter: p,
@@ -94,5 +94,5 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	go func() { defer wg.Done(); c.libraryCollector.Collect(ch) }()
 	wg.Wait()
 	c.transport.Collect(ch)
-	c.logger.Debug("stats collected", "duration", time.Since(start))
+	c.logger.Debug("stats collected", slog.Duration("duration", time.Since(start)))
 }
