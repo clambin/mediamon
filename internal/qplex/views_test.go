@@ -75,49 +75,43 @@ var _ qplex.PlexGetter = &fakeClient{}
 func (f fakeClient) SetAuthToken(_ string) {
 }
 
-func (f fakeClient) GetLibraries(_ context.Context) (plex.Libraries, error) {
-	return plex.Libraries{
-		Directory: []plex.LibrariesDirectory{
-			{
-				Key:   "1",
-				Type:  "movie",
-				Title: "Movies",
-			},
-			{
-				Key:   "2",
-				Type:  "show",
-				Title: "Shows",
-			},
+func (f fakeClient) GetLibraries(_ context.Context) ([]plex.Library, error) {
+	return []plex.Library{
+		{
+			Key:   "1",
+			Type:  "movie",
+			Title: "Movies",
+		},
+		{
+			Key:   "2",
+			Type:  "show",
+			Title: "Shows",
 		},
 	}, nil
 }
 
-func (f fakeClient) GetMovieLibrary(_ context.Context, s string) (plex.MovieLibrary, error) {
+func (f fakeClient) GetMovies(_ context.Context, s string) ([]plex.Movie, error) {
 	if s != "1" {
-		return plex.MovieLibrary{}, fmt.Errorf("invalid movie library key: %s", s)
+		return nil, fmt.Errorf("invalid movie library key: %s", s)
 	}
-	return plex.MovieLibrary{
-		Metadata: []plex.MovieLibraryEntry{
-			{
-				Guid:      "1",
-				Title:     "foo",
-				ViewCount: 1,
-			},
+	return []plex.Movie{
+		{
+			Guid:      "1",
+			Title:     "foo",
+			ViewCount: 1,
 		},
 	}, nil
 }
 
-func (f fakeClient) GetShowLibrary(_ context.Context, s string) (plex.ShowLibrary, error) {
+func (f fakeClient) GetShows(_ context.Context, s string) ([]plex.Show, error) {
 	if s != "2" {
-		return plex.ShowLibrary{}, fmt.Errorf("invalid show library key: %s", s)
+		return nil, fmt.Errorf("invalid show library key: %s", s)
 	}
-	return plex.ShowLibrary{
-		Metadata: []plex.ShowLibraryEntry{
-			{
-				Guid:      "2",
-				Title:     "bar",
-				ViewCount: 2,
-			},
+	return []plex.Show{
+		{
+			Guid:      "2",
+			Title:     "bar",
+			ViewCount: 2,
 		},
 	}, nil
 }

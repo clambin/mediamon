@@ -1,32 +1,28 @@
 package plex
 
 import (
-	"context"
 	"github.com/clambin/go-common/httpclient"
-	"github.com/clambin/go-common/set"
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/roundtripper"
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
-	"math"
-	"strconv"
-	"strings"
 	"time"
 )
 
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
-	IPLocator
-	Plex      Getter
-	url       string
+	versionCollector
+	sessionCollector
+	libraryCollector
 	transport *httpclient.RoundTripper
 	logger    *slog.Logger
 }
 
 type Getter interface {
-	GetIdentity(context.Context) (plex.Identity, error)
-	GetSessions(context.Context) (plex.Sessions, error)
+	versionGetter
+	sessionGetter
+	libraryGetter
 }
 
 type IPLocator interface {
@@ -42,16 +38,39 @@ type Config struct {
 	Password string
 }
 
+var plexCacheTable = httpclient.CacheTable{
+	{
+		Path:     "/library/metadata/[0-9]+/children",
+		IsRegExp: true,
+		Expiry:   time.Hour,
+	},
+}
+
 // NewCollector creates a new Collector
 func NewCollector(version, url, username, password string) *Collector {
 	r := httpclient.NewRoundTripper(
+		httpclient.WithCache(plexCacheTable, time.Hour, 2*time.Hour),
 		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "plex")),
 	)
+	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, r)
 	l := slog.Default().With("collector", "plex")
 	return &Collector{
-		Plex:      plex.New(username, password, "github.com/clambin/mediamon", version, url, r),
-		IPLocator: iplocator.New(l),
-		url:       url,
+		versionCollector: versionCollector{
+			versionGetter: p,
+			url:           url,
+			logger:        l,
+		},
+		sessionCollector: sessionCollector{
+			sessionGetter: p,
+			IPLocator:     iplocator.New(l),
+			url:           url,
+			logger:        l,
+		},
+		libraryCollector: libraryCollector{
+			libraryGetter: p,
+			url:           url,
+			l:             l,
+		},
 		transport: r,
 		logger:    l,
 	}
@@ -59,164 +78,18 @@ func NewCollector(version, url, username, password string) *Collector {
 
 // Describe implements the prometheus.Collector interface
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- versionMetric
-	ch <- sessionMetric
-	ch <- transcodersMetric
-	ch <- speedMetric
+	c.versionCollector.Describe(ch)
+	c.sessionCollector.Describe(ch)
+	c.libraryCollector.Describe(ch)
 	c.transport.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	start := time.Now()
-	c.collectVersion(ch)
-	c.collectSessionStats(ch)
+	c.versionCollector.Collect(ch)
+	c.sessionCollector.Collect(ch)
+	c.libraryCollector.Collect(ch)
 	c.transport.Collect(ch)
 	c.logger.Debug("stats collected", "duration", time.Since(start))
 }
-
-func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
-	identity, err := c.Plex.GetIdentity(context.Background())
-	if err != nil {
-		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting Plex version", nil, nil),err)
-		c.logger.Error("failed to collect version", "err", err)
-		return
-	}
-
-	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), identity.Version, c.url)
-}
-
-func (c *Collector) collectSessionStats(ch chan<- prometheus.Metric) {
-	sessions, err := c.Plex.GetSessions(context.Background())
-	if err != nil {
-		ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting Plex session stats", nil, nil), err)
-		c.logger.Error("failed to collect session stats", "err", err)
-		return
-	}
-
-	var active, throttled, speed float64
-
-	for _, stats := range parseSessions(sessions) {
-		var lon, lat string
-		if stats.location != "lan" {
-			lon, lat = c.locateAddress(stats.address)
-		}
-
-		ch <- prometheus.MustNewConstMetric(sessionMetric, prometheus.GaugeValue, stats.progress,
-			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat, stats.videoCodec, stats.audioCodec,
-		)
-
-		if stats.videoMode == "transcode" {
-			if stats.throttled {
-				throttled++
-			} else {
-				active++
-			}
-			speed += stats.speed
-		}
-	}
-	if active+throttled > 0 {
-		ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, active,
-			c.url, "transcoding",
-		)
-		ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, throttled,
-			c.url, "throttled",
-		)
-		ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, speed,
-			c.url,
-		)
-	}
-}
-
-func (c *Collector) locateAddress(address string) (lonAsString, latAsString string) {
-	if lon, lat, err := c.IPLocator.Locate(address); err == nil {
-		lonAsString = strconv.FormatFloat(lon, 'f', 2, 64)
-		latAsString = strconv.FormatFloat(lat, 'f', 2, 64)
-	}
-	return
-}
-
-type plexSession struct {
-	user       string
-	player     string
-	location   string
-	title      string
-	address    string
-	progress   float64
-	videoMode  string
-	throttled  bool
-	speed      float64
-	audioCodec string
-	videoCodec string
-}
-
-func parseSessions(input plex.Sessions) map[string]plexSession {
-	output := make(map[string]plexSession)
-
-	for _, session := range input.Metadata {
-		videoCodecs := set.Create[string]()
-		audioCodecs := set.Create[string]()
-		for _, media := range session.Media {
-			videoCodecs.Add(media.VideoCodec)
-			audioCodecs.Add(media.AudioCodec)
-		}
-		progress := session.GetProgress()
-		if math.IsNaN(progress) {
-			progress = 0
-		}
-
-		output[session.Session.ID] = plexSession{
-			user:       session.User.Title,
-			player:     session.Player.Product,
-			location:   session.Session.Location,
-			title:      session.GetTitle(),
-			address:    session.Player.Address,
-			progress:   progress,
-			videoMode:  session.GetVideoMode(),
-			throttled:  session.TranscodeSession.Throttled,
-			speed:      session.TranscodeSession.Speed,
-			videoCodec: strings.Join(videoCodecs.List(), ","),
-			audioCodec: strings.Join(audioCodecs.List(), ","),
-		}
-	}
-	return output
-}
-
-/*
-type sessionInfo struct {
-	parts []partInfo
-}
-
-type partInfo struct {
-	decision string
-	video    string
-}
-
-func (c *Collector) log(session plex.Session) {
-	var sessionInfos []sessionInfo
-	for _, media := range session.Media {
-		var parts []partInfo
-		for _, part := range media.Part {
-			for _, stream := range part.Stream {
-				if stream.StreamType == 1 {
-					parts = append(parts, partInfo{
-						decision: part.Decision,
-						video:    stream.Decision,
-					})
-				}
-			}
-		}
-		sessionInfos = append(sessionInfos, sessionInfo{
-			parts: parts,
-		})
-	}
-
-	c.logger.Debug("session found",
-		"title", session.GetTitle(),
-		"media count", len(session.Media),
-		"mode", session.GetVideoMode(),
-		"media.part.decisions", sessionInfos,
-		"transcode", session.TranscodeSession,
-	)
-}
-*/

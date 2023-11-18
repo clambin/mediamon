@@ -57,7 +57,7 @@ func TestProcessSessions(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			stats := parseSessions(plex.Sessions{Size: 1, Metadata: []plex.Session{tt.session}})
+			stats := parseSessions([]plex.Session{tt.session})
 			assert.Equal(t, tt.want, stats)
 		})
 	}
