@@ -69,7 +69,7 @@ func NewCollector(version, url, username, password string) *Collector {
 		libraryCollector: libraryCollector{
 			libraryGetter: p,
 			url:           url,
-			l:             l,
+			logger:        l,
 		},
 		transport: r,
 		logger:    l,

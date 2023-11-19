@@ -6,7 +6,6 @@ import (
 	"github.com/clambin/mediaclients/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
-	"time"
 )
 
 var (
@@ -26,8 +25,8 @@ var (
 
 type libraryCollector struct {
 	libraryGetter
-	url string
-	l   *slog.Logger
+	url    string
+	logger *slog.Logger
 }
 
 type libraryGetter interface {
@@ -44,11 +43,9 @@ func (c libraryCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c libraryCollector) Collect(ch chan<- prometheus.Metric) {
-	start := time.Now()
 	sizes, err := c.reportSizes()
-	c.l.Debug("sizes collected", slog.Duration("duration", time.Since(start)), slog.Int("count", len(sizes)))
 	if err != nil {
-		c.l.Error("failed to collect plex library stats", "err", err)
+		c.logger.Error("failed to collect plex library stats", "err", err)
 		return
 	}
 

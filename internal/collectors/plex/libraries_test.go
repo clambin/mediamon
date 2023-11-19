@@ -156,7 +156,7 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 			c := libraryCollector{
 				libraryGetter: p,
 				url:           "http://localhost:8080",
-				l:             slog.Default(),
+				logger:        slog.Default(),
 			}
 			r := prometheus.NewPedanticRegistry()
 			r.MustRegister(c)
