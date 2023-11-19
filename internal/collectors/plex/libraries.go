@@ -48,7 +48,7 @@ func (c *libraryCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *libraryCollector) Collect(ch chan<- prometheus.Metric) {
-	sizes, err := c.reportSizes()
+	sizes, err := c.reportLibraries()
 	if err != nil {
 		c.logger.Error("failed to collect plex library stats", "err", err)
 		return
@@ -69,7 +69,7 @@ type libraryEntry struct {
 	size  int64
 }
 
-func (c *libraryCollector) reportSizes() (map[string][]libraryEntry, error) {
+func (c *libraryCollector) reportLibraries() (map[string][]libraryEntry, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -77,7 +77,7 @@ func (c *libraryCollector) reportSizes() (map[string][]libraryEntry, error) {
 		return *c.cache, nil
 	}
 
-	sizes, err := c.getSizes()
+	sizes, err := c.getLibraries()
 	if err == nil {
 		c.cache = &sizes
 		c.age = time.Now()
@@ -85,7 +85,7 @@ func (c *libraryCollector) reportSizes() (map[string][]libraryEntry, error) {
 	return sizes, err
 }
 
-func (c *libraryCollector) getSizes() (map[string][]libraryEntry, error) {
+func (c *libraryCollector) getLibraries() (map[string][]libraryEntry, error) {
 	ctx := context.Background()
 	libraries, err := c.libraryGetter.GetLibraries(ctx)
 	if err != nil {
@@ -97,13 +97,12 @@ func (c *libraryCollector) getSizes() (map[string][]libraryEntry, error) {
 	for index := range libraries {
 		switch libraries[index].Type {
 		case "movie":
-			if sizes, err = c.getMovieTotals(ctx, libraries[index].Key); err != nil {
-				return nil, fmt.Errorf("getMovieTotals: %w", err)
-			}
+			sizes, err = c.getMovieTotals(ctx, libraries[index].Key)
 		case "show":
-			if sizes, err = c.getShowTotals(ctx, libraries[index].Key); err != nil {
-				return nil, fmt.Errorf("getShowTotals: %w", err)
-			}
+			sizes, err = c.getShowTotals(ctx, libraries[index].Key)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("getTotals (%s): %w", libraries[index].Type, err)
 		}
 		result[libraries[index].Title] = sizes
 	}
