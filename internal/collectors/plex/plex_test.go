@@ -33,9 +33,14 @@ func TestCollector_Collect(t *testing.T) {
 	r.MustRegister(c)
 
 	assert.NoError(t, testutil.GatherAndCompare(r, strings.NewReader(`
-# HELP mediamon_plex_library_entry_bytes Library file sizes
-# TYPE mediamon_plex_library_entry_bytes gauge
-mediamon_plex_library_entry_bytes{library="movies",title="a movie",url="http://localhost:8080"} 1024
+# HELP mediamon_plex_library_bytes Library size in bytes
+# TYPE mediamon_plex_library_bytes gauge
+mediamon_plex_library_bytes{library="movies",url="http://localhost:8080"} 1024
+mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
+# HELP mediamon_plex_library_count Library size in number of entries
+# TYPE mediamon_plex_library_count gauge
+mediamon_plex_library_count{library="movies",url="http://localhost:8080"} 1
+mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 # HELP mediamon_plex_version version info
 # TYPE mediamon_plex_version gauge
 mediamon_plex_version{url="http://localhost:8080",version="1.0"} 1

@@ -6,13 +6,22 @@ import (
 	"github.com/clambin/mediaclients/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
+	"time"
 )
 
-var libraryMetric = prometheus.NewDesc(
-	prometheus.BuildFQName("mediamon", "plex", "library_entry_bytes"),
-	"Library file sizes",
-	[]string{"url", "library", "title"},
-	nil,
+var (
+	libraryBytesMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "library_bytes"),
+		"Library size in bytes",
+		[]string{"url", "library"},
+		nil,
+	)
+	libraryCountMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "library_count"),
+		"Library size in number of entries",
+		[]string{"url", "library"},
+		nil,
+	)
 )
 
 type libraryCollector struct {
@@ -30,20 +39,26 @@ type libraryGetter interface {
 }
 
 func (c libraryCollector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- libraryMetric
+	ch <- libraryBytesMetric
+	ch <- libraryCountMetric
 }
 
 func (c libraryCollector) Collect(ch chan<- prometheus.Metric) {
+	start := time.Now()
 	sizes, err := c.reportSizes()
+	c.l.Debug("sizes collected", slog.Duration("duration", time.Since(start)), slog.Int("count", len(sizes)))
 	if err != nil {
 		c.l.Error("failed to collect plex library stats", "err", err)
 		return
 	}
 
 	for library, entries := range sizes {
+		ch <- prometheus.MustNewConstMetric(libraryCountMetric, prometheus.GaugeValue, float64(len(entries)), c.url, library)
+		var size int64
 		for _, entry := range entries {
-			ch <- prometheus.MustNewConstMetric(libraryMetric, prometheus.GaugeValue, float64(entry.size), c.url, library, entry.title)
+			size += entry.size
 		}
+		ch <- prometheus.MustNewConstMetric(libraryBytesMetric, prometheus.GaugeValue, float64(size), c.url, library)
 	}
 }
 

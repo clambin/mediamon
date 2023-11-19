@@ -29,10 +29,12 @@ func TestLibraryCollector_Collect(t *testing.T) {
 				}, nil)
 			},
 			want: `
-# HELP mediamon_plex_library_entry_bytes Library file sizes
-# TYPE mediamon_plex_library_entry_bytes gauge
-mediamon_plex_library_entry_bytes{library="movies",title="movie 1",url="http://localhost:8080"} 1024
-mediamon_plex_library_entry_bytes{library="movies",title="movie 2",url="http://localhost:8080"} 2048
+# HELP mediamon_plex_library_bytes Library size in bytes
+# TYPE mediamon_plex_library_bytes gauge
+mediamon_plex_library_bytes{library="movies",url="http://localhost:8080"} 3072
+# HELP mediamon_plex_library_count Library size in number of entries
+# TYPE mediamon_plex_library_count gauge
+mediamon_plex_library_count{library="movies",url="http://localhost:8080"} 2
 `,
 		},
 		{
@@ -41,7 +43,14 @@ mediamon_plex_library_entry_bytes{library="movies",title="movie 2",url="http://l
 				p.EXPECT().GetLibraries(mock.Anything).Return([]plex.Library{{Title: "movies", Type: "movie", Key: "1"}}, nil)
 				p.EXPECT().GetMovies(mock.Anything, "1").Return([]plex.Movie{}, nil)
 			},
-			want: ``,
+			want: `
+# HELP mediamon_plex_library_bytes Library size in bytes
+# TYPE mediamon_plex_library_bytes gauge
+mediamon_plex_library_bytes{library="movies",url="http://localhost:8080"} 0
+# HELP mediamon_plex_library_count Library size in number of entries
+# TYPE mediamon_plex_library_count gauge
+mediamon_plex_library_count{library="movies",url="http://localhost:8080"} 0
+`,
 		},
 		{
 			name: "movie - error",
@@ -65,9 +74,12 @@ mediamon_plex_library_entry_bytes{library="movies",title="movie 2",url="http://l
 				}, nil)
 			},
 			want: `
-# HELP mediamon_plex_library_entry_bytes Library file sizes
-# TYPE mediamon_plex_library_entry_bytes gauge
-mediamon_plex_library_entry_bytes{library="shows",title="show 1",url="http://localhost:8080"} 1024
+# HELP mediamon_plex_library_bytes Library size in bytes
+# TYPE mediamon_plex_library_bytes gauge
+mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 1024
+# HELP mediamon_plex_library_count Library size in number of entries
+# TYPE mediamon_plex_library_count gauge
+mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 1
 `,
 		},
 		{
@@ -82,7 +94,14 @@ mediamon_plex_library_entry_bytes{library="shows",title="show 1",url="http://loc
 				}, nil)
 				p.EXPECT().GetEpisodes(mock.Anything, "23").Return([]plex.Episode{}, nil)
 			},
-			want: ``,
+			want: `
+# HELP mediamon_plex_library_bytes Library size in bytes
+# TYPE mediamon_plex_library_bytes gauge
+mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
+# HELP mediamon_plex_library_count Library size in number of entries
+# TYPE mediamon_plex_library_count gauge
+mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
+`,
 		},
 		{
 			name: "show - empty seasons",
@@ -93,7 +112,14 @@ mediamon_plex_library_entry_bytes{library="shows",title="show 1",url="http://loc
 				}, nil)
 				p.EXPECT().GetSeasons(mock.Anything, "21").Return([]plex.Season{}, nil)
 			},
-			want: ``,
+			want: `
+# HELP mediamon_plex_library_bytes Library size in bytes
+# TYPE mediamon_plex_library_bytes gauge
+mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
+# HELP mediamon_plex_library_count Library size in number of entries
+# TYPE mediamon_plex_library_count gauge
+mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
+`,
 		},
 		{
 			name: "show - empty",
@@ -101,7 +127,14 @@ mediamon_plex_library_entry_bytes{library="shows",title="show 1",url="http://loc
 				p.EXPECT().GetLibraries(mock.Anything).Return([]plex.Library{{Title: "shows", Type: "show", Key: "2"}}, nil)
 				p.EXPECT().GetShows(mock.Anything, "2").Return([]plex.Show{}, nil)
 			},
-			want: ``,
+			want: `
+# HELP mediamon_plex_library_bytes Library size in bytes
+# TYPE mediamon_plex_library_bytes gauge
+mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
+# HELP mediamon_plex_library_count Library size in number of entries
+# TYPE mediamon_plex_library_count gauge
+mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
+`,
 		},
 		{
 			name: "show - error",
