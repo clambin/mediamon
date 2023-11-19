@@ -38,18 +38,9 @@ type Config struct {
 	Password string
 }
 
-var plexCacheTable = httpclient.CacheTable{
-	{
-		Path:     "/library/.*",
-		IsRegExp: true,
-		Expiry:   15 * time.Minute,
-	},
-}
-
 // NewCollector creates a new Collector
 func NewCollector(version, url, username, password string) *Collector {
 	r := httpclient.NewRoundTripper(
-		httpclient.WithInstrumentedCache(plexCacheTable, time.Hour, 2*time.Hour, "mediamon", "", "plex"),
 		httpclient.WithCustomMetrics(newMeasurer("mediamon", "", "plex")),
 	)
 	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, r)

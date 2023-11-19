@@ -6,6 +6,8 @@ import (
 	"github.com/clambin/mediaclients/plex"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
+	"sync"
+	"time"
 )
 
 var (
@@ -27,6 +29,9 @@ type libraryCollector struct {
 	libraryGetter
 	url    string
 	logger *slog.Logger
+	cache  *map[string][]libraryEntry
+	age    time.Time
+	lock   sync.Mutex
 }
 
 type libraryGetter interface {
@@ -37,12 +42,12 @@ type libraryGetter interface {
 	GetEpisodes(ctx context.Context, key string) ([]plex.Episode, error)
 }
 
-func (c libraryCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c *libraryCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- libraryBytesMetric
 	ch <- libraryCountMetric
 }
 
-func (c libraryCollector) Collect(ch chan<- prometheus.Metric) {
+func (c *libraryCollector) Collect(ch chan<- prometheus.Metric) {
 	sizes, err := c.reportSizes()
 	if err != nil {
 		c.logger.Error("failed to collect plex library stats", "err", err)
@@ -64,7 +69,23 @@ type libraryEntry struct {
 	size  int64
 }
 
-func (c libraryCollector) reportSizes() (map[string][]libraryEntry, error) {
+func (c *libraryCollector) reportSizes() (map[string][]libraryEntry, error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	if c.cache != nil && time.Since(c.age) < 15*time.Minute {
+		return *c.cache, nil
+	}
+
+	sizes, err := c.getSizes()
+	if err == nil {
+		c.cache = &sizes
+		c.age = time.Now()
+	}
+	return sizes, err
+}
+
+func (c *libraryCollector) getSizes() (map[string][]libraryEntry, error) {
 	ctx := context.Background()
 	libraries, err := c.libraryGetter.GetLibraries(ctx)
 	if err != nil {
@@ -89,7 +110,7 @@ func (c libraryCollector) reportSizes() (map[string][]libraryEntry, error) {
 	return result, nil
 }
 
-func (c libraryCollector) getMovieTotals(ctx context.Context, key string) ([]libraryEntry, error) {
+func (c *libraryCollector) getMovieTotals(ctx context.Context, key string) ([]libraryEntry, error) {
 	movies, err := c.GetMovies(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("GetMovies: %w", err)
@@ -104,7 +125,7 @@ func (c libraryCollector) getMovieTotals(ctx context.Context, key string) ([]lib
 	return entries, nil
 }
 
-func (c libraryCollector) getShowTotals(ctx context.Context, key string) ([]libraryEntry, error) {
+func (c *libraryCollector) getShowTotals(ctx context.Context, key string) ([]libraryEntry, error) {
 	shows, err := c.GetShows(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("GetShows: %w", err)
@@ -126,7 +147,7 @@ func (c libraryCollector) getShowTotals(ctx context.Context, key string) ([]libr
 	return entries, nil
 }
 
-func (c libraryCollector) getShowTotal(ctx context.Context, key string) (int64, error) {
+func (c *libraryCollector) getShowTotal(ctx context.Context, key string) (int64, error) {
 	seasons, err := c.GetSeasons(ctx, key)
 	if err != nil {
 		return 0, fmt.Errorf("GetSeasons: %w", err)

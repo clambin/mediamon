@@ -159,7 +159,7 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 				logger:        slog.Default(),
 			}
 			r := prometheus.NewPedanticRegistry()
-			r.MustRegister(c)
+			r.MustRegister(&c)
 			assert.NoError(t, testutil.GatherAndCompare(r, strings.NewReader(tt.want)))
 		})
 	}
