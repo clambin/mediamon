@@ -69,11 +69,13 @@ type libraryEntry struct {
 	size  int64
 }
 
+const libraryRefreshInterval = time.Hour
+
 func (c *libraryCollector) reportLibraries() (map[string][]libraryEntry, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	if c.cache != nil && time.Since(c.age) < 15*time.Minute {
+	if c.cache != nil && time.Since(c.age) < libraryRefreshInterval {
 		return *c.cache, nil
 	}
 
