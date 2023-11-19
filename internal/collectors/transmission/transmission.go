@@ -6,6 +6,7 @@ import (
 	"github.com/clambin/mediaclients/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
+	"sync"
 	"time"
 )
 
@@ -62,27 +63,6 @@ type Collector struct {
 
 var _ prometheus.Collector = &Collector{}
 
-// Config items for Transmission collector
-type Config struct {
-	URL string
-}
-
-type transmissionStats struct {
-	version  string
-	active   int
-	paused   int
-	download int
-	upload   int
-}
-
-func (s transmissionStats) collect(ch chan<- prometheus.Metric, url string) {
-	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), s.version, url)
-	ch <- prometheus.MustNewConstMetric(activeTorrentsMetric, prometheus.GaugeValue, float64(s.active), url)
-	ch <- prometheus.MustNewConstMetric(pausedTorrentsMetric, prometheus.GaugeValue, float64(s.paused), url)
-	ch <- prometheus.MustNewConstMetric(downloadSpeedMetric, prometheus.GaugeValue, float64(s.download), url)
-	ch <- prometheus.MustNewConstMetric(uploadSpeedMetric, prometheus.GaugeValue, float64(s.upload), url)
-}
-
 // NewCollector creates a new Collector
 func NewCollector(url string) *Collector {
 	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "transmission"))
@@ -107,31 +87,32 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	start := time.Now()
-	stats, err := c.getStats()
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() { defer wg.Done(); c.collectVersion(ch) }()
+	go func() { defer wg.Done(); c.collectStats(ch) }()
+	wg.Wait()
+	c.transport.Collect(ch)
+	c.logger.Debug("stats collected", slog.Duration("duration", time.Since(start)))
+}
+
+func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
+	params, err := c.Transmission.GetSessionParameters(context.Background())
 	if err != nil {
-		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting transmission metrics", nil, nil),err)
-		c.logger.Error("failed to collect stats", "err", err)
+		c.logger.Error("failed to get session parameters", "err", err)
 		return
 	}
-	stats.collect(ch, c.url)
-	c.transport.Collect(ch)
-	c.logger.Debug("stats collected", "duration", time.Since(start))
+	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), params.Arguments.Version, c.url)
 }
 
-func (c *Collector) getStats() (stats transmissionStats, err error) {
-	ctx := context.Background()
-	if stats.version, err = c.getVersion(ctx); err == nil {
-		stats.active, stats.paused, stats.download, stats.upload, err = c.getSessionStats(ctx)
+func (c *Collector) collectStats(ch chan<- prometheus.Metric) {
+	stats, err := c.Transmission.GetSessionStatistics(context.Background())
+	if err != nil {
+		c.logger.Error("failed to get session statistics", "err", err)
+		return
 	}
-	return stats, err
-}
-
-func (c *Collector) getVersion(ctx context.Context) (string, error) {
-	params, err := c.Transmission.GetSessionParameters(ctx)
-	return params.Arguments.Version, err
-}
-
-func (c *Collector) getSessionStats(ctx context.Context) (int, int, int, int, error) {
-	stats, err := c.Transmission.GetSessionStatistics(ctx)
-	return stats.Arguments.ActiveTorrentCount, stats.Arguments.PausedTorrentCount, stats.Arguments.DownloadSpeed, stats.Arguments.UploadSpeed, err
+	ch <- prometheus.MustNewConstMetric(activeTorrentsMetric, prometheus.GaugeValue, float64(stats.Arguments.ActiveTorrentCount), c.url)
+	ch <- prometheus.MustNewConstMetric(pausedTorrentsMetric, prometheus.GaugeValue, float64(stats.Arguments.PausedTorrentCount), c.url)
+	ch <- prometheus.MustNewConstMetric(downloadSpeedMetric, prometheus.GaugeValue, float64(stats.Arguments.DownloadSpeed), c.url)
+	ch <- prometheus.MustNewConstMetric(uploadSpeedMetric, prometheus.GaugeValue, float64(stats.Arguments.UploadSpeed), c.url)
 }

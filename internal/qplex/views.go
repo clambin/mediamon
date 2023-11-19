@@ -4,16 +4,14 @@ import (
 	"cmp"
 	"context"
 	"github.com/clambin/mediaclients/plex"
-	"log/slog"
 	"slices"
-	"time"
 )
 
 type PlexGetter interface {
 	SetAuthToken(string)
-	GetLibraries(context.Context) (plex.Libraries, error)
-	GetMovieLibrary(context.Context, string) (plex.MovieLibrary, error)
-	GetShowLibrary(context.Context, string) (plex.ShowLibrary, error)
+	GetLibraries(context.Context) ([]plex.Library, error)
+	GetMovies(context.Context, string) ([]plex.Movie, error)
+	GetShows(context.Context, string) ([]plex.Show, error)
 }
 
 func GetViews(ctx context.Context, c PlexGetter, tokens []string, reverse bool) ([]ViewCountEntry, error) {
@@ -52,7 +50,7 @@ func getUserViewCount(ctx context.Context, c PlexGetter) (viewCount, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, library := range libraries.Directory {
+	for _, library := range libraries {
 		var libraryViewCount viewCount
 		switch library.Type {
 		case "movie":
@@ -69,13 +67,13 @@ func getUserViewCount(ctx context.Context, c PlexGetter) (viewCount, error) {
 	return result, err
 }
 
-func getMovieViewCount(ctx context.Context, client PlexGetter, library plex.LibrariesDirectory) (viewCount, error) {
+func getMovieViewCount(ctx context.Context, client PlexGetter, library plex.Library) (viewCount, error) {
 	result := make(viewCount)
-	entries, err := client.GetMovieLibrary(ctx, library.Key)
+	entries, err := client.GetMovies(ctx, library.Key)
 	if err != nil {
 		return result, err
 	}
-	for _, entry := range entries.Metadata {
+	for _, entry := range entries {
 		existing, ok := result[guid(entry.Guid)]
 		if !ok {
 			existing = ViewCountEntry{
@@ -89,13 +87,13 @@ func getMovieViewCount(ctx context.Context, client PlexGetter, library plex.Libr
 	return result, nil
 }
 
-func getShowViewCount(ctx context.Context, client PlexGetter, library plex.LibrariesDirectory) (viewCount, error) {
+func getShowViewCount(ctx context.Context, client PlexGetter, library plex.Library) (viewCount, error) {
 	result := make(viewCount)
-	entries, err := client.GetShowLibrary(ctx, library.Key)
+	entries, err := client.GetShows(ctx, library.Key)
 	if err != nil {
 		return result, err
 	}
-	for _, entry := range entries.Metadata {
+	for _, entry := range entries {
 		existing, ok := result[guid(entry.Guid)]
 		if !ok {
 			existing = ViewCountEntry{
@@ -105,13 +103,6 @@ func getShowViewCount(ctx context.Context, client PlexGetter, library plex.Libra
 		}
 		existing.Views += entry.ViewCount
 		result[guid(entry.Guid)] = existing
-
-		slog.Debug("show found",
-			slog.String("name", entry.Title),
-			slog.Time("added", time.Time(entry.AddedAt)),
-			slog.Time("updated", time.Time(entry.UpdatedAt)),
-			slog.Time("viewed", time.Time(entry.LastViewedAt)),
-		)
 	}
 	return result, nil
 }

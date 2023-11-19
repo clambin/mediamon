@@ -3,7 +3,7 @@ package roundtripper_test
 import (
 	"bytes"
 	"github.com/clambin/go-common/httpclient"
-	"github.com/clambin/mediamon/v2/internal/roundtripper"
+	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/roundtripper"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
