@@ -164,3 +164,23 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 		})
 	}
 }
+
+func TestLibraryCollector_Collect_cached(t *testing.T) {
+	p := mocks.NewGetter(t)
+	p.EXPECT().GetLibraries(mock.Anything).Return([]plex.Library{{Title: "movies", Type: "movie", Key: "1"}}, nil).Once()
+	p.EXPECT().GetMovies(mock.Anything, "1").Return([]plex.Movie{
+		{Title: "movie 1", Media: []plex.Media{{Part: []plex.MediaPart{{Size: 1024}}}}},
+		{Title: "movie 2", Media: []plex.Media{{Part: []plex.MediaPart{{Size: 2 * 1024}}}}},
+	}, nil).Once()
+
+	c := libraryCollector{
+		libraryGetter: p,
+		url:           "http://localhost:8080",
+		logger:        slog.Default(),
+	}
+	r := prometheus.NewPedanticRegistry()
+	r.MustRegister(&c)
+
+	assert.NotZero(t, testutil.CollectAndCount(r))
+	assert.NotZero(t, testutil.CollectAndCount(r))
+}
