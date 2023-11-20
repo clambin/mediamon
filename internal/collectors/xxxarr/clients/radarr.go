@@ -25,9 +25,10 @@ func (r Radarr) GetVersion(ctx context.Context) (string, error) {
 func (r Radarr) GetHealth(ctx context.Context) (map[string]int, error) {
 	health := make(map[string]int)
 	healthItems, err := r.Client.GetHealth(ctx)
-	for _, item := range healthItems {
-		value := health[item.Type]
-		health[item.Type] = value + 1
+	for i := range healthItems {
+		healthType := healthItems[i].Type
+		value := health[healthType]
+		health[healthType] = value + 1
 	}
 	return health, err
 }
@@ -57,8 +58,8 @@ func (r Radarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
 func (r Radarr) GetLibrary(ctx context.Context) (Library, error) {
 	var library Library
 	series, err := r.Client.GetMovies(ctx)
-	for _, entry := range series {
-		if entry.Monitored {
+	for i := range series {
+		if series[i].Monitored {
 			library.Monitored++
 		} else {
 			library.Unmonitored++
