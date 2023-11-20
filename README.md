@@ -26,7 +26,7 @@ Flags:
 ```
 
 ### Configuration
-The  configuration file option specifies a yaml file to control tado-monitor's behaviour:
+The  configuration file option specifies a yaml file to control mediamon's behaviour:
 
 ```
 transmission:
@@ -68,7 +68,7 @@ openvpn:
     interval: <duration>
 ```
 
-If the filename is not specified on the command line, tado-monitor will look for a file `config.yaml` in the following directories:
+If the filename is not specified on the command line, mediamon will look for a file `config.yaml` in the following directories:
 
 ```
 /etc/mediamon

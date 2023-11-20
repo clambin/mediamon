@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/clambin/go-common/httpclient v0.6.0
 	github.com/clambin/go-common/set v0.3.0
-	github.com/clambin/mediaclients v0.3.0
+	github.com/clambin/mediaclients v0.4.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.17.0
