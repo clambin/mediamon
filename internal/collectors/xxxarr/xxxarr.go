@@ -2,34 +2,31 @@ package xxxarr
 
 import (
 	"context"
-	"errors"
 	"github.com/clambin/go-common/httpclient"
 	"github.com/clambin/mediaclients/xxxarr"
+	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/roundtripper"
-	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
+	"sync"
 	"time"
 )
 
 // Collector presents Sonarr/Radarr statistics as Prometheus metrics
 type Collector struct {
-	Scraper
+	client      Client
 	application string
 	metrics     map[string]*prometheus.Desc
 	transport   *httpclient.RoundTripper
 	logger      *slog.Logger
 }
 
-// Scraper provides a generic means of getting stats from Sonarr or Radarr
-type Scraper interface {
-	Scrape(ctx context.Context) (scraper.Stats, error)
-}
-
-// Config to create a collector
-type Config struct {
-	URL    string
-	APIKey string
+type Client interface {
+	GetVersion(context.Context) (string, error)
+	GetHealth(context.Context) (map[string]int, error)
+	GetCalendar(context.Context) ([]string, error)
+	GetQueue(context.Context) ([]clients.QueuedItem, error)
+	GetLibrary(context.Context) (clients.Library, error)
 }
 
 var (
@@ -62,7 +59,7 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 	)
 
 	return &Collector{
-		Scraper:     scraper.RadarrScraper{Radarr: xxxarr.NewRadarrClient(url, apiKey, r)},
+		client:      clients.Radarr{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
 		application: "radarr",
 		metrics:     createMetrics("radarr", url),
 		transport:   r,
@@ -78,7 +75,7 @@ func NewSonarrCollector(url, apiKey string) *Collector {
 	)
 
 	return &Collector{
-		Scraper:     scraper.SonarrScraper{Sonarr: xxxarr.NewSonarrClient(url, apiKey, r)},
+		client:      clients.Sonarr{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
 		application: "sonarr",
 		metrics:     createMetrics("sonarr", url),
 		transport:   r,
@@ -97,42 +94,77 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	start := time.Now()
-	stats, err := c.Scraper.Scrape(context.Background())
+	var wg sync.WaitGroup
+	wg.Add(5)
+	go func() { defer wg.Done(); c.collectVersion(ch) }()
+	go func() { defer wg.Done(); c.collectHealth(ch) }()
+	go func() { defer wg.Done(); c.collectCalendar(ch) }()
+	go func() { defer wg.Done(); c.collectQueue(ch) }()
+	go func() { defer wg.Done(); c.collectLibrary(ch) }()
+	wg.Wait()
+	c.transport.Collect(ch)
+
+	c.logger.Debug("stats collected", "duration", time.Since(start))
+}
+
+func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
+	version, err := c.client.GetVersion(context.Background())
 	if err != nil {
-		// ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting "+c.application+" metrics", nil, nil), err)
-		var err2 *xxxarr.ErrInvalidJSON
-		if errors.As(err, &err2) {
-			c.logger.Error("server returned invalid output", "err", err, "body", string(err2.Body))
-		} else {
-			c.logger.Error("failed to collect metrics", "err", err)
-		}
+		c.logger.Error("failed to get version", "err", err)
+		return
+	}
+	ch <- prometheus.MustNewConstMetric(c.metrics["version"], prometheus.GaugeValue, float64(1), version)
+}
+
+func (c *Collector) collectHealth(ch chan<- prometheus.Metric) {
+	health, err := c.client.GetHealth(context.Background())
+	if err != nil {
+		c.logger.Error("failed to get health", "err", err)
+		return
+	}
+	for key, value := range health {
+		ch <- prometheus.MustNewConstMetric(c.metrics["health"], prometheus.GaugeValue, float64(value), key)
+	}
+}
+
+func (c *Collector) collectCalendar(ch chan<- prometheus.Metric) {
+	calendar, err := c.client.GetCalendar(context.Background())
+	if err != nil {
+		c.logger.Error("failed to get calendar", "err", err)
+		return
+	}
+	for _, title := range calendar {
+		ch <- prometheus.MustNewConstMetric(c.metrics["calendar"], prometheus.GaugeValue, 1.0, title)
+	}
+}
+
+func (c *Collector) collectQueue(ch chan<- prometheus.Metric) {
+	queue, err := c.client.GetQueue(context.Background())
+	if err != nil {
+		c.logger.Error("failed to get queue", "err", err)
 		return
 	}
 
-	ch <- prometheus.MustNewConstMetric(c.metrics["version"], prometheus.GaugeValue, float64(1), stats.Version)
-	for key, value := range stats.Health {
-		ch <- prometheus.MustNewConstMetric(c.metrics["health"], prometheus.GaugeValue, float64(value), key)
-	}
-	for _, title := range stats.Calendar {
-		ch <- prometheus.MustNewConstMetric(c.metrics["calendar"], prometheus.GaugeValue, 1.0, title)
-	}
+	ch <- prometheus.MustNewConstMetric(c.metrics["queued_count"], prometheus.GaugeValue, float64(len(queue)))
 
-	ch <- prometheus.MustNewConstMetric(c.metrics["queued_count"], prometheus.GaugeValue, float64(len(stats.Queued)))
-
-	totalBytes := make(map[string]float64)
-	downloadedBytes := make(map[string]float64)
-	for _, queued := range stats.Queued {
+	totalBytes := make(map[string]int64)
+	downloadedBytes := make(map[string]int64)
+	for _, queued := range queue {
 		totalBytes[queued.Name] += queued.TotalBytes
 		downloadedBytes[queued.Name] += queued.DownloadedBytes
 	}
 	for name := range totalBytes {
-		ch <- prometheus.MustNewConstMetric(c.metrics["queued_total"], prometheus.GaugeValue, totalBytes[name], name)
-		ch <- prometheus.MustNewConstMetric(c.metrics["queued_downloaded"], prometheus.GaugeValue, downloadedBytes[name], name)
+		ch <- prometheus.MustNewConstMetric(c.metrics["queued_total"], prometheus.GaugeValue, float64(totalBytes[name]), name)
+		ch <- prometheus.MustNewConstMetric(c.metrics["queued_downloaded"], prometheus.GaugeValue, float64(downloadedBytes[name]), name)
 	}
+}
 
-	ch <- prometheus.MustNewConstMetric(c.metrics["monitored"], prometheus.GaugeValue, float64(stats.Monitored))
-	ch <- prometheus.MustNewConstMetric(c.metrics["unmonitored"], prometheus.GaugeValue, float64(stats.Unmonitored))
-	c.transport.Collect(ch)
-
-	c.logger.Debug("stats collected", "duration", time.Since(start))
+func (c *Collector) collectLibrary(ch chan<- prometheus.Metric) {
+	library, err := c.client.GetLibrary(context.Background())
+	if err != nil {
+		c.logger.Error("failed to get library", "err", err)
+		return
+	}
+	ch <- prometheus.MustNewConstMetric(c.metrics["monitored"], prometheus.GaugeValue, float64(library.Monitored))
+	ch <- prometheus.MustNewConstMetric(c.metrics["unmonitored"], prometheus.GaugeValue, float64(library.Unmonitored))
 }

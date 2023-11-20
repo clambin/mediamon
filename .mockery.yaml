@@ -13,8 +13,8 @@ packages:
       Getter:
   github.com/clambin/mediamon/v2/internal/collectors/xxxarr:
     interfaces:
-      Scraper:
-  github.com/clambin/mediamon/v2/internal/collectors/xxxarr/scraper:
+      Client:
+  github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients:
     interfaces:
-      RadarrGetter:
-      SonarrGetter:
+      RadarrClient:
+      SonarrClient:
