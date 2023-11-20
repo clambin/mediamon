@@ -23,19 +23,19 @@ func (_m *SonarrClient) EXPECT() *SonarrClient_Expecter {
 }
 
 // GetCalendar provides a mock function with given fields: ctx
-func (_m *SonarrClient) GetCalendar(ctx context.Context) ([]xxxarr.SonarrCalendarResponse, error) {
+func (_m *SonarrClient) GetCalendar(ctx context.Context) ([]xxxarr.SonarrCalendar, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []xxxarr.SonarrCalendarResponse
+	var r0 []xxxarr.SonarrCalendar
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.SonarrCalendarResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.SonarrCalendar, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.SonarrCalendarResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.SonarrCalendar); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]xxxarr.SonarrCalendarResponse)
+			r0 = ret.Get(0).([]xxxarr.SonarrCalendar)
 		}
 	}
 
@@ -66,29 +66,29 @@ func (_c *SonarrClient_GetCalendar_Call) Run(run func(ctx context.Context)) *Son
 	return _c
 }
 
-func (_c *SonarrClient_GetCalendar_Call) Return(_a0 []xxxarr.SonarrCalendarResponse, _a1 error) *SonarrClient_GetCalendar_Call {
+func (_c *SonarrClient_GetCalendar_Call) Return(_a0 []xxxarr.SonarrCalendar, _a1 error) *SonarrClient_GetCalendar_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *SonarrClient_GetCalendar_Call) RunAndReturn(run func(context.Context) ([]xxxarr.SonarrCalendarResponse, error)) *SonarrClient_GetCalendar_Call {
+func (_c *SonarrClient_GetCalendar_Call) RunAndReturn(run func(context.Context) ([]xxxarr.SonarrCalendar, error)) *SonarrClient_GetCalendar_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetEpisodeByID provides a mock function with given fields: ctx, id
-func (_m *SonarrClient) GetEpisodeByID(ctx context.Context, id int) (xxxarr.SonarrEpisodeResponse, error) {
+func (_m *SonarrClient) GetEpisodeByID(ctx context.Context, id int) (xxxarr.SonarrEpisode, error) {
 	ret := _m.Called(ctx, id)
 
-	var r0 xxxarr.SonarrEpisodeResponse
+	var r0 xxxarr.SonarrEpisode
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) (xxxarr.SonarrEpisodeResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int) (xxxarr.SonarrEpisode, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) xxxarr.SonarrEpisodeResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int) xxxarr.SonarrEpisode); ok {
 		r0 = rf(ctx, id)
 	} else {
-		r0 = ret.Get(0).(xxxarr.SonarrEpisodeResponse)
+		r0 = ret.Get(0).(xxxarr.SonarrEpisode)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
@@ -119,30 +119,30 @@ func (_c *SonarrClient_GetEpisodeByID_Call) Run(run func(ctx context.Context, id
 	return _c
 }
 
-func (_c *SonarrClient_GetEpisodeByID_Call) Return(_a0 xxxarr.SonarrEpisodeResponse, _a1 error) *SonarrClient_GetEpisodeByID_Call {
+func (_c *SonarrClient_GetEpisodeByID_Call) Return(_a0 xxxarr.SonarrEpisode, _a1 error) *SonarrClient_GetEpisodeByID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *SonarrClient_GetEpisodeByID_Call) RunAndReturn(run func(context.Context, int) (xxxarr.SonarrEpisodeResponse, error)) *SonarrClient_GetEpisodeByID_Call {
+func (_c *SonarrClient_GetEpisodeByID_Call) RunAndReturn(run func(context.Context, int) (xxxarr.SonarrEpisode, error)) *SonarrClient_GetEpisodeByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetHealth provides a mock function with given fields: ctx
-func (_m *SonarrClient) GetHealth(ctx context.Context) ([]xxxarr.SonarrHealthResponse, error) {
+func (_m *SonarrClient) GetHealth(ctx context.Context) ([]xxxarr.SonarrHealth, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []xxxarr.SonarrHealthResponse
+	var r0 []xxxarr.SonarrHealth
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.SonarrHealthResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.SonarrHealth, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.SonarrHealthResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.SonarrHealth); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]xxxarr.SonarrHealthResponse)
+			r0 = ret.Get(0).([]xxxarr.SonarrHealth)
 		}
 	}
 
@@ -173,29 +173,31 @@ func (_c *SonarrClient_GetHealth_Call) Run(run func(ctx context.Context)) *Sonar
 	return _c
 }
 
-func (_c *SonarrClient_GetHealth_Call) Return(_a0 []xxxarr.SonarrHealthResponse, _a1 error) *SonarrClient_GetHealth_Call {
+func (_c *SonarrClient_GetHealth_Call) Return(_a0 []xxxarr.SonarrHealth, _a1 error) *SonarrClient_GetHealth_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *SonarrClient_GetHealth_Call) RunAndReturn(run func(context.Context) ([]xxxarr.SonarrHealthResponse, error)) *SonarrClient_GetHealth_Call {
+func (_c *SonarrClient_GetHealth_Call) RunAndReturn(run func(context.Context) ([]xxxarr.SonarrHealth, error)) *SonarrClient_GetHealth_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetQueue provides a mock function with given fields: ctx
-func (_m *SonarrClient) GetQueue(ctx context.Context) (xxxarr.SonarrQueueResponse, error) {
+func (_m *SonarrClient) GetQueue(ctx context.Context) ([]xxxarr.SonarrQueue, error) {
 	ret := _m.Called(ctx)
 
-	var r0 xxxarr.SonarrQueueResponse
+	var r0 []xxxarr.SonarrQueue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (xxxarr.SonarrQueueResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.SonarrQueue, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) xxxarr.SonarrQueueResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.SonarrQueue); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(xxxarr.SonarrQueueResponse)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]xxxarr.SonarrQueue)
+		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -225,30 +227,30 @@ func (_c *SonarrClient_GetQueue_Call) Run(run func(ctx context.Context)) *Sonarr
 	return _c
 }
 
-func (_c *SonarrClient_GetQueue_Call) Return(_a0 xxxarr.SonarrQueueResponse, _a1 error) *SonarrClient_GetQueue_Call {
+func (_c *SonarrClient_GetQueue_Call) Return(_a0 []xxxarr.SonarrQueue, _a1 error) *SonarrClient_GetQueue_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *SonarrClient_GetQueue_Call) RunAndReturn(run func(context.Context) (xxxarr.SonarrQueueResponse, error)) *SonarrClient_GetQueue_Call {
+func (_c *SonarrClient_GetQueue_Call) RunAndReturn(run func(context.Context) ([]xxxarr.SonarrQueue, error)) *SonarrClient_GetQueue_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSeries provides a mock function with given fields: ctx
-func (_m *SonarrClient) GetSeries(ctx context.Context) ([]xxxarr.SonarrSeriesResponse, error) {
+func (_m *SonarrClient) GetSeries(ctx context.Context) ([]xxxarr.SonarrSeries, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []xxxarr.SonarrSeriesResponse
+	var r0 []xxxarr.SonarrSeries
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.SonarrSeriesResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.SonarrSeries, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.SonarrSeriesResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.SonarrSeries); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]xxxarr.SonarrSeriesResponse)
+			r0 = ret.Get(0).([]xxxarr.SonarrSeries)
 		}
 	}
 
@@ -279,29 +281,29 @@ func (_c *SonarrClient_GetSeries_Call) Run(run func(ctx context.Context)) *Sonar
 	return _c
 }
 
-func (_c *SonarrClient_GetSeries_Call) Return(_a0 []xxxarr.SonarrSeriesResponse, _a1 error) *SonarrClient_GetSeries_Call {
+func (_c *SonarrClient_GetSeries_Call) Return(_a0 []xxxarr.SonarrSeries, _a1 error) *SonarrClient_GetSeries_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *SonarrClient_GetSeries_Call) RunAndReturn(run func(context.Context) ([]xxxarr.SonarrSeriesResponse, error)) *SonarrClient_GetSeries_Call {
+func (_c *SonarrClient_GetSeries_Call) RunAndReturn(run func(context.Context) ([]xxxarr.SonarrSeries, error)) *SonarrClient_GetSeries_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSystemStatus provides a mock function with given fields: ctx
-func (_m *SonarrClient) GetSystemStatus(ctx context.Context) (xxxarr.SonarrSystemStatusResponse, error) {
+func (_m *SonarrClient) GetSystemStatus(ctx context.Context) (xxxarr.SonarrSystemStatus, error) {
 	ret := _m.Called(ctx)
 
-	var r0 xxxarr.SonarrSystemStatusResponse
+	var r0 xxxarr.SonarrSystemStatus
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (xxxarr.SonarrSystemStatusResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (xxxarr.SonarrSystemStatus, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) xxxarr.SonarrSystemStatusResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) xxxarr.SonarrSystemStatus); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(xxxarr.SonarrSystemStatusResponse)
+		r0 = ret.Get(0).(xxxarr.SonarrSystemStatus)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -331,12 +333,12 @@ func (_c *SonarrClient_GetSystemStatus_Call) Run(run func(ctx context.Context)) 
 	return _c
 }
 
-func (_c *SonarrClient_GetSystemStatus_Call) Return(_a0 xxxarr.SonarrSystemStatusResponse, _a1 error) *SonarrClient_GetSystemStatus_Call {
+func (_c *SonarrClient_GetSystemStatus_Call) Return(_a0 xxxarr.SonarrSystemStatus, _a1 error) *SonarrClient_GetSystemStatus_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *SonarrClient_GetSystemStatus_Call) RunAndReturn(run func(context.Context) (xxxarr.SonarrSystemStatusResponse, error)) *SonarrClient_GetSystemStatus_Call {
+func (_c *SonarrClient_GetSystemStatus_Call) RunAndReturn(run func(context.Context) (xxxarr.SonarrSystemStatus, error)) *SonarrClient_GetSystemStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

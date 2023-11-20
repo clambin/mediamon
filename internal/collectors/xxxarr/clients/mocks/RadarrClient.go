@@ -23,19 +23,19 @@ func (_m *RadarrClient) EXPECT() *RadarrClient_Expecter {
 }
 
 // GetCalendar provides a mock function with given fields: ctx
-func (_m *RadarrClient) GetCalendar(ctx context.Context) ([]xxxarr.RadarrCalendarResponse, error) {
+func (_m *RadarrClient) GetCalendar(ctx context.Context) ([]xxxarr.RadarrCalendar, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []xxxarr.RadarrCalendarResponse
+	var r0 []xxxarr.RadarrCalendar
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.RadarrCalendarResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.RadarrCalendar, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.RadarrCalendarResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.RadarrCalendar); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]xxxarr.RadarrCalendarResponse)
+			r0 = ret.Get(0).([]xxxarr.RadarrCalendar)
 		}
 	}
 
@@ -66,30 +66,30 @@ func (_c *RadarrClient_GetCalendar_Call) Run(run func(ctx context.Context)) *Rad
 	return _c
 }
 
-func (_c *RadarrClient_GetCalendar_Call) Return(_a0 []xxxarr.RadarrCalendarResponse, _a1 error) *RadarrClient_GetCalendar_Call {
+func (_c *RadarrClient_GetCalendar_Call) Return(_a0 []xxxarr.RadarrCalendar, _a1 error) *RadarrClient_GetCalendar_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *RadarrClient_GetCalendar_Call) RunAndReturn(run func(context.Context) ([]xxxarr.RadarrCalendarResponse, error)) *RadarrClient_GetCalendar_Call {
+func (_c *RadarrClient_GetCalendar_Call) RunAndReturn(run func(context.Context) ([]xxxarr.RadarrCalendar, error)) *RadarrClient_GetCalendar_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetHealth provides a mock function with given fields: ctx
-func (_m *RadarrClient) GetHealth(ctx context.Context) ([]xxxarr.RadarrHealthResponse, error) {
+func (_m *RadarrClient) GetHealth(ctx context.Context) ([]xxxarr.RadarrHealth, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []xxxarr.RadarrHealthResponse
+	var r0 []xxxarr.RadarrHealth
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.RadarrHealthResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.RadarrHealth, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.RadarrHealthResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.RadarrHealth); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]xxxarr.RadarrHealthResponse)
+			r0 = ret.Get(0).([]xxxarr.RadarrHealth)
 		}
 	}
 
@@ -120,30 +120,30 @@ func (_c *RadarrClient_GetHealth_Call) Run(run func(ctx context.Context)) *Radar
 	return _c
 }
 
-func (_c *RadarrClient_GetHealth_Call) Return(_a0 []xxxarr.RadarrHealthResponse, _a1 error) *RadarrClient_GetHealth_Call {
+func (_c *RadarrClient_GetHealth_Call) Return(_a0 []xxxarr.RadarrHealth, _a1 error) *RadarrClient_GetHealth_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *RadarrClient_GetHealth_Call) RunAndReturn(run func(context.Context) ([]xxxarr.RadarrHealthResponse, error)) *RadarrClient_GetHealth_Call {
+func (_c *RadarrClient_GetHealth_Call) RunAndReturn(run func(context.Context) ([]xxxarr.RadarrHealth, error)) *RadarrClient_GetHealth_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetMovies provides a mock function with given fields: ctx
-func (_m *RadarrClient) GetMovies(ctx context.Context) ([]xxxarr.RadarrMovieResponse, error) {
+func (_m *RadarrClient) GetMovies(ctx context.Context) ([]xxxarr.RadarrMovie, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []xxxarr.RadarrMovieResponse
+	var r0 []xxxarr.RadarrMovie
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.RadarrMovieResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.RadarrMovie, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.RadarrMovieResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.RadarrMovie); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]xxxarr.RadarrMovieResponse)
+			r0 = ret.Get(0).([]xxxarr.RadarrMovie)
 		}
 	}
 
@@ -174,29 +174,31 @@ func (_c *RadarrClient_GetMovies_Call) Run(run func(ctx context.Context)) *Radar
 	return _c
 }
 
-func (_c *RadarrClient_GetMovies_Call) Return(_a0 []xxxarr.RadarrMovieResponse, _a1 error) *RadarrClient_GetMovies_Call {
+func (_c *RadarrClient_GetMovies_Call) Return(_a0 []xxxarr.RadarrMovie, _a1 error) *RadarrClient_GetMovies_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *RadarrClient_GetMovies_Call) RunAndReturn(run func(context.Context) ([]xxxarr.RadarrMovieResponse, error)) *RadarrClient_GetMovies_Call {
+func (_c *RadarrClient_GetMovies_Call) RunAndReturn(run func(context.Context) ([]xxxarr.RadarrMovie, error)) *RadarrClient_GetMovies_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetQueue provides a mock function with given fields: ctx
-func (_m *RadarrClient) GetQueue(ctx context.Context) (xxxarr.RadarrQueueResponse, error) {
+func (_m *RadarrClient) GetQueue(ctx context.Context) ([]xxxarr.RadarrQueue, error) {
 	ret := _m.Called(ctx)
 
-	var r0 xxxarr.RadarrQueueResponse
+	var r0 []xxxarr.RadarrQueue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (xxxarr.RadarrQueueResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]xxxarr.RadarrQueue, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) xxxarr.RadarrQueueResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []xxxarr.RadarrQueue); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(xxxarr.RadarrQueueResponse)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]xxxarr.RadarrQueue)
+		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -226,29 +228,29 @@ func (_c *RadarrClient_GetQueue_Call) Run(run func(ctx context.Context)) *Radarr
 	return _c
 }
 
-func (_c *RadarrClient_GetQueue_Call) Return(_a0 xxxarr.RadarrQueueResponse, _a1 error) *RadarrClient_GetQueue_Call {
+func (_c *RadarrClient_GetQueue_Call) Return(_a0 []xxxarr.RadarrQueue, _a1 error) *RadarrClient_GetQueue_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *RadarrClient_GetQueue_Call) RunAndReturn(run func(context.Context) (xxxarr.RadarrQueueResponse, error)) *RadarrClient_GetQueue_Call {
+func (_c *RadarrClient_GetQueue_Call) RunAndReturn(run func(context.Context) ([]xxxarr.RadarrQueue, error)) *RadarrClient_GetQueue_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSystemStatus provides a mock function with given fields: ctx
-func (_m *RadarrClient) GetSystemStatus(ctx context.Context) (xxxarr.RadarrSystemStatusResponse, error) {
+func (_m *RadarrClient) GetSystemStatus(ctx context.Context) (xxxarr.RadarrSystemStatus, error) {
 	ret := _m.Called(ctx)
 
-	var r0 xxxarr.RadarrSystemStatusResponse
+	var r0 xxxarr.RadarrSystemStatus
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (xxxarr.RadarrSystemStatusResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (xxxarr.RadarrSystemStatus, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) xxxarr.RadarrSystemStatusResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) xxxarr.RadarrSystemStatus); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(xxxarr.RadarrSystemStatusResponse)
+		r0 = ret.Get(0).(xxxarr.RadarrSystemStatus)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -278,12 +280,12 @@ func (_c *RadarrClient_GetSystemStatus_Call) Run(run func(ctx context.Context)) 
 	return _c
 }
 
-func (_c *RadarrClient_GetSystemStatus_Call) Return(_a0 xxxarr.RadarrSystemStatusResponse, _a1 error) *RadarrClient_GetSystemStatus_Call {
+func (_c *RadarrClient_GetSystemStatus_Call) Return(_a0 xxxarr.RadarrSystemStatus, _a1 error) *RadarrClient_GetSystemStatus_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *RadarrClient_GetSystemStatus_Call) RunAndReturn(run func(context.Context) (xxxarr.RadarrSystemStatusResponse, error)) *RadarrClient_GetSystemStatus_Call {
+func (_c *RadarrClient_GetSystemStatus_Call) RunAndReturn(run func(context.Context) (xxxarr.RadarrSystemStatus, error)) *RadarrClient_GetSystemStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

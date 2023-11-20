@@ -6,14 +6,12 @@ import (
 )
 
 type RadarrClient interface {
-	GetSystemStatus(ctx context.Context) (xxxarr2.RadarrSystemStatusResponse, error)
-	GetHealth(ctx context.Context) ([]xxxarr2.RadarrHealthResponse, error)
-	GetCalendar(ctx context.Context) ([]xxxarr2.RadarrCalendarResponse, error)
-	GetQueue(ctx context.Context) (xxxarr2.RadarrQueueResponse, error)
-	GetMovies(ctx context.Context) ([]xxxarr2.RadarrMovieResponse, error)
+	GetSystemStatus(ctx context.Context) (xxxarr2.RadarrSystemStatus, error)
+	GetHealth(ctx context.Context) ([]xxxarr2.RadarrHealth, error)
+	GetCalendar(ctx context.Context) ([]xxxarr2.RadarrCalendar, error)
+	GetQueue(ctx context.Context) ([]xxxarr2.RadarrQueue, error)
+	GetMovies(ctx context.Context) ([]xxxarr2.RadarrMovie, error)
 }
-
-//var _ xxxarr.XXXArrGetter = &Radarr{}
 
 type Radarr struct {
 	Client RadarrClient
@@ -45,13 +43,13 @@ func (r Radarr) GetCalendar(ctx context.Context) ([]string, error) {
 
 func (r Radarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
 	queued, err := r.Client.GetQueue(ctx)
-	var entries []QueuedItem
-	for _, entry := range queued.Records {
-		entries = append(entries, QueuedItem{
-			Name:            entry.Title,
-			TotalBytes:      int64(entry.Size),
-			DownloadedBytes: int64(entry.Size) - int64(entry.Sizeleft),
-		})
+	entries := make([]QueuedItem, len(queued))
+	for i := range queued {
+		entries[i] = QueuedItem{
+			Name:            queued[i].Title,
+			TotalBytes:      queued[i].Size,
+			DownloadedBytes: queued[i].Size - queued[i].SizeLeft,
+		}
 	}
 	return entries, err
 }

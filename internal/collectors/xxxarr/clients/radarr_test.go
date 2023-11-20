@@ -68,11 +68,11 @@ func TestRadarr_GetVersion(t *testing.T) {
 }
 
 var (
-	RadarrSystemStatus = xxxarr.RadarrSystemStatusResponse{
+	RadarrSystemStatus = xxxarr.RadarrSystemStatus{
 		Version: "1.2.3.4444",
 	}
 
-	RadarrSystemHealth = []xxxarr.RadarrHealthResponse{
+	RadarrSystemHealth = []xxxarr.RadarrHealth{
 		{
 			Type: "ok",
 		},
@@ -81,36 +81,22 @@ var (
 		},
 	}
 
-	RadarrCalendar = []xxxarr.RadarrCalendarResponse{
+	RadarrCalendar = []xxxarr.RadarrCalendar{
 		{Title: "movie 1", Monitored: true, HasFile: false},
 		{Title: "movie 2", Monitored: false, HasFile: false},
 		{Title: "movie 3", Monitored: true, HasFile: true},
 	}
 
-	RadarrQueue = xxxarr.RadarrQueueResponse{
-		Page:         1,
-		PageSize:     10,
-		TotalRecords: 3,
-		Records: []xxxarr.RadarrQueueResponseRecord{
-			{MovieID: 1, Title: "file1", Status: "downloading", Size: 100, Sizeleft: 50},
-			{MovieID: 2, Title: "file3", Status: "downloaded???", Size: 100, Sizeleft: 0},
-			{MovieID: 3, Title: "file4", Status: "downloading", Size: 100, Sizeleft: 25},
-		},
+	RadarrQueue = []xxxarr.RadarrQueue{
+		{MovieID: 1, Title: "file1", Status: "downloading", Size: 100, SizeLeft: 50},
+		{MovieID: 2, Title: "file3", Status: "downloaded???", Size: 100, SizeLeft: 0},
+		{MovieID: 3, Title: "file4", Status: "downloading", Size: 100, SizeLeft: 25},
 	}
 
-	RadarrMovies = []xxxarr.RadarrMovieResponse{
+	RadarrMovies = []xxxarr.RadarrMovie{
 		{Title: "movie 1", Monitored: true},
 		{Title: "movie 2", Monitored: false},
 		{Title: "movie 3", Monitored: true},
 		{Title: "movie 5", Monitored: true},
 	}
-
-	/*
-		RadarrMoviesByID = map[int]xxxarr.RadarrMovieResponse{
-			1: {Title: "movie 1"},
-			2: {Title: "movie 3"},
-			3: {Title: "movie 4"},
-		}
-
-	*/
 )

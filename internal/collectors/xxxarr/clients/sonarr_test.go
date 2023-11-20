@@ -71,46 +71,35 @@ func TestSonarr_GetVersion(t *testing.T) {
 }
 
 var (
-	SonarrSystemStatus = xxxarr.SonarrSystemStatusResponse{
+	SonarrSystemStatus = xxxarr.SonarrSystemStatus{
 		Version: "1.2.3.4444",
 	}
 
-	SonarrSystemHealth = []xxxarr.SonarrHealthResponse{
+	SonarrSystemHealth = []xxxarr.SonarrHealth{
 		{Type: "warning"},
 		{Type: "error"},
 	}
 
-	SonarrCalendar = []xxxarr.SonarrCalendarResponse{
+	SonarrCalendar = []xxxarr.SonarrCalendar{
 		{SeriesID: 11, SeasonNumber: 1, EpisodeNumber: 1, Title: "foo", Monitored: true, HasFile: true},
 		{SeriesID: 11, SeasonNumber: 1, EpisodeNumber: 2, Title: "bar", Monitored: true, HasFile: false},
 		{SeriesID: 11, SeasonNumber: 1, EpisodeNumber: 3, Title: "snafu", Monitored: true, HasFile: false},
 		{SeriesID: 12, SeasonNumber: 2, EpisodeNumber: 1, Title: "ufans", Monitored: false, HasFile: true},
 	}
 
-	/*
-		SonarrSeriesByID11 = xxxarr.SonarrSeriesResponse{
-			Title: "Series 11",
-		}
-	*/
-
-	SonarrQueue = xxxarr.SonarrQueueResponse{
-		Page:         1,
-		PageSize:     10,
-		TotalRecords: 3,
-		Records: []xxxarr.SonarrQueueResponseRecord{
-			{Title: "file1", Status: "downloading", EpisodeID: 1, Size: 100, Sizeleft: 50},
-			{Title: "file2", Status: "downloaded???", EpisodeID: 2, Size: 100, Sizeleft: 0},
-			{Title: "file3", Status: "downloading", EpisodeID: 3, Size: 100, Sizeleft: 25},
-		},
+	SonarrQueue = []xxxarr.SonarrQueue{
+		{Title: "file1", Status: "downloading", EpisodeID: 1, Size: 100, SizeLeft: 50},
+		{Title: "file2", Status: "downloaded???", EpisodeID: 2, Size: 100, SizeLeft: 0},
+		{Title: "file3", Status: "downloading", EpisodeID: 3, Size: 100, SizeLeft: 25},
 	}
 
-	SonarrEpisodes = map[int]xxxarr.SonarrEpisodeResponse{
-		1: {Title: "Pilot", SeasonNumber: 1, EpisodeNumber: 1, Series: xxxarr.SonarrEpisodeResponseSeries{Title: "series"}},
-		2: {Title: "Seconds", SeasonNumber: 1, EpisodeNumber: 2, Series: xxxarr.SonarrEpisodeResponseSeries{Title: "series"}},
-		3: {Title: "End", SeasonNumber: 1, EpisodeNumber: 3, Series: xxxarr.SonarrEpisodeResponseSeries{Title: "series"}},
+	SonarrEpisodes = map[int]xxxarr.SonarrEpisode{
+		1: {Title: "Pilot", SeasonNumber: 1, EpisodeNumber: 1, Series: xxxarr.SonarrEpisodeSeries{Title: "series"}},
+		2: {Title: "Seconds", SeasonNumber: 1, EpisodeNumber: 2, Series: xxxarr.SonarrEpisodeSeries{Title: "series"}},
+		3: {Title: "End", SeasonNumber: 1, EpisodeNumber: 3, Series: xxxarr.SonarrEpisodeSeries{Title: "series"}},
 	}
 
-	SonarrSeries = []xxxarr.SonarrSeriesResponse{
+	SonarrSeries = []xxxarr.SonarrSeries{
 		{Title: "movie 1", Monitored: true},
 		{Title: "movie 2", Monitored: false},
 		{Title: "movie 3", Monitored: true},

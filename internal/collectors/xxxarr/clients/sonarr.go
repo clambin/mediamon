@@ -6,19 +6,17 @@ import (
 	xxxarr2 "github.com/clambin/mediaclients/xxxarr"
 )
 
-//var _ xxxarr.XXXArrGetter = &Sonarr{}
-
 type Sonarr struct {
 	Client SonarrClient
 }
 
 type SonarrClient interface {
-	GetSystemStatus(ctx context.Context) (xxxarr2.SonarrSystemStatusResponse, error)
-	GetHealth(ctx context.Context) ([]xxxarr2.SonarrHealthResponse, error)
-	GetCalendar(ctx context.Context) ([]xxxarr2.SonarrCalendarResponse, error)
-	GetQueue(ctx context.Context) (xxxarr2.SonarrQueueResponse, error)
-	GetEpisodeByID(ctx context.Context, id int) (xxxarr2.SonarrEpisodeResponse, error)
-	GetSeries(ctx context.Context) ([]xxxarr2.SonarrSeriesResponse, error)
+	GetSystemStatus(ctx context.Context) (xxxarr2.SonarrSystemStatus, error)
+	GetHealth(ctx context.Context) ([]xxxarr2.SonarrHealth, error)
+	GetCalendar(ctx context.Context) ([]xxxarr2.SonarrCalendar, error)
+	GetQueue(ctx context.Context) ([]xxxarr2.SonarrQueue, error)
+	GetEpisodeByID(ctx context.Context, id int) (xxxarr2.SonarrEpisode, error)
+	GetSeries(ctx context.Context) ([]xxxarr2.SonarrSeries, error)
 }
 
 func (s Sonarr) GetVersion(ctx context.Context) (string, error) {
@@ -47,20 +45,20 @@ func (s Sonarr) GetCalendar(ctx context.Context) ([]string, error) {
 
 func (s Sonarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
 	queued, err := s.Client.GetQueue(ctx)
-	var entries []QueuedItem
-	for _, entry := range queued.Records {
-		var episode xxxarr2.SonarrEpisodeResponse
-		episode, err = s.Client.GetEpisodeByID(ctx, entry.EpisodeID)
+	entries := make([]QueuedItem, len(queued))
+	for i := range queued {
+		var episode xxxarr2.SonarrEpisode
+		episode, err = s.Client.GetEpisodeByID(ctx, queued[i].EpisodeID)
 		if err != nil {
 			return nil, fmt.Errorf("GetEpisideByID: %w", err)
 		}
 
-		entries = append(entries, QueuedItem{
+		entries[i] = QueuedItem{
 			Name: fmt.Sprintf("%s - S%02dE%02d - %s",
 				episode.Series.Title, episode.SeasonNumber, episode.EpisodeNumber, episode.Title),
-			TotalBytes:      int64(entry.Size),
-			DownloadedBytes: int64(entry.Size) - int64(entry.Sizeleft),
-		})
+			TotalBytes:      queued[i].Size,
+			DownloadedBytes: queued[i].Size - queued[i].SizeLeft,
+		}
 	}
 	return entries, err
 }
