@@ -14,7 +14,14 @@ import (
 var (
 	sessionMetric = prometheus.NewDesc(
 		prometheus.BuildFQName("mediamon", "plex", "session_count"),
-		"Active Plex session",
+		"Active Plex session progress",
+		[]string{"url", "user", "player", "title", "mode", "location", "address", "lon", "lat", "videoCodec", "audioCodec"},
+		nil,
+	)
+
+	bandwidthMetric = prometheus.NewDesc(
+		prometheus.BuildFQName("mediamon", "plex", "session_bandwidth"),
+		"Active Plex session Bandwidth usage (in kbps)",
 		[]string{"url", "user", "player", "title", "mode", "location", "address", "lon", "lat", "videoCodec", "audioCodec"},
 		nil,
 	)
@@ -49,6 +56,7 @@ type sessionGetter interface {
 
 func (c sessionCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- sessionMetric
+	ch <- bandwidthMetric
 	ch <- transcodersMetric
 	ch <- speedMetric
 }
@@ -70,6 +78,10 @@ func (c sessionCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 
 		ch <- prometheus.MustNewConstMetric(sessionMetric, prometheus.GaugeValue, stats.progress,
+			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat, stats.videoCodec, stats.audioCodec,
+		)
+
+		ch <- prometheus.MustNewConstMetric(bandwidthMetric, prometheus.GaugeValue, float64(stats.bandwidth),
 			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat, stats.videoCodec, stats.audioCodec,
 		)
 
@@ -110,6 +122,7 @@ type plexSession struct {
 	title      string
 	address    string
 	progress   float64
+	bandwidth  int
 	videoMode  string
 	throttled  bool
 	speed      float64
@@ -139,6 +152,7 @@ func parseSessions(sessions []plex.Session) map[string]plexSession {
 			title:      session.GetTitle(),
 			address:    session.Player.Address,
 			progress:   progress,
+			bandwidth:  session.Session.Bandwidth,
 			videoMode:  session.GetVideoMode(),
 			throttled:  session.TranscodeSession.Throttled,
 			speed:      session.TranscodeSession.Speed,

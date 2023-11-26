@@ -33,7 +33,10 @@ func TestSessionsCollector_Collector(t *testing.T) {
 				Session:    plex.SessionStats{ID: "1", Location: "lan"},
 			},
 			want: `
-# HELP mediamon_plex_session_count Active Plex session
+# HELP mediamon_plex_session_bandwidth Active Plex session Bandwidth usage (in kbps)
+# TYPE mediamon_plex_session_bandwidth gauge
+mediamon_plex_session_bandwidth{address="192.168.0.1",audioCodec="aac",lat="",location="lan",lon="",mode="directplay",player="Plex Web",title="foo",url="http://localhost:8080",user="bar",videoCodec="hvec"} 0
+# HELP mediamon_plex_session_count Active Plex session progress
 # TYPE mediamon_plex_session_count gauge
 mediamon_plex_session_count{address="192.168.0.1",audioCodec="aac",lat="",location="lan",lon="",mode="directplay",player="Plex Web",title="foo",url="http://localhost:8080",user="bar",videoCodec="hvec"} 0.5
 `,
@@ -58,7 +61,10 @@ mediamon_plex_session_count{address="192.168.0.1",audioCodec="aac",lat="",locati
 				},
 			},
 			want: `
-# HELP mediamon_plex_session_count Active Plex session
+# HELP mediamon_plex_session_bandwidth Active Plex session Bandwidth usage (in kbps)
+# TYPE mediamon_plex_session_bandwidth gauge
+mediamon_plex_session_bandwidth{address="1.2.3.4",audioCodec="aac",lat="20.00",location="wan",lon="10.00",mode="transcode",player="Plex Web",title="foo - S01E10 - bar",url="http://localhost:8080",user="bar",videoCodec="hvec"} 0
+# HELP mediamon_plex_session_count Active Plex session progress
 # TYPE mediamon_plex_session_count gauge
 mediamon_plex_session_count{address="1.2.3.4",audioCodec="aac",lat="20.00",location="wan",lon="10.00",mode="transcode",player="Plex Web",title="foo - S01E10 - bar",url="http://localhost:8080",user="bar",videoCodec="hvec"} 0.75
 # HELP mediamon_plex_transcoder_count Video transcode session
