@@ -8,7 +8,7 @@ require (
 	github.com/clambin/mediaclients v0.4.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/spf13/cobra v1.8.0
-	github.com/spf13/viper v1.18.1
+	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
 	k8s.io/api v0.29.0
 	k8s.io/apimachinery v0.29.0
