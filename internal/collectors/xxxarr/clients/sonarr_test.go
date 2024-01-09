@@ -16,7 +16,7 @@ func TestSonarr_GetCalendar(t *testing.T) {
 
 	calendar, err := c.GetCalendar(ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"foo", "bar", "snafu", "ufans"}, calendar)
+	assert.Equal(t, []string{"S01E01 - foo", "S01E02 - bar", "S01E03 - snafu", "S02E01 - ufans"}, calendar)
 }
 
 func TestSonarr_GetHealth(t *testing.T) {

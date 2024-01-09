@@ -38,7 +38,11 @@ func (s Sonarr) GetCalendar(ctx context.Context) ([]string, error) {
 	items, err := s.Client.GetCalendar(ctx)
 	calendar := make([]string, len(items))
 	for i := range items {
-		calendar[i] = items[i].Title
+		calendar[i] = fmt.Sprintf("S%02dE%02d - %s",
+			items[i].SeasonNumber,
+			items[i].EpisodeNumber,
+			items[i].Title,
+		)
 	}
 	return calendar, err
 }
