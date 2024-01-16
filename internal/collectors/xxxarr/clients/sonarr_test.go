@@ -12,11 +12,14 @@ func TestSonarr_GetCalendar(t *testing.T) {
 	ctx := context.Background()
 	s := mocks.NewSonarrClient(t)
 	s.EXPECT().GetCalendar(ctx).Return(SonarrCalendar, nil)
+	for key, val := range SonarrCalendarEpisodes {
+		s.EXPECT().GetEpisodeByID(ctx, key).Return(val, nil)
+	}
 	c := Sonarr{Client: s}
 
 	calendar, err := c.GetCalendar(ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"S01E01 - foo", "S01E02 - bar", "S01E03 - snafu", "S02E01 - ufans"}, calendar)
+	assert.Equal(t, []string{"series - S01E01 - Pilot", "series - S01E02 - EP2", "series - S01E03 - EP3", "series two - S02E01 - EP1"}, calendar)
 }
 
 func TestSonarr_GetHealth(t *testing.T) {
@@ -45,7 +48,7 @@ func TestSonarr_GetQueue(t *testing.T) {
 	ctx := context.Background()
 	s := mocks.NewSonarrClient(t)
 	s.EXPECT().GetQueue(ctx).Return(SonarrQueue, nil)
-	for key, value := range SonarrEpisodes {
+	for key, value := range SonarrQueuedEpisodes {
 		s.EXPECT().GetEpisodeByID(ctx, key).Return(value, nil)
 	}
 	c := Sonarr{Client: s}
@@ -81,10 +84,17 @@ var (
 	}
 
 	SonarrCalendar = []xxxarr.SonarrCalendar{
-		{SeriesID: 11, SeasonNumber: 1, EpisodeNumber: 1, Title: "foo", Monitored: true, HasFile: true},
-		{SeriesID: 11, SeasonNumber: 1, EpisodeNumber: 2, Title: "bar", Monitored: true, HasFile: false},
-		{SeriesID: 11, SeasonNumber: 1, EpisodeNumber: 3, Title: "snafu", Monitored: true, HasFile: false},
-		{SeriesID: 12, SeasonNumber: 2, EpisodeNumber: 1, Title: "ufans", Monitored: false, HasFile: true},
+		{ID: 101, SeriesID: 11, SeasonNumber: 1, EpisodeNumber: 1, Title: "foo", Monitored: true, HasFile: true},
+		{ID: 102, SeriesID: 11, SeasonNumber: 1, EpisodeNumber: 2, Title: "bar", Monitored: true, HasFile: false},
+		{ID: 103, SeriesID: 11, SeasonNumber: 1, EpisodeNumber: 3, Title: "snafu", Monitored: true, HasFile: false},
+		{ID: 111, SeriesID: 12, SeasonNumber: 2, EpisodeNumber: 1, Title: "ufans", Monitored: false, HasFile: true},
+	}
+
+	SonarrCalendarEpisodes = map[int]xxxarr.SonarrEpisode{
+		101: {Title: "Pilot", SeasonNumber: 1, EpisodeNumber: 1, Series: xxxarr.SonarrEpisodeSeries{Title: "series"}},
+		102: {Title: "EP2", SeasonNumber: 1, EpisodeNumber: 2, Series: xxxarr.SonarrEpisodeSeries{Title: "series"}},
+		103: {Title: "EP3", SeasonNumber: 1, EpisodeNumber: 3, Series: xxxarr.SonarrEpisodeSeries{Title: "series"}},
+		111: {Title: "EP1", SeasonNumber: 2, EpisodeNumber: 1, Series: xxxarr.SonarrEpisodeSeries{Title: "series two"}},
 	}
 
 	SonarrQueue = []xxxarr.SonarrQueue{
@@ -93,7 +103,7 @@ var (
 		{Title: "file3", Status: "downloading", EpisodeID: 3, Size: 100, SizeLeft: 25},
 	}
 
-	SonarrEpisodes = map[int]xxxarr.SonarrEpisode{
+	SonarrQueuedEpisodes = map[int]xxxarr.SonarrEpisode{
 		1: {Title: "Pilot", SeasonNumber: 1, EpisodeNumber: 1, Series: xxxarr.SonarrEpisodeSeries{Title: "series"}},
 		2: {Title: "Seconds", SeasonNumber: 1, EpisodeNumber: 2, Series: xxxarr.SonarrEpisodeSeries{Title: "series"}},
 		3: {Title: "End", SeasonNumber: 1, EpisodeNumber: 3, Series: xxxarr.SonarrEpisodeSeries{Title: "series"}},

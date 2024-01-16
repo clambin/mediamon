@@ -35,36 +35,59 @@ func (s Sonarr) GetHealth(ctx context.Context) (map[string]int, error) {
 }
 
 func (s Sonarr) GetCalendar(ctx context.Context) ([]string, error) {
-	items, err := s.Client.GetCalendar(ctx)
-	calendar := make([]string, len(items))
-	for i := range items {
-		calendar[i] = fmt.Sprintf("S%02dE%02d - %s",
-			items[i].SeasonNumber,
-			items[i].EpisodeNumber,
-			items[i].Title,
-		)
+	calendar, err := s.Client.GetCalendar(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("GetCalendar: %w", err)
 	}
-	return calendar, err
+	ids := getIDs(calendar, func(queue xxxarr2.SonarrCalendar) int { return queue.ID })
+	entries := make([]string, len(calendar))
+	for i := range calendar {
+		var name string
+		name, err = s.getEpisodeName(ctx, ids[i])
+		if err != nil {
+			return nil, err
+		}
+		entries[i] = name
+	}
+	return entries, err
 }
 
 func (s Sonarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
 	queued, err := s.Client.GetQueue(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("GetQueue: %w", err)
+	}
+	ids := getIDs(queued, func(queue xxxarr2.SonarrQueue) int { return queue.EpisodeID })
 	entries := make([]QueuedItem, len(queued))
 	for i := range queued {
-		var episode xxxarr2.SonarrEpisode
-		episode, err = s.Client.GetEpisodeByID(ctx, queued[i].EpisodeID)
+		var name string
+		name, err = s.getEpisodeName(ctx, ids[i])
 		if err != nil {
-			return nil, fmt.Errorf("GetEpisideByID: %w", err)
+			return nil, err
 		}
-
 		entries[i] = QueuedItem{
-			Name: fmt.Sprintf("%s - S%02dE%02d - %s",
-				episode.Series.Title, episode.SeasonNumber, episode.EpisodeNumber, episode.Title),
+			Name:            name,
 			TotalBytes:      queued[i].Size,
 			DownloadedBytes: queued[i].Size - queued[i].SizeLeft,
 		}
 	}
 	return entries, err
+}
+
+func (s Sonarr) getEpisodeName(ctx context.Context, id int) (string, error) {
+	episode, err := s.Client.GetEpisodeByID(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s - S%02dE%02d - %s", episode.Series.Title, episode.SeasonNumber, episode.EpisodeNumber, episode.Title), nil
+}
+
+func getIDs[T ~[]E, E any](episodes T, getID func(E) int) []int {
+	ids := make([]int, len(episodes))
+	for i := range episodes {
+		ids[i] = getID(episodes[i])
+	}
+	return ids
 }
 
 func (s Sonarr) GetLibrary(ctx context.Context) (Library, error) {
