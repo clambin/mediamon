@@ -3,7 +3,6 @@ package xxxarr
 import (
 	"context"
 	"github.com/clambin/go-common/httpclient"
-	"github.com/clambin/go-common/set"
 	"github.com/clambin/mediaclients/xxxarr"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/roundtripper"
@@ -134,11 +133,17 @@ func (c *Collector) collectCalendar(ch chan<- prometheus.Metric) {
 		c.logger.Error("failed to get calendar", "err", err)
 		return
 	}
-	// FIXME: workaround for #176.  should we report the number of entries rather than 1?
-	single := set.New(calendar...)
-	for _, title := range single.ListOrdered() {
-		ch <- prometheus.MustNewConstMetric(c.metrics["calendar"], prometheus.GaugeValue, 1.0, title)
+	for name, count := range groupNames(calendar) {
+		ch <- prometheus.MustNewConstMetric(c.metrics["calendar"], prometheus.GaugeValue, float64(count), name)
 	}
+}
+
+func groupNames(names []string) map[string]int {
+	result := make(map[string]int)
+	for i := range names {
+		result[names[i]]++
+	}
+	return result
 }
 
 func (c *Collector) collectQueue(ch chan<- prometheus.Metric) {

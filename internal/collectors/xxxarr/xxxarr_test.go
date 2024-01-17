@@ -68,6 +68,54 @@ mediamon_xxxarr_version{application="sonarr",url="",version="foo"} 1
 `,
 		},
 		{
+			name:      "sonarr - duplicates",
+			collector: "sonarr",
+			setup: func(c *mocks.Client, ctx context.Context) {
+				c.EXPECT().GetVersion(ctx).Return("foo", nil)
+				c.EXPECT().GetHealth(ctx).Return(nil, nil)
+				c.EXPECT().GetCalendar(ctx).Return([]string{
+					"foo - S01E01 - 1",
+					"foo - S01E01 - 1",
+					"foo - S01E02 - 2",
+					"foo - S01E03 - 3",
+					"foo - S01E04 - 4",
+				}, nil)
+				c.EXPECT().GetQueue(ctx).Return([]clients.QueuedItem{
+					{Name: "foo - S01E01 - 1", TotalBytes: 100, DownloadedBytes: 75},
+					{Name: "foo - S01E02 - 2", TotalBytes: 100, DownloadedBytes: 50},
+				}, nil)
+				c.EXPECT().GetLibrary(ctx).Return(clients.Library{Monitored: 3, Unmonitored: 1}, nil)
+			},
+			want: `
+# HELP mediamon_xxxarr_calendar Upcoming episodes / movies
+# TYPE mediamon_xxxarr_calendar gauge
+mediamon_xxxarr_calendar{application="sonarr",title="foo - S01E01 - 1",url=""} 2
+mediamon_xxxarr_calendar{application="sonarr",title="foo - S01E02 - 2",url=""} 1
+mediamon_xxxarr_calendar{application="sonarr",title="foo - S01E03 - 3",url=""} 1
+mediamon_xxxarr_calendar{application="sonarr",title="foo - S01E04 - 4",url=""} 1
+# HELP mediamon_xxxarr_monitored_count Number of Monitored series / movies
+# TYPE mediamon_xxxarr_monitored_count gauge
+mediamon_xxxarr_monitored_count{application="sonarr",url=""} 3
+# HELP mediamon_xxxarr_queued_count Episodes / movies being downloaded
+# TYPE mediamon_xxxarr_queued_count gauge
+mediamon_xxxarr_queued_count{application="sonarr",url=""} 2
+# HELP mediamon_xxxarr_queued_downloaded_bytes Downloaded size of episode / movie being downloaded in bytes
+# TYPE mediamon_xxxarr_queued_downloaded_bytes gauge
+mediamon_xxxarr_queued_downloaded_bytes{application="sonarr",title="foo - S01E01 - 1",url=""} 75
+mediamon_xxxarr_queued_downloaded_bytes{application="sonarr",title="foo - S01E02 - 2",url=""} 50
+# HELP mediamon_xxxarr_queued_total_bytes Size of episode / movie being downloaded in bytes
+# TYPE mediamon_xxxarr_queued_total_bytes gauge
+mediamon_xxxarr_queued_total_bytes{application="sonarr",title="foo - S01E01 - 1",url=""} 100
+mediamon_xxxarr_queued_total_bytes{application="sonarr",title="foo - S01E02 - 2",url=""} 100
+# HELP mediamon_xxxarr_unmonitored_count Number of Unmonitored series / movies
+# TYPE mediamon_xxxarr_unmonitored_count gauge
+mediamon_xxxarr_unmonitored_count{application="sonarr",url=""} 1
+# HELP mediamon_xxxarr_version Version info
+# TYPE mediamon_xxxarr_version gauge
+mediamon_xxxarr_version{application="sonarr",url="",version="foo"} 1
+`,
+		},
+		{
 			name:      "sonarr (error)",
 			collector: "sonarr",
 			setup: func(c *mocks.Client, ctx context.Context) {
