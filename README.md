@@ -99,35 +99,26 @@ scrape_configs:
 
 mediamon exposes the following metrics:
 
-```
-mediamon_plex_session_count:                Active plex sessions by location (value indicates progress in the movie / episode)
-mediamon_plex_transcoder_count:             Number of active transcode sessions
-mediamon_plex_transcoder_speed:             Total speed of active transcoders
-mediamon_plex_transcoder_count:             Number of transcode sessions
-mediamon_plex_version:                      version info
-mediamon_transmission_active_torrent_count: Number of active torrents
-mediamon_transmission_download_speed:       Transmission download speed in bytes / sec
-mediamon_transmission_paused_torrent_count: Number of paused torrents
-mediamon_transmission_upload_speed:         Transmission upload speed in bytes / sec
-mediamon_transmission_version:              version info
-mediamon_xxxarr_calendar:                   Upcoming episodes / movies ("title" label contains the title)
-mediamon_xxxarr_monitored_count:            Number of monitored series / movies
-mediamon_xxxarr_queued_count:               Number of episodes / movies being downloaded
-mediamon_xxxarr_queued_total_bytes:         Size of an episode / movie being downloaded ("title" label contains the title)
-mediamon_xxxarr_queued_downloaded_bytes:    Downloaded size of an episode / movie being downloaded ("title" label contains the title)
-mediamon_xxxarr_unmonitored_count:          Number of unmonitored series / movies
-mediamon_xxxarr_version:                    version info
-openvpn_client_status:                      OpenVPN client status
-openvpn_client_tcp_udp_read_bytes_total:    OpenVPN client bytes read
-openvpn_client_tcp_udp_write_bytes_total:   OpenVPN client bytes written
-```
-
-Additionally, the following metrics provide API usage statistics:
-
-```
-mediamon_request_duration_seconds Duration of API requests (summary metric)
-mediamon_request_errors_total     API requests errors
-```
+| metric | type |  labels | help |
+| --- | --- |  --- | --- |
+| mediamon_api_cache_hit_total | COUNTER | application, method, path|Number of times the cache was used |
+| mediamon_api_cache_total | COUNTER | application, method, path|Number of times the cache was consulted |
+| mediamon_api_errors_total | COUNTER | application, method, path|Number of failed HTTP calls |
+| mediamon_api_latency | SUMMARY | application, method, path|latency of HTTP calls |
+| mediamon_plex_library_bytes | GAUGE | library, url|Library size in bytes |
+| mediamon_plex_library_count | GAUGE | library, url|Library size in number of entries |
+| mediamon_plex_session_bandwidth | GAUGE | address, audioCodec, lat, location, lon, mode, player, title, url, user, videoCodec|Active Plex session Bandwidth usage (in kbps) |
+| mediamon_plex_session_count | GAUGE | address, audioCodec, lat, location, lon, mode, player, title, url, user, videoCodec|Active Plex session progress |
+| mediamon_plex_version | GAUGE | url, version|version info |
+| mediamon_transmission_active_torrent_count | GAUGE | url|Number of active torrents |
+| mediamon_transmission_download_speed | GAUGE | url|Transmission download speed in bytes / sec |
+| mediamon_transmission_paused_torrent_count | GAUGE | url|Number of paused torrents |
+| mediamon_transmission_upload_speed | GAUGE | url|Transmission upload speed in bytes / sec |
+| mediamon_transmission_version | GAUGE | url, version|version info |
+| mediamon_xxxarr_monitored_count | GAUGE | application, url|Number of Monitored series / movies |
+| mediamon_xxxarr_queued_count | GAUGE | application, url|Episodes / movies being downloaded |
+| mediamon_xxxarr_unmonitored_count | GAUGE | application, url|Number of Unmonitored series / movies |
+| mediamon_xxxarr_version | GAUGE | application, url, version|Version info |
 
 ### Grafana
 
