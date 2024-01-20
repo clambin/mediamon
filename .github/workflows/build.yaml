@@ -11,23 +11,9 @@ on:
 jobs:
   test:
     uses: clambin/workflows/.github/workflows/test.yaml@main
-  build-mediamon:
+  build:
     needs:
       - test
     uses: clambin/workflows/.github/workflows/build.yaml@main
     with:
       target: mediamon
-  build-restarter:
-    needs:
-      - test
-    uses: clambin/workflows/.github/workflows/build.yaml@main
-    with:
-      target: restarter
-      dockerfile: ./build/Dockerfile-restarter
-  build-qplex:
-    needs:
-      - test
-    uses: clambin/workflows/.github/workflows/build.yaml@main
-    with:
-      target: qplex
-      docker: false
