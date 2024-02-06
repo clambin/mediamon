@@ -6,8 +6,8 @@ github.com/clambin/go-common/cache v0.2.2 h1:Tjb+71+/2ckrZlSbLDYgCEpkS2HwkTRkQ/1
 github.com/clambin/go-common/cache v0.2.2/go.mod h1:6DMcBIPTGckXMNQTGfdEMiLAbKqIOWzgk5KNyiJK54M=
 github.com/clambin/go-common/httpclient v0.6.0 h1:zSt9OV8ekXB/LwFwazEO4x8z+9p968nwfDQOmvF784A=
 github.com/clambin/go-common/httpclient v0.6.0/go.mod h1:77y+6LzAKdenkU+vwQFdNKyxs2HhUXEiqYwzS7Q9FKI=
-github.com/clambin/go-common/set v0.3.0 h1:JvLbPbmFEjhqk4wsgqa/swxD0wGOEDXLOjTrsgZLR3o=
-github.com/clambin/go-common/set v0.3.0/go.mod h1:45ZNvBGpHWw2vtfgG6pzqEJpTUUNfgUluJ1/jmM0uWI=
+github.com/clambin/go-common/set v0.4.1 h1:mtn+Q86omfaXtJFMUYoLlxNmRIT5Cmsrs8ig7PW/g28=
+github.com/clambin/go-common/set v0.4.1/go.mod h1:Q5GpBoM7B7abNV2Wzys+wQMInBHMoHyh/h0Cn2OmY4A=
 github.com/clambin/mediaclients v0.4.0 h1:oOxpVNVN6RqY0dJQr5HSIfvTUkQCVJgtfGeCqaWQwpQ=
 github.com/clambin/mediaclients v0.4.0/go.mod h1:TJPhx9pRVM6Vcyx9DxA7BJGM6Ttx6Z8lmHRhUA8oK1c=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
