@@ -3,7 +3,7 @@ module github.com/clambin/mediamon/v2
 go 1.21
 
 require (
-	github.com/clambin/go-common/httpclient v0.6.0
+	github.com/clambin/go-common/httpclient v0.7.0
 	github.com/clambin/go-common/set v0.4.3
 	github.com/clambin/mediaclients v0.4.1
 	github.com/prometheus/client_golang v1.19.0
