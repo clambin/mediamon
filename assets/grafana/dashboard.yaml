@@ -1,0 +1,284 @@
+---
+# WIP
+apiVersion: k8s.kevingomez.fr/v1
+kind: GrafanaDashboard
+metadata:
+    annotations:
+        dark/folder: Media Apps
+    name: mediamon
+    namespace: development
+spec:
+    title: Mediamon
+    tags: [yaml,generated]
+    auto_refresh: 30s
+    time:
+        - now-24h
+        - now
+    rows:
+        - name: OpenVPN
+          panels:
+            - gauge:
+                title: VPN Uptime
+                span: 2
+                targets:
+                    - prometheus:
+                        query: sum(openvpn_client_status)
+                        legend: "On"
+                unit: percentunit
+                thresholds:
+                    - color: red
+                    - color: '#EAB839'
+                      value: 0.9
+                    - color: dark-green
+                      value: 0.99
+            - timeseries:
+                title: Network usage
+                span: 4
+                targets:
+                    - prometheus:
+                        query: avg(rate(openvpn_client_tcp_udp_read_bytes_total[$__rate_interval]))
+                        legend: In
+                    - prometheus:
+                        query: -avg(rate(openvpn_client_tcp_udp_write_bytes_total[$__rate_interval]))
+                        legend: Out
+                legend: [as_list, to_bottom]
+                axis:
+                    unit: Bps
+            - timeseries:
+                title: VPN Status
+                span: 4
+                targets:
+                    - prometheus:
+                        query: avg(openvpn_client_status)
+                        legend: "On"
+                    - prometheus:
+                        query: 1-avg(openvpn_client_status)
+                        legend: "Off"
+                legend: [hide]
+                visualization:
+                    gradient_mode: none
+                    tooltip: single_series
+                    stack: none
+                    fill_opacity: 100
+                    point_size: 5
+                    line_width: 1
+                axis:
+                    display: hidden
+                    scale: linear
+                overrides:
+                    - match: {field_name: "Off"}
+                      properties:
+                        color: semi-dark-red
+                    - match: {field_type: time}
+                      properties:
+                        axis_display: auto
+            - timeseries:
+                title: Restarts
+                span: 2
+                targets:
+                    - loki:
+                          loki_query: sum(count_over_time({app="restarter"} | json | level = `INFO` | msg = `pod deleted` | name =~ `^transmission.*` [$__auto]))
+                legend: [hide]
+        - name: Transmission
+          panels:
+            - stat:
+                title: Transmission version
+                span: 2
+                targets:
+                    - prometheus:
+                        query: mediamon_transmission_version{version=~"[0-9]+.[0-9]+.*"}
+                        format: table
+                value_type: last_non_null
+            - timeseries:
+                title: Network usage
+                span: 4
+                targets:
+                    - prometheus:
+                        query: sum(mediamon_transmission_download_speed)
+                        legend: Download
+                    - prometheus:
+                        query: -sum(mediamon_transmission_upload_speed)
+                        legend: Upload
+                legend: [as_list, to_bottom]
+                axis:
+                    unit: Bps
+            - timeseries:
+                title: Torrents
+                span: 3
+                targets:
+                    - prometheus:
+                        query: sum(mediamon_transmission_active_torrent_count)
+                        legend: Active
+                    - prometheus:
+                        query: sum(mediamon_transmission_paused_torrent_count)
+                        legend: Paused
+                legend: [as_list, to_bottom]
+                axis:
+                    #min: 0
+                    #decimals: 0
+            - gauge:
+                title: temp disk space
+                span: 1
+                targets:
+                    - prometheus:
+                        query: 1 - (node_filesystem_avail_bytes{node="nuc1",mountpoint="/mnt/data"} / node_filesystem_size_bytes)
+                        legend: __auto
+                unit: percentunit
+                value_type: last_non_null
+                thresholds:
+                    - color: green
+                    - color: '#EAB839'
+                      value: 0.85
+                    - color: red
+                      value: 0.95
+            - gauge:
+                title: media disk space
+                span: 1
+                targets:
+                    - prometheus:
+                        query: 1 - (node_filesystem_avail_bytes{node="nuc1",mountpoint="/mnt/media"} / node_filesystem_size_bytes)
+                unit: percentunit
+                value_type: last_non_null
+                thresholds:
+                    - color: green
+                    - color: '#EAB839'
+                      value: 0.85
+                    - color: red
+                      value: 0.95
+        - name: Sonarr / Radarr
+          panels:
+            - stat:
+                title: Sonarr version
+                span: 1
+                targets:
+                    - prometheus:
+                        query: mediamon_xxxarr_version{application="sonarr"}
+                        format: table
+                value_type: last_non_null
+            - table:
+                title: On Calendar
+                span: 6
+                targets:
+                    - prometheus:
+                        query: mediamon_xxxarr_calendar
+                        legend: __auto
+                        format: table
+                        instant: true
+                hidden_columns: []
+            - stat:
+                title: Radarr version
+                span: 1
+                targets:
+                    - prometheus:
+                        query: mediamon_xxxarr_version{application="radarr"}
+                        format: table
+                value_type: last_non_null
+            - table:
+                title: Downloading
+                span: 6
+                targets:
+                    - prometheus:
+                        query: mediamon_xxxarr_queued_downloaded_bytes / mediamon_xxxarr_queued_total_bytes
+                        legend: '{{server}}'
+                        format: table
+                        instant: true
+        - name: Plex
+          panels:
+            - stat:
+                title: Plex version
+                span: 1
+                targets:
+                    - prometheus:
+                        query: mediamon_plex_version
+                        format: table
+                value_type: last_non_null
+            - table:
+                title: Current sessions
+                span: 10
+                targets:
+                    - prometheus:
+                        query: sum by (title, user, player, mode, videoCodec, location) (mediamon_plex_session_count)
+                        legend: __auto
+                        format: table
+                #hidden_columns: []
+            - table:
+                title: All sessions w/in timeframe
+                span: 10
+                targets:
+                    - prometheus:
+                        query: max by (title, user, player, mode, videoCodec, location) (mediamon_plex_session_count)
+                        format: table
+            - timeseries:
+                title: Sessions by users
+                span: 6
+                targets:
+                    - prometheus:
+                        query: count by (user) (mediamon_plex_session_count)
+                        legend: '{{location}}'
+                legend: [as_list, to_bottom]
+                visualization:
+                    gradient_mode: none
+                    tooltip: single_series
+                    stack: normal
+                    fill_opacity: 100
+                    point_size: 5
+                    line_width: 1
+                axis:
+                    min: 0
+            - timeseries:
+                title: CPU usage
+                span: 4
+                targets:
+                    - prometheus:
+                        query: sum(rate(container_cpu_user_seconds_total{container="plex"}[$__rate_interval]))
+                        legend: system
+                    - prometheus:
+                        query: sum(rate(container_cpu_system_seconds_total{container="plex"}[$__rate_interval]))
+                        legend: user
+                legend: [hide]
+            - timeseries:
+                title: Bandwidth
+                span: 6
+                targets:
+                    - prometheus:
+                        query: sum by (user) (mediamon_plex_session_bandwidth)
+                        legend: '{{location}}'
+                legend: [as_list, to_bottom]
+                axis:
+                    unit: Kbits
+            - timeseries:
+                title: Network usage
+                span: 4
+                targets:
+                    - prometheus:
+                        query: sum(rate(container_network_transmit_bytes_total{pod=~"plex-.*"}[$__rate_interval]))
+                        legend: Transmit
+                    - prometheus:
+                        query: -sum(rate(container_network_receive_bytes_total{pod=~"plex-.*"}[$__rate_interval]))
+                        legend: Receive
+                legend: [as_list, to_bottom]
+                axis:
+                    unit: Bps
+            - timeseries:
+                title: Sessions by location
+                span: 6
+                targets:
+                    - prometheus:
+                        query: count by (location) (mediamon_plex_session_count)
+                        legend: '{{location}}'
+                legend: [as_list, to_bottom]
+            - timeseries:
+                title: Plex transcoders
+                span: 6
+                targets:
+                    - prometheus:
+                        query: sum by (state) (mediamon_plex_transcoder_count)
+                        legend: '{{state}}'
+                    - prometheus:
+                        query: sum(mediamon_plex_transcoder_speed)
+                        legend: Speed
+                legend: [as_list, to_bottom]
+                overrides:
+                    - match: {field_name: Speed}
+                      properties:
+                        axis_display: right
