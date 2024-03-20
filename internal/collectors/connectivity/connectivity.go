@@ -74,7 +74,6 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	start := time.Now()
 	var value float64
 	if err := c.ping(); err == nil {
 		value = 1.0
@@ -82,7 +81,6 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
 	c.tpMetrics.Collect(ch)
 	c.cacheMetrics.Collect(ch)
-	c.logger.Debug("stats collected", "duration", time.Since(start))
 }
 
 func (c *Collector) ping() error {
@@ -110,26 +108,5 @@ func (c *Collector) ping() error {
 		return fmt.Errorf("%s", resp.Status)
 	}
 
-	/*
-		var response struct {
-			IP       string
-			Hostname string
-			City     string
-			Region   string
-			Country  string
-			Loc      string
-			Org      string
-			Postal   string
-			Timezone string
-		}
-
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("read: %w", err)
-		}
-
-		return json.Unmarshal(body, &response)
-
-	*/
 	return nil
 }
