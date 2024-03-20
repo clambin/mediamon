@@ -2,10 +2,10 @@ package xxxarr
 
 import (
 	"context"
-	"github.com/clambin/go-common/httpclient"
+	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/xxxarr"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
-	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/roundtripper"
+	"github.com/clambin/mediamon/v2/pkg/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"sync"
@@ -14,11 +14,12 @@ import (
 
 // Collector presents Sonarr/Radarr statistics as Prometheus metrics
 type Collector struct {
-	client      Client
-	application string
-	metrics     map[string]*prometheus.Desc
-	transport   *httpclient.RoundTripper
-	logger      *slog.Logger
+	client       Client
+	application  string
+	metrics      map[string]*prometheus.Desc
+	tpMetrics    roundtripper.RoundTripMetrics
+	cacheMetrics roundtripper.CacheMetrics
+	logger       *slog.Logger
 }
 
 type Client interface {
@@ -30,14 +31,14 @@ type Client interface {
 }
 
 var (
-	radarrCacheTable = httpclient.CacheTable{
+	radarrCacheTable = roundtripper.CacheTable{
 		{Path: `/api/v3/system/status`, Expiry: time.Minute},
 		{Path: `/api/v3/calendar`, Expiry: time.Minute},
 		{Path: `/api/v3/movie`},
 		{Path: `/api/v3/movie/[\d+]`, IsRegExp: true},
 	}
 
-	sonarrCacheTable = httpclient.CacheTable{
+	sonarrCacheTable = roundtripper.CacheTable{
 		{Path: `/api/v3/system/status`, Expiry: time.Minute},
 		{Path: `/api/v3/calendar`, Expiry: time.Minute},
 		{Path: `/api/v3/series`},
@@ -53,33 +54,41 @@ const (
 
 // NewRadarrCollector creates a new RadarrCollector
 func NewRadarrCollector(url, apiKey string) *Collector {
-	r := httpclient.NewRoundTripper(
-		httpclient.WithInstrumentedCache(radarrCacheTable, cacheExpiry, cleanupInterval, "mediamon", "", "radarr"),
-		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "radarr")),
+	tpMetrics := metrics.NewCustomizedRoundTripMetrics("mediamon", "", "radarr", chopPath)
+	cacheMetrics := metrics.NewCustomizedCacheMetrics("mediamon", "", "radarr", chopPath)
+
+	r := roundtripper.New(
+		roundtripper.WithInstrumentedCache(radarrCacheTable, cacheExpiry, cleanupInterval, cacheMetrics),
+		roundtripper.WithInstrumentedRoundTripper(tpMetrics),
 	)
 
 	return &Collector{
-		client:      clients.Radarr{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
-		application: "radarr",
-		metrics:     createMetrics("radarr", url),
-		transport:   r,
-		logger:      slog.Default().With(slog.String("collector", "radarr")),
+		client:       clients.Radarr{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
+		application:  "radarr",
+		metrics:      createMetrics("radarr", url),
+		tpMetrics:    tpMetrics,
+		cacheMetrics: cacheMetrics,
+		logger:       slog.Default().With(slog.String("collector", "radarr")),
 	}
 }
 
 // NewSonarrCollector creates a new SonarrCollector
 func NewSonarrCollector(url, apiKey string) *Collector {
-	r := httpclient.NewRoundTripper(
-		httpclient.WithInstrumentedCache(sonarrCacheTable, cacheExpiry, cleanupInterval, "mediamon", "", "sonarr"),
-		httpclient.WithCustomMetrics(roundtripper.NewRequestMeasurer("mediamon", "", "sonarr")),
+	tpMetrics := metrics.NewCustomizedRoundTripMetrics("mediamon", "", "sonarr", chopPath)
+	cacheMetrics := metrics.NewCustomizedCacheMetrics("mediamon", "", "sonarr", chopPath)
+
+	r := roundtripper.New(
+		roundtripper.WithInstrumentedCache(sonarrCacheTable, cacheExpiry, cleanupInterval, cacheMetrics),
+		roundtripper.WithInstrumentedRoundTripper(tpMetrics),
 	)
 
 	return &Collector{
-		client:      clients.Sonarr{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
-		application: "sonarr",
-		metrics:     createMetrics("sonarr", url),
-		transport:   r,
-		logger:      slog.Default().With(slog.String("collector", "sonarr")),
+		client:       clients.Sonarr{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
+		application:  "sonarr",
+		metrics:      createMetrics("sonarr", url),
+		tpMetrics:    tpMetrics,
+		cacheMetrics: cacheMetrics,
+		logger:       slog.Default().With(slog.String("collector", "sonarr")),
 	}
 }
 
@@ -88,12 +97,12 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	for _, metric := range c.metrics {
 		ch <- metric
 	}
-	c.transport.Describe(ch)
+	c.tpMetrics.Describe(ch)
+	c.cacheMetrics.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	start := time.Now()
 	var wg sync.WaitGroup
 	wg.Add(5)
 	go func() { defer wg.Done(); c.collectVersion(ch) }()
@@ -102,9 +111,8 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	go func() { defer wg.Done(); c.collectQueue(ch) }()
 	go func() { defer wg.Done(); c.collectLibrary(ch) }()
 	wg.Wait()
-	c.transport.Collect(ch)
-
-	c.logger.Debug("stats collected", "duration", time.Since(start))
+	c.tpMetrics.Collect(ch)
+	c.cacheMetrics.Collect(ch)
 }
 
 func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {

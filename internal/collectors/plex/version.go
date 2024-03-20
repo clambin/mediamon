@@ -26,17 +26,17 @@ type versionGetter interface {
 	GetIdentity(context.Context) (plex.Identity, error)
 }
 
-func (v versionCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c versionCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- versionMetric
 }
 
-func (v versionCollector) Collect(ch chan<- prometheus.Metric) {
-	identity, err := v.versionGetter.GetIdentity(context.Background())
+func (c versionCollector) Collect(ch chan<- prometheus.Metric) {
+	identity, err := c.versionGetter.GetIdentity(context.Background())
 	if err != nil {
 		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting Plex version", nil, nil),err)
-		v.logger.Error("failed to collect version", "err", err)
+		c.logger.Error("failed to collect version", "err", err)
 		return
 	}
 
-	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), identity.Version, v.url)
+	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), identity.Version, c.url)
 }

@@ -2,7 +2,7 @@ package transmission
 
 import (
 	"context"
-	"github.com/clambin/go-common/httpclient"
+	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/transmission"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
@@ -57,7 +57,7 @@ type Getter interface {
 type Collector struct {
 	Transmission Getter
 	url          string
-	transport    *httpclient.RoundTripper
+	metrics      roundtripper.RoundTripMetrics
 	logger       *slog.Logger
 }
 
@@ -65,11 +65,12 @@ var _ prometheus.Collector = &Collector{}
 
 // NewCollector creates a new Collector
 func NewCollector(url string) *Collector {
-	r := httpclient.NewRoundTripper(httpclient.WithMetrics("mediamon", "", "transmission"))
+	metrics := roundtripper.NewDefaultRoundTripMetrics("mediamon", "", "transmission")
+	r := roundtripper.New(roundtripper.WithInstrumentedRoundTripper(metrics))
 	return &Collector{
 		Transmission: transmission.NewClient(url, r),
 		url:          url,
-		transport:    r,
+		metrics:      metrics,
 		logger:       slog.Default().With(slog.String("collector", "transmission")),
 	}
 }
@@ -81,7 +82,7 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- pausedTorrentsMetric
 	ch <- downloadSpeedMetric
 	ch <- uploadSpeedMetric
-	c.transport.Describe(ch)
+	c.metrics.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface
@@ -92,7 +93,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	go func() { defer wg.Done(); c.collectVersion(ch) }()
 	go func() { defer wg.Done(); c.collectStats(ch) }()
 	wg.Wait()
-	c.transport.Collect(ch)
+	c.metrics.Collect(ch)
 	c.logger.Debug("stats collected", slog.Duration("duration", time.Since(start)))
 }
 

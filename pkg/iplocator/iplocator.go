@@ -3,7 +3,7 @@ package iplocator
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-common/httpclient"
+	"github.com/clambin/go-common/http/roundtripper"
 	"log/slog"
 	"net/http"
 	"time"
@@ -20,7 +20,7 @@ type Client struct {
 func New(logger *slog.Logger) *Client {
 	return &Client{
 		httpClient: &http.Client{
-			Transport: httpclient.NewRoundTripper(httpclient.WithCache(httpclient.DefaultCacheTable, 24*time.Hour, 36*time.Hour)),
+			Transport: roundtripper.New(roundtripper.WithCache(roundtripper.DefaultCacheTable, 24*time.Hour, 36*time.Hour)),
 		},
 		url:    ipAPIURL,
 		logger: logger,

@@ -2,7 +2,7 @@ package connectivity
 
 import (
 	"fmt"
-	"github.com/clambin/go-common/httpclient"
+	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"net/http"
@@ -22,11 +22,12 @@ var (
 // Collector tests VPN connectivity by checking connection to https://ipinfo.io through a
 // configured proxy
 type Collector struct {
-	HTTPClient *http.Client
-	URL        string
-	token      string
-	transport  *httpclient.RoundTripper
-	logger     *slog.Logger
+	HTTPClient   *http.Client
+	URL          string
+	token        string
+	tpMetrics    roundtripper.RoundTripMetrics
+	cacheMetrics roundtripper.CacheMetrics
+	logger       *slog.Logger
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -42,31 +43,33 @@ const httpTimeout = 10 * time.Second
 
 // NewCollector creates a new Collector
 func NewCollector(token string, proxyURL *url.URL, expiry time.Duration) *Collector {
-	options := []httpclient.Option{
-		httpclient.WithInstrumentedCache(httpclient.DefaultCacheTable, expiry, 2*expiry, "mediamon", "", "connectivity"),
-		httpclient.WithMetrics("mediamon", "", "connectivity"),
+	cacheMetrics := roundtripper.NewCacheMetrics("mediamon", "", "connectivity")
+	tpMetrics := roundtripper.NewDefaultRoundTripMetrics("mediamon", "", "connectivity")
+	options := []roundtripper.Option{
+		roundtripper.WithInstrumentedCache(roundtripper.DefaultCacheTable, expiry, 2*expiry, cacheMetrics),
+		roundtripper.WithInstrumentedRoundTripper(tpMetrics),
 	}
 	if proxyURL != nil {
-		options = append(options, httpclient.WithRoundTripper(&http.Transport{Proxy: http.ProxyURL(proxyURL)}))
+		options = append(options, roundtripper.WithRoundTripper(&http.Transport{Proxy: http.ProxyURL(proxyURL)}))
 	}
-
-	r := httpclient.NewRoundTripper(options...)
 
 	return &Collector{
 		HTTPClient: &http.Client{
-			Transport: r,
+			Transport: roundtripper.New(options...),
 			Timeout:   httpTimeout,
 		},
-		token:     token,
-		transport: r,
-		logger:    slog.Default().With("collector", "connectivity"),
+		token:        token,
+		tpMetrics:    tpMetrics,
+		cacheMetrics: cacheMetrics,
+		logger:       slog.Default().With("collector", "connectivity"),
 	}
 }
 
 // Describe implements the prometheus.Collector interface
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- upMetric
-	c.transport.Describe(ch)
+	c.tpMetrics.Describe(ch)
+	c.cacheMetrics.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface
@@ -77,12 +80,13 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		value = 1.0
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
-	c.transport.Collect(ch)
+	c.tpMetrics.Collect(ch)
+	c.cacheMetrics.Collect(ch)
 	c.logger.Debug("stats collected", "duration", time.Since(start))
 }
 
 func (c *Collector) ping() error {
-	URL := "https://ipinfo.io/"
+	URL := "https://ipinfo.io"
 	if c.URL != "" {
 		URL = c.URL
 	}
