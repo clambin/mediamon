@@ -15,7 +15,8 @@ import (
 func TestSessionsCollector_Collector(t *testing.T) {
 	i := mocks.NewIPLocator(t)
 	i.EXPECT().Locate("1.2.3.4").Return(10, 20, nil)
-	testCases := []struct {
+
+	tests := []struct {
 		name    string
 		session plex.Session
 		want    string
@@ -78,8 +79,7 @@ mediamon_plex_transcoder_speed{url="http://localhost:8080"} 21
 		},
 	}
 
-	for _, tt := range testCases {
-		tt := tt
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

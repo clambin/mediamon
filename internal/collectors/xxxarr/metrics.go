@@ -1,6 +1,11 @@
 package xxxarr
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"net/http"
+	"net/url"
+	"regexp"
+)
 
 func createMetrics(application, url string) map[string]*prometheus.Desc {
 	constLabels := prometheus.Labels{
@@ -56,5 +61,18 @@ func createMetrics(application, url string) map[string]*prometheus.Desc {
 			nil,
 			constLabels,
 		),
+	}
+}
+
+var idEliminator = regexp.MustCompile("^(?P<path>.+)/[0-9]+$")
+
+func chopPath(req *http.Request) *http.Request {
+	path := req.URL.Path
+	if matches := idEliminator.FindAllStringSubmatch(path, 1); len(matches) == 1 && len(matches[0]) == 2 {
+		path = matches[0][1]
+	}
+	return &http.Request{
+		Method: req.Method,
+		URL:    &url.URL{Path: path},
 	}
 }

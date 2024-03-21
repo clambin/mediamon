@@ -8,7 +8,6 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"time"
 )
 
 var (
@@ -60,8 +59,6 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	start := time.Now()
-
 	stats, err := c.getStats()
 	if err != nil {
 		// ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting bandwidth statistics", nil, nil), err)
@@ -70,7 +67,6 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 	ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(stats.read))
 	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
-	c.logger.Debug("stats collected", "duration", time.Since(start))
 }
 
 var (

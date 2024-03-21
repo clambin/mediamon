@@ -19,13 +19,18 @@ func TestCollector_Collect_Up(t *testing.T) {
 	c.URL = testServer.URL
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
-# HELP mediamon_api_errors_total Number of failed HTTP calls
-# TYPE mediamon_api_errors_total counter
-mediamon_api_errors_total{application="connectivity",method="GET",path=""} 0
+# HELP mediamon_http_cache_total Number of times the cache was consulted
+# TYPE mediamon_http_cache_total counter
+mediamon_http_cache_total{application="connectivity",method="GET",path="/"} 1
+
+# HELP mediamon_http_requests_total total number of http requests
+# TYPE mediamon_http_requests_total counter
+mediamon_http_requests_total{application="connectivity",code="200",method="GET",path="/"} 1
+
 # HELP openvpn_client_status OpenVPN client status
 # TYPE openvpn_client_status gauge
 openvpn_client_status 1
-`), "mediamon_api_errors_total", "openvpn_client_status"))
+`), "openvpn_client_status", "mediamon_http_cache_total", "mediamon_http_requests_total"))
 }
 
 func TestCollector_Collect_Down(t *testing.T) {
@@ -35,13 +40,18 @@ func TestCollector_Collect_Down(t *testing.T) {
 	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
 	c.URL = testServer.URL
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
-# HELP mediamon_api_errors_total Number of failed HTTP calls
-# TYPE mediamon_api_errors_total counter
-mediamon_api_errors_total{application="connectivity",method="GET",path=""} 0
+# HELP mediamon_http_cache_total Number of times the cache was consulted
+# TYPE mediamon_http_cache_total counter
+mediamon_http_cache_total{application="connectivity",method="GET",path="/"} 1
+
+# HELP mediamon_http_requests_total total number of http requests
+# TYPE mediamon_http_requests_total counter
+mediamon_http_requests_total{application="connectivity",code="500",method="GET",path="/"} 1
+
 # HELP openvpn_client_status OpenVPN client status
 # TYPE openvpn_client_status gauge
 openvpn_client_status 0
-`), "mediamon_api_errors_total", "openvpn_client_status"))
+`), "openvpn_client_status", "mediamon_http_cache_total", "mediamon_http_requests_total"))
 }
 
 func up(w http.ResponseWriter, r *http.Request) {
