@@ -12,17 +12,16 @@ import (
 )
 
 func TestCustomizedRoundTripMetrics(t *testing.T) {
-	m := metrics.NewCustomizedRoundTripMetrics("", "", "", func(r *http.Request) *http.Request {
+	m := metrics.NewCustomizedRoundTripMetrics("", "", nil, func(r *http.Request) *http.Request {
 		return &http.Request{Method: r.Method, URL: &url.URL{Path: "/<redacted>"}}
 	})
 
 	req := http.Request{Method: http.MethodPost, URL: &url.URL{Path: "/foo"}}
-	resp := http.Response{StatusCode: http.StatusOK}
 
-	m.Measure(&req, &resp, nil, time.Second)
+	m.Measure(&req, http.StatusOK, time.Second)
 
 	assert.NoError(t, testutil.CollectAndCompare(m, strings.NewReader(`
-# HELP http_request_duration_seconds http request duration in seconds
+# HELP http_request_duration_seconds duration of http requests
 # TYPE http_request_duration_seconds summary
 http_request_duration_seconds_sum{code="200",method="POST",path="/<redacted>"} 1
 http_request_duration_seconds_count{code="200",method="POST",path="/<redacted>"} 1

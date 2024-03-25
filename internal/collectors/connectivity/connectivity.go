@@ -2,6 +2,7 @@ package connectivity
 
 import (
 	"fmt"
+	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
@@ -25,7 +26,7 @@ type Collector struct {
 	HTTPClient   *http.Client
 	URL          string
 	token        string
-	tpMetrics    roundtripper.RoundTripMetrics
+	tpMetrics    metrics.RequestMetrics
 	cacheMetrics roundtripper.CacheMetrics
 	logger       *slog.Logger
 }
@@ -44,10 +45,10 @@ const httpTimeout = 10 * time.Second
 // NewCollector creates a new Collector
 func NewCollector(token string, proxyURL *url.URL, expiry time.Duration) *Collector {
 	cacheMetrics := roundtripper.NewCacheMetrics("mediamon", "", "connectivity")
-	tpMetrics := roundtripper.NewDefaultRoundTripMetrics("mediamon", "", "connectivity")
+	tpMetrics := metrics.NewRequestSummaryMetrics("mediamon", "", map[string]string{"application": "connectivity"})
 	options := []roundtripper.Option{
 		roundtripper.WithInstrumentedCache(roundtripper.DefaultCacheTable, expiry, 2*expiry, cacheMetrics),
-		roundtripper.WithInstrumentedRoundTripper(tpMetrics),
+		roundtripper.WithRequestMetrics(tpMetrics),
 	}
 	if proxyURL != nil {
 		options = append(options, roundtripper.WithRoundTripper(&http.Transport{Proxy: http.ProxyURL(proxyURL)}))

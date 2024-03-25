@@ -1,27 +1,27 @@
 package metrics
 
 import (
-	"github.com/clambin/go-common/http/roundtripper"
+	"github.com/clambin/go-common/http/metrics"
 	"net/http"
 	"time"
 )
 
-var _ roundtripper.RoundTripMetrics = CustomizedRoundTripMetrics{}
+var _ metrics.RequestMetrics = CustomizedRoundTripMetrics{}
 
 type CustomizedRoundTripMetrics struct {
-	roundtripper.RoundTripMetrics
+	metrics.RequestMetrics
 	customize RequestCustomizer
 }
 
 type RequestCustomizer func(r *http.Request) *http.Request
 
-func NewCustomizedRoundTripMetrics(namespace, subsystem, application string, f RequestCustomizer) roundtripper.RoundTripMetrics {
+func NewCustomizedRoundTripMetrics(namespace, subsystem string, labels map[string]string, f RequestCustomizer) metrics.RequestMetrics {
 	return CustomizedRoundTripMetrics{
-		RoundTripMetrics: roundtripper.NewDefaultRoundTripMetrics(namespace, subsystem, application),
-		customize:        f,
+		RequestMetrics: metrics.NewRequestSummaryMetrics(namespace, subsystem, labels),
+		customize:      f,
 	}
 }
 
-func (m CustomizedRoundTripMetrics) Measure(req *http.Request, resp *http.Response, err error, duration time.Duration) {
-	m.RoundTripMetrics.Measure(m.customize(req), resp, err, duration)
+func (m CustomizedRoundTripMetrics) Measure(req *http.Request, statusCode int, duration time.Duration) {
+	m.RequestMetrics.Measure(m.customize(req), statusCode, duration)
 }

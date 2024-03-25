@@ -2,6 +2,7 @@ package transmission
 
 import (
 	"context"
+	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/transmission"
 	"github.com/prometheus/client_golang/prometheus"
@@ -57,7 +58,7 @@ type Getter interface {
 type Collector struct {
 	Transmission Getter
 	url          string
-	metrics      roundtripper.RoundTripMetrics
+	metrics      metrics.RequestMetrics
 	logger       *slog.Logger
 }
 
@@ -65,12 +66,12 @@ var _ prometheus.Collector = &Collector{}
 
 // NewCollector creates a new Collector
 func NewCollector(url string) *Collector {
-	metrics := roundtripper.NewDefaultRoundTripMetrics("mediamon", "", "transmission")
-	r := roundtripper.New(roundtripper.WithInstrumentedRoundTripper(metrics))
+	m := metrics.NewRequestSummaryMetrics("mediamon", "", map[string]string{"application": "transmission"})
+	r := roundtripper.New(roundtripper.WithRequestMetrics(m))
 	return &Collector{
 		Transmission: transmission.NewClient(url, r),
 		url:          url,
-		metrics:      metrics,
+		metrics:      m,
 		logger:       slog.Default().With(slog.String("collector", "transmission")),
 	}
 }
