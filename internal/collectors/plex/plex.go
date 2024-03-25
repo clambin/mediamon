@@ -1,10 +1,11 @@
 package plex
 
 import (
+	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
-	"github.com/clambin/mediamon/v2/pkg/metrics"
+	customMetrics "github.com/clambin/mediamon/v2/pkg/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"net/http"
@@ -18,7 +19,7 @@ type Collector struct {
 	versionCollector
 	sessionCollector
 	libraryCollector
-	metrics roundtripper.RoundTripMetrics
+	metrics metrics.RequestMetrics
 	logger  *slog.Logger
 }
 
@@ -43,8 +44,8 @@ type Config struct {
 
 // NewCollector creates a new Collector
 func NewCollector(version, url, username, password string) *Collector {
-	m := metrics.NewCustomizedRoundTripMetrics("mediamon", "", "plex", chopPath)
-	r := roundtripper.New(roundtripper.WithInstrumentedRoundTripper(m))
+	m := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "plex"}, chopPath)
+	r := roundtripper.New(roundtripper.WithRequestMetrics(m))
 	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, r)
 	l := slog.Default().With(slog.String("collector", "plex"))
 	return &Collector{

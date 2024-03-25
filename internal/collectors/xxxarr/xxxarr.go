@@ -2,10 +2,11 @@ package xxxarr
 
 import (
 	"context"
+	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/xxxarr"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
-	"github.com/clambin/mediamon/v2/pkg/metrics"
+	customMetrics "github.com/clambin/mediamon/v2/pkg/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"sync"
@@ -17,7 +18,7 @@ type Collector struct {
 	client       Client
 	application  string
 	metrics      map[string]*prometheus.Desc
-	tpMetrics    roundtripper.RoundTripMetrics
+	tpMetrics    metrics.RequestMetrics
 	cacheMetrics roundtripper.CacheMetrics
 	logger       *slog.Logger
 }
@@ -54,12 +55,12 @@ const (
 
 // NewRadarrCollector creates a new RadarrCollector
 func NewRadarrCollector(url, apiKey string) *Collector {
-	tpMetrics := metrics.NewCustomizedRoundTripMetrics("mediamon", "", "radarr", chopPath)
-	cacheMetrics := metrics.NewCustomizedCacheMetrics("mediamon", "", "radarr", chopPath)
+	tpMetrics := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "radarr"}, chopPath)
+	cacheMetrics := customMetrics.NewCustomizedCacheMetrics("mediamon", "", "radarr", chopPath)
 
 	r := roundtripper.New(
 		roundtripper.WithInstrumentedCache(radarrCacheTable, cacheExpiry, cleanupInterval, cacheMetrics),
-		roundtripper.WithInstrumentedRoundTripper(tpMetrics),
+		roundtripper.WithRequestMetrics(tpMetrics),
 	)
 
 	return &Collector{
@@ -74,12 +75,12 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 
 // NewSonarrCollector creates a new SonarrCollector
 func NewSonarrCollector(url, apiKey string) *Collector {
-	tpMetrics := metrics.NewCustomizedRoundTripMetrics("mediamon", "", "sonarr", chopPath)
-	cacheMetrics := metrics.NewCustomizedCacheMetrics("mediamon", "", "sonarr", chopPath)
+	tpMetrics := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "sonarr"}, chopPath)
+	cacheMetrics := customMetrics.NewCustomizedCacheMetrics("mediamon", "", "sonarr", chopPath)
 
 	r := roundtripper.New(
 		roundtripper.WithInstrumentedCache(sonarrCacheTable, cacheExpiry, cleanupInterval, cacheMetrics),
-		roundtripper.WithInstrumentedRoundTripper(tpMetrics),
+		roundtripper.WithRequestMetrics(tpMetrics),
 	)
 
 	return &Collector{
