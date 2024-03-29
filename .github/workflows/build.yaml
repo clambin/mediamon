@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - http
+      - build
     paths-ignore:
       - 'assets/**'
 
@@ -16,6 +16,7 @@ jobs:
   build:
     needs:
       - test
-    uses: clambin/workflows/.github/workflows/build.yaml@main
+    uses: clambin/workflows/.github/workflows/build.yaml@docker
     with:
-      target: mediamon
+      image: ghcr.io/clambin/mediamon
+      dockerfile: build/Dockerfile
