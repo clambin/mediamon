@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
 FROM alpine
 
 WORKDIR /app
-COPY --from=build /app/mediamon /app/mediamon
+COPY --from=builder /app/mediamon /app/mediamon
 
 RUN /usr/sbin/addgroup app
 RUN /usr/sbin/adduser app -G app -D
