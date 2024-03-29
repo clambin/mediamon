@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"sync"
-	"time"
 )
 
 var (
@@ -88,14 +87,12 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	start := time.Now()
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() { defer wg.Done(); c.collectVersion(ch) }()
 	go func() { defer wg.Done(); c.collectStats(ch) }()
 	wg.Wait()
 	c.metrics.Collect(ch)
-	c.logger.Debug("stats collected", slog.Duration("duration", time.Since(start)))
 }
 
 func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {

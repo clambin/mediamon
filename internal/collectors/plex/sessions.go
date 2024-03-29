@@ -95,15 +95,9 @@ func (c sessionCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 	if active+throttled > 0 {
-		ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, active,
-			c.url, "transcoding",
-		)
-		ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, throttled,
-			c.url, "throttled",
-		)
-		ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, speed,
-			c.url,
-		)
+		ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, active, c.url, "transcoding")
+		ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, throttled, c.url, "throttled")
+		ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, speed, c.url)
 	}
 }
 
