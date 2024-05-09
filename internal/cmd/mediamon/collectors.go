@@ -89,7 +89,7 @@ func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []pro
 
 	for key, c := range constructors {
 		if value := v.GetString(key); value != "" {
-			logger.Info("monitoring "+key, "target", key)
+			logger.Info("monitoring "+c.name, "target", value)
 			if collector := c.make(value, version, v, logger.With("collector", c.name)); collector != nil {
 				collectors = append(collectors, collector)
 			}
