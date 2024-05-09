@@ -1,0 +1,5 @@
+debug: true
+openvpn:
+  bandwidth:
+    filename: 'client.status'
+    interval: 30s
