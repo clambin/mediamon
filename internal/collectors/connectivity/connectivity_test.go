@@ -4,6 +4,7 @@ import (
 	"github.com/clambin/mediamon/v2/internal/collectors/connectivity"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,7 +16,7 @@ func TestCollector_Collect_Up(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(up))
 	defer testServer.Close()
 
-	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
+	c := connectivity.NewCollector("foo", nil, 5*time.Minute, slog.Default())
 	c.URL = testServer.URL
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
@@ -37,7 +38,7 @@ func TestCollector_Collect_Down(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(down))
 	defer testServer.Close()
 
-	c := connectivity.NewCollector("foo", nil, 5*time.Minute)
+	c := connectivity.NewCollector("foo", nil, 5*time.Minute, slog.Default())
 	c.URL = testServer.URL
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP mediamon_http_cache_total Number of times the cache was consulted

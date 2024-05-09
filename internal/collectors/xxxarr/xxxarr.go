@@ -54,7 +54,7 @@ const (
 )
 
 // NewRadarrCollector creates a new RadarrCollector
-func NewRadarrCollector(url, apiKey string) *Collector {
+func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *Collector {
 	tpMetrics := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "radarr"}, chopPath)
 	cacheMetrics := customMetrics.NewCustomizedCacheMetrics("mediamon", "", "radarr", chopPath)
 
@@ -69,12 +69,12 @@ func NewRadarrCollector(url, apiKey string) *Collector {
 		metrics:      createMetrics("radarr", url),
 		tpMetrics:    tpMetrics,
 		cacheMetrics: cacheMetrics,
-		logger:       slog.Default().With(slog.String("collector", "radarr")),
+		logger:       logger,
 	}
 }
 
 // NewSonarrCollector creates a new SonarrCollector
-func NewSonarrCollector(url, apiKey string) *Collector {
+func NewSonarrCollector(url, apiKey string, logger *slog.Logger) *Collector {
 	tpMetrics := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "sonarr"}, chopPath)
 	cacheMetrics := customMetrics.NewCustomizedCacheMetrics("mediamon", "", "sonarr", chopPath)
 
@@ -89,7 +89,7 @@ func NewSonarrCollector(url, apiKey string) *Collector {
 		metrics:      createMetrics("sonarr", url),
 		tpMetrics:    tpMetrics,
 		cacheMetrics: cacheMetrics,
-		logger:       slog.Default().With(slog.String("collector", "sonarr")),
+		logger:       logger,
 	}
 }
 

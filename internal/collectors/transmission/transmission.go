@@ -64,14 +64,14 @@ type Collector struct {
 var _ prometheus.Collector = &Collector{}
 
 // NewCollector creates a new Collector
-func NewCollector(url string) *Collector {
+func NewCollector(url string, logger *slog.Logger) *Collector {
 	m := metrics.NewRequestSummaryMetrics("mediamon", "", map[string]string{"application": "transmission"})
 	r := roundtripper.New(roundtripper.WithRequestMetrics(m))
 	return &Collector{
 		Transmission: transmission.NewClient(url, r),
 		url:          url,
 		metrics:      m,
-		logger:       slog.Default().With(slog.String("collector", "transmission")),
+		logger:       logger,
 	}
 }
 

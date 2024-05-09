@@ -8,6 +8,7 @@ import (
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/mocks"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+	"log/slog"
 	"testing"
 )
 
@@ -196,9 +197,9 @@ mediamon_xxxarr_version{application="radarr",url="",version="foo"} 1
 			var c *Collector
 			switch tt.collector {
 			case "sonarr":
-				c = NewSonarrCollector("", "")
+				c = NewSonarrCollector("", "", slog.Default())
 			case "radarr":
-				c = NewRadarrCollector("", "")
+				c = NewRadarrCollector("", "", slog.Default())
 			default:
 				t.Fatalf("invalid collector type: %s", tt.collector)
 			}

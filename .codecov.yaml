@@ -1,4 +1,3 @@
 ignore:
   - "**/mocks/*.go"
-  - "cmd/mediamon/mediamon.go"
-  - "cmd/qplex/qplex.go"
+  - "cmd/**/*.go"
