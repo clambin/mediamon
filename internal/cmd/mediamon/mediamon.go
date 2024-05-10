@@ -30,7 +30,7 @@ func Main(cmd *cobra.Command, _ []string) {
 	logger := charmer.GetLogger(cmd)
 	slog.SetDefault(logger)
 
-	logger.Info("mediamon starting", "version", cmd.Version)
+	logger.Info("mediamon starting", "version", cmd.Version, "addr", viper.GetString("metrics.addr"))
 
 	go func() {
 		http.Handle(viper.GetString("metrics.path"), promhttp.Handler())
@@ -51,7 +51,7 @@ func Main(cmd *cobra.Command, _ []string) {
 var arguments = charmer.Arguments{
 	"debug":                         {Default: false},
 	"metrics.path":                  {Default: "/metrics"},
-	"metrics:addr":                  {Default: ":9090"},
+	"metrics.addr":                  {Default: ":9090"},
 	"transmission.url":              {Default: ""},
 	"sonarr.url":                    {Default: ""},
 	"sonarr.apikey":                 {Default: ""},

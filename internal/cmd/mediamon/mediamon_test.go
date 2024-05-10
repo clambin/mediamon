@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"log/slog"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -24,9 +25,13 @@ func TestExecute(t *testing.T) {
 	go func() { _ = RootCmd.Execute() }()
 
 	assert.Eventually(t, func() bool {
-		err := testutil.GatherAndCompare(
-			prometheus.DefaultGatherer,
-			strings.NewReader(`
+		_, err := http.Get("http://127.0.0.1:9090/metrics")
+		return err == nil
+	}, time.Second, time.Millisecond*100)
+
+	assert.NoError(t, testutil.GatherAndCompare(
+		prometheus.DefaultGatherer,
+		strings.NewReader(`
 # HELP openvpn_client_tcp_udp_read_bytes_total OpenVPN client bytes read
 # TYPE openvpn_client_tcp_udp_read_bytes_total gauge
 openvpn_client_tcp_udp_read_bytes_total 5.893220736e+09
@@ -35,12 +40,9 @@ openvpn_client_tcp_udp_read_bytes_total 5.893220736e+09
 # TYPE openvpn_client_tcp_udp_write_bytes_total gauge
 openvpn_client_tcp_udp_write_bytes_total 1.882796878e+09
 `),
-			"openvpn_client_tcp_udp_read_bytes_total",
-			"openvpn_client_tcp_udp_write_bytes_total",
-		)
-		//t.Log(err)
-		return err == nil
-	}, time.Second, time.Millisecond*100, "timeout")
+		"openvpn_client_tcp_udp_read_bytes_total",
+		"openvpn_client_tcp_udp_write_bytes_total",
+	))
 
 	cancel()
 }
