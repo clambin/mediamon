@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,7 +27,7 @@ func TestCollector_Collect(t *testing.T) {
 	}, nil)
 	p.EXPECT().GetShows(mock.Anything, "2").Return([]plex.Show{}, nil)
 
-	c := NewCollector("1.0", "http://localhost:8080", "", "")
+	c := NewCollector("1.0", "http://localhost:8080", "", "", slog.Default())
 	c.libraryCollector.libraryGetter = p
 	c.versionCollector.versionGetter = p
 	c.sessionCollector.sessionGetter = p

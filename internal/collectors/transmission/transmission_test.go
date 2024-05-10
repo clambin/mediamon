@@ -8,12 +8,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"log/slog"
 	"strings"
 	"testing"
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := transmission.NewCollector("http://localhost:8888")
+	c := transmission.NewCollector("http://localhost:8888", slog.Default())
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -41,7 +42,7 @@ func TestCollector_Collect(t *testing.T) {
 	sessionParameters.Arguments.Version = "foo"
 	g.EXPECT().GetSessionParameters(mock.Anything).Return(sessionParameters, nil)
 
-	c := transmission.NewCollector("")
+	c := transmission.NewCollector("", slog.Default())
 	c.Transmission = g
 
 	e := strings.NewReader(`# HELP mediamon_transmission_active_torrent_count Number of active torrents

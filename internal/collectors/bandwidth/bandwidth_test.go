@@ -6,13 +6,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := bandwidth.NewCollector("")
+	c := bandwidth.NewCollector("", slog.Default())
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -62,7 +63,7 @@ openvpn_client_tcp_udp_write_bytes_total 2048
 		filename, err := tempFile(testCase.content)
 		require.NoError(t, err)
 
-		c := bandwidth.NewCollector(filename)
+		c := bandwidth.NewCollector(filename, slog.Default())
 		if testCase.pass {
 			assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCase.output)))
 		} else {

@@ -43,7 +43,7 @@ type Config struct {
 const httpTimeout = 10 * time.Second
 
 // NewCollector creates a new Collector
-func NewCollector(token string, proxyURL *url.URL, expiry time.Duration) *Collector {
+func NewCollector(token string, proxyURL *url.URL, expiry time.Duration, logger *slog.Logger) *Collector {
 	cacheMetrics := roundtripper.NewCacheMetrics("mediamon", "", "connectivity")
 	tpMetrics := metrics.NewRequestSummaryMetrics("mediamon", "", map[string]string{"application": "connectivity"})
 	options := []roundtripper.Option{
@@ -62,7 +62,7 @@ func NewCollector(token string, proxyURL *url.URL, expiry time.Duration) *Collec
 		token:        token,
 		tpMetrics:    tpMetrics,
 		cacheMetrics: cacheMetrics,
-		logger:       slog.Default().With("collector", "connectivity"),
+		logger:       logger,
 	}
 }
 

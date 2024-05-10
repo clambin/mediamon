@@ -44,10 +44,10 @@ type bandwidthStats struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(filename string) *Collector {
+func NewCollector(filename string, logger *slog.Logger) *Collector {
 	return &Collector{
 		Filename: filename,
-		logger:   slog.Default().With("collector", "bandwidth"),
+		logger:   logger,
 	}
 }
 

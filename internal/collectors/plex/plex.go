@@ -43,30 +43,29 @@ type Config struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(version, url, username, password string) *Collector {
+func NewCollector(version, url, username, password string, logger *slog.Logger) *Collector {
 	m := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "plex"}, chopPath)
 	r := roundtripper.New(roundtripper.WithRequestMetrics(m))
 	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, r)
-	l := slog.Default().With(slog.String("collector", "plex"))
 	return &Collector{
 		versionCollector: versionCollector{
 			versionGetter: p,
 			url:           url,
-			logger:        l,
+			logger:        logger,
 		},
 		sessionCollector: sessionCollector{
 			sessionGetter: p,
-			IPLocator:     iplocator.New(l),
+			IPLocator:     iplocator.New(logger),
 			url:           url,
-			logger:        l,
+			logger:        logger,
 		},
 		libraryCollector: libraryCollector{
 			libraryGetter: p,
 			url:           url,
-			logger:        l,
+			logger:        logger,
 		},
 		metrics: m,
-		logger:  l,
+		logger:  logger,
 	}
 }
 
