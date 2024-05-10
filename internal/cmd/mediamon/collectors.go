@@ -20,48 +20,37 @@ type constructor struct {
 
 var constructors = map[string]constructor{
 	"transmission.url": {
-		name: "Transmission",
+		name: "transmission",
 		make: func(url, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
-			return transmission.NewCollector(
-				url,
-				logger.With("collector", "transmission"),
-			), nil
+			return transmission.NewCollector(url, logger), nil
 		},
 	},
 	"sonarr.url": {
-		name: "Sonarr",
+		name: "sonarr",
 		make: func(url, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
-			return xxxarr.NewSonarrCollector(
-				url,
-				v.GetString("sonarr.apikey"),
-				logger.With("collector", "sonarr"),
-			), nil
+			return xxxarr.NewSonarrCollector(url, v.GetString("sonarr.apikey"), logger), nil
 		},
 	},
 	"radarr.url": {
-		name: "Radarr",
+		name: "radarr",
 		make: func(url, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
-			return xxxarr.NewRadarrCollector(
-				url,
-				v.GetString("radarr.apikey"),
-				logger.With("collector", "radarr"),
-			), nil
+			return xxxarr.NewRadarrCollector(url, v.GetString("radarr.apikey"), logger), nil
 		},
 	},
 	"plex.url": {
-		name: "Plex",
+		name: "plex",
 		make: func(url, version string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
 			return plex.NewCollector(
 				version,
 				url,
 				v.GetString("plex.username"),
 				v.GetString("plex.password"),
-				logger.With("collector", "plex"),
+				logger,
 			), nil
 		},
 	},
 	"openvpn.connectivity.proxy": {
-		name: "VPN connectivity",
+		name: "vpn connectivity",
 		make: func(url, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
 			proxy, err := parseProxy(url)
 			if err != nil {
@@ -71,14 +60,14 @@ var constructors = map[string]constructor{
 				v.GetString("openvpn.connectivity.token"),
 				proxy,
 				v.GetDuration("openvpn.connectivity.interval"),
-				logger.With("collector", "connectivity"),
+				logger,
 			), nil
 		},
 	},
 	"openvpn.bandwidth.filename": {
-		name: "VPN bandwidth",
+		name: "vpn bandwidth",
 		make: func(target, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
-			return bandwidth.NewCollector(target, logger.With("collector", "bandwidth")), nil
+			return bandwidth.NewCollector(target, logger), nil
 		},
 	},
 }
