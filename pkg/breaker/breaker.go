@@ -61,6 +61,8 @@ func (c *CircuitBreaker) Do(f func() error) {
 		}
 	case StateHalfOpen:
 		if err != nil {
+			// one error during half-open state opens the circuit again
+			// alternatively: one move after c.FailureThreshold errors?
 			c.setState(StateOpen)
 		} else {
 			c.successes++
