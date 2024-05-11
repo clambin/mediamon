@@ -2,14 +2,16 @@ package xxxarr
 
 import (
 	"context"
+	"fmt"
 	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/xxxarr"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
+	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	customMetrics "github.com/clambin/mediamon/v2/pkg/metrics"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 	"log/slog"
-	"sync"
 	"time"
 )
 
@@ -54,7 +56,7 @@ const (
 )
 
 // NewRadarrCollector creates a new RadarrCollector
-func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *Collector {
+func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreaker.CBCollector {
 	tpMetrics := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "radarr"}, chopPath)
 	cacheMetrics := customMetrics.NewCustomizedCacheMetrics("mediamon", "", "radarr", chopPath)
 
@@ -63,7 +65,7 @@ func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *Collector {
 		roundtripper.WithRequestMetrics(tpMetrics),
 	)
 
-	return &Collector{
+	c := Collector{
 		client:       clients.Radarr{Client: xxxarr.NewRadarrClient(url, apiKey, r)},
 		application:  "radarr",
 		metrics:      createMetrics("radarr", url),
@@ -71,10 +73,11 @@ func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *Collector {
 		cacheMetrics: cacheMetrics,
 		logger:       logger,
 	}
+	return collectorBreaker.New(&c, 10, time.Minute, 10, logger)
 }
 
 // NewSonarrCollector creates a new SonarrCollector
-func NewSonarrCollector(url, apiKey string, logger *slog.Logger) *Collector {
+func NewSonarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreaker.CBCollector {
 	tpMetrics := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "sonarr"}, chopPath)
 	cacheMetrics := customMetrics.NewCustomizedCacheMetrics("mediamon", "", "sonarr", chopPath)
 
@@ -83,7 +86,7 @@ func NewSonarrCollector(url, apiKey string, logger *slog.Logger) *Collector {
 		roundtripper.WithRequestMetrics(tpMetrics),
 	)
 
-	return &Collector{
+	c := Collector{
 		client:       clients.Sonarr{Client: xxxarr.NewSonarrClient(url, apiKey, r)},
 		application:  "sonarr",
 		metrics:      createMetrics("sonarr", url),
@@ -91,6 +94,7 @@ func NewSonarrCollector(url, apiKey string, logger *slog.Logger) *Collector {
 		cacheMetrics: cacheMetrics,
 		logger:       logger,
 	}
+	return collectorBreaker.New(&c, 10, time.Minute, 10, logger)
 }
 
 // Describe implements the prometheus.Collector interface
@@ -102,49 +106,52 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	c.cacheMetrics.Describe(ch)
 }
 
-// Collect implements the prometheus.Collector interface
-func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	var wg sync.WaitGroup
-	wg.Add(5)
-	go func() { defer wg.Done(); c.collectVersion(ch) }()
-	go func() { defer wg.Done(); c.collectHealth(ch) }()
-	go func() { defer wg.Done(); c.collectCalendar(ch) }()
-	go func() { defer wg.Done(); c.collectQueue(ch) }()
-	go func() { defer wg.Done(); c.collectLibrary(ch) }()
-	wg.Wait()
+// CollectE implements the prometheus.Collector interface
+func (c *Collector) CollectE(ch chan<- prometheus.Metric) error {
+	var g errgroup.Group
+	g.Go(func() error { return c.collectVersion(ch) })
+	g.Go(func() error { return c.collectHealth(ch) })
+	g.Go(func() error { return c.collectCalendar(ch) })
+	g.Go(func() error { return c.collectQueue(ch) })
+	g.Go(func() error { return c.collectLibrary(ch) })
+	err := g.Wait()
+	if err != nil {
+		c.logger.Warn("collection failed", "err", err)
+	}
 	c.tpMetrics.Collect(ch)
 	c.cacheMetrics.Collect(ch)
+	return err
 }
 
-func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
+func (c *Collector) collectVersion(ch chan<- prometheus.Metric) error {
 	version, err := c.client.GetVersion(context.Background())
 	if err != nil {
-		c.logger.Error("failed to get version", "err", err)
-		return
+		return fmt.Errorf("version: %w", err)
 	}
 	ch <- prometheus.MustNewConstMetric(c.metrics["version"], prometheus.GaugeValue, float64(1), version)
+	return nil
 }
 
-func (c *Collector) collectHealth(ch chan<- prometheus.Metric) {
+func (c *Collector) collectHealth(ch chan<- prometheus.Metric) error {
 	health, err := c.client.GetHealth(context.Background())
 	if err != nil {
-		c.logger.Error("failed to get health", "err", err)
-		return
+		return fmt.Errorf("health: %w", err)
 	}
 	for key, value := range health {
 		ch <- prometheus.MustNewConstMetric(c.metrics["health"], prometheus.GaugeValue, float64(value), key)
 	}
+	return nil
 }
 
-func (c *Collector) collectCalendar(ch chan<- prometheus.Metric) {
+func (c *Collector) collectCalendar(ch chan<- prometheus.Metric) error {
 	calendar, err := c.client.GetCalendar(context.Background())
 	if err != nil {
-		c.logger.Error("failed to get calendar", "err", err)
-		return
+		return fmt.Errorf("calendar: %w", err)
 	}
 	for name, count := range groupNames(calendar) {
 		ch <- prometheus.MustNewConstMetric(c.metrics["calendar"], prometheus.GaugeValue, float64(count), name)
 	}
+	return nil
 }
 
 func groupNames(names []string) map[string]int {
@@ -155,11 +162,10 @@ func groupNames(names []string) map[string]int {
 	return result
 }
 
-func (c *Collector) collectQueue(ch chan<- prometheus.Metric) {
+func (c *Collector) collectQueue(ch chan<- prometheus.Metric) error {
 	queue, err := c.client.GetQueue(context.Background())
 	if err != nil {
-		c.logger.Error("failed to get queue", "err", err)
-		return
+		return fmt.Errorf("queue: %w", err)
 	}
 
 	ch <- prometheus.MustNewConstMetric(c.metrics["queued_count"], prometheus.GaugeValue, float64(len(queue)))
@@ -174,14 +180,15 @@ func (c *Collector) collectQueue(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(c.metrics["queued_total"], prometheus.GaugeValue, float64(totalBytes[name]), name)
 		ch <- prometheus.MustNewConstMetric(c.metrics["queued_downloaded"], prometheus.GaugeValue, float64(downloadedBytes[name]), name)
 	}
+	return nil
 }
 
-func (c *Collector) collectLibrary(ch chan<- prometheus.Metric) {
+func (c *Collector) collectLibrary(ch chan<- prometheus.Metric) error {
 	library, err := c.client.GetLibrary(context.Background())
 	if err != nil {
-		c.logger.Error("failed to get library", "err", err)
-		return
+		return fmt.Errorf("library: %w", err)
 	}
 	ch <- prometheus.MustNewConstMetric(c.metrics["monitored"], prometheus.GaugeValue, float64(library.Monitored))
 	ch <- prometheus.MustNewConstMetric(c.metrics["unmonitored"], prometheus.GaugeValue, float64(library.Unmonitored))
+	return nil
 }

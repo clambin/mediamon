@@ -14,14 +14,15 @@ const (
 	StateOpen
 )
 
+var stateStrings = map[State]string{
+	StateClosed:   "closed",
+	StateHalfOpen: "half-open",
+	StateOpen:     "open",
+}
+
 func (s State) String() string {
-	switch s {
-	case StateClosed:
-		return "closed"
-	case StateHalfOpen:
-		return "half-open"
-	case StateOpen:
-		return "open"
+	if value, ok := stateStrings[s]; ok {
+		return value
 	}
 	return "unknown"
 }
@@ -38,6 +39,17 @@ type CircuitBreaker struct {
 	openExpiration   time.Time
 }
 
+func New(failureThreshold int, openDuration time.Duration, successThreshold int, logger *slog.Logger) *CircuitBreaker {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	return &CircuitBreaker{
+		FailureThreshold: failureThreshold,
+		OpenDuration:     openDuration,
+		SuccessThreshold: successThreshold,
+		Logger:           logger,
+	}
+}
 func (c *CircuitBreaker) Do(f func() error) {
 	state := c.getState()
 	if state == StateOpen {
@@ -93,7 +105,5 @@ func (c *CircuitBreaker) setState(state State) {
 	if state == StateOpen {
 		c.openExpiration = time.Now().Add(c.OpenDuration)
 	}
-	if c.Logger != nil {
-		c.Logger.Debug("circuit breaker state set", "state", c.state)
-	}
+	c.Logger.Info("circuit breaker", "state", c.state)
 }

@@ -40,14 +40,9 @@ func TestState_String(t *testing.T) {
 
 func TestCircuitBreaker_Do(t *testing.T) {
 	newCB := func(state State) *CircuitBreaker {
-		cb := CircuitBreaker{
-			FailureThreshold: 5,
-			OpenDuration:     500 * time.Millisecond,
-			SuccessThreshold: 10,
-			Logger:           slog.Default(),
-		}
+		cb := New(5, 500*time.Millisecond, 10, slog.Default())
 		cb.setState(state)
-		return &cb
+		return cb
 	}
 
 	t.Run("closed cb remains closed on success", func(t *testing.T) {

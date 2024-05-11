@@ -16,18 +16,13 @@ var _ prometheus.Collector = &CBCollector{}
 
 type CBCollector struct {
 	Collector
-	breaker.CircuitBreaker
+	breaker *breaker.CircuitBreaker
 }
 
 func New(c Collector, failureThreshold int, openDuration time.Duration, successThreshold int, logger *slog.Logger) *CBCollector {
 	return &CBCollector{
 		Collector: c,
-		CircuitBreaker: breaker.CircuitBreaker{
-			FailureThreshold: failureThreshold,
-			OpenDuration:     openDuration,
-			SuccessThreshold: successThreshold,
-			Logger:           logger.With("component", "breaker"),
-		},
+		breaker:   breaker.New(failureThreshold, openDuration, successThreshold, logger.With("component", "breaker")),
 	}
 }
 
@@ -36,7 +31,7 @@ func (c *CBCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *CBCollector) Collect(ch chan<- prometheus.Metric) {
-	c.CircuitBreaker.Do(func() error {
+	c.breaker.Do(func() error {
 		return c.Collector.CollectE(ch)
 	})
 }

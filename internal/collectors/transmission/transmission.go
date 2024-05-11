@@ -94,6 +94,9 @@ func (c *Collector) CollectE(ch chan<- prometheus.Metric) error {
 	g.Go(func() error { return c.collectVersion(ch) })
 	g.Go(func() error { return c.collectStats(ch) })
 	err := g.Wait()
+	if err != nil {
+		c.logger.Warn("collection failed", "err", err)
+	}
 	c.metrics.Collect(ch)
 	return err
 }
