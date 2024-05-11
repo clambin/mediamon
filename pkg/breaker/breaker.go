@@ -94,6 +94,6 @@ func (c *CircuitBreaker) setState(state State) {
 		c.openExpiration = time.Now().Add(c.OpenDuration)
 	}
 	if c.Logger != nil {
-		c.Logger.Debug("circuit breaker state set", "state", c)
+		c.Logger.Debug("circuit breaker state set", "state", c.state)
 	}
 }
