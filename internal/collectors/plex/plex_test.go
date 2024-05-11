@@ -27,13 +27,13 @@ func TestCollector_Collect(t *testing.T) {
 	}, nil)
 	p.EXPECT().GetShows(mock.Anything, "2").Return([]plex.Show{}, nil)
 
-	c := NewCollector("1.0", "http://localhost:8080", "", "", slog.Default())
-	c.libraryCollector.libraryGetter = p
-	c.versionCollector.versionGetter = p
-	c.sessionCollector.sessionGetter = p
+	cb := NewCollector("1.0", "http://localhost:8080", "", "", slog.Default())
+	cb.Collector.(*Collector).libraryCollector.libraryGetter = p
+	cb.Collector.(*Collector).versionCollector.versionGetter = p
+	cb.Collector.(*Collector).sessionCollector.sessionGetter = p
 
 	r := prometheus.NewPedanticRegistry()
-	r.MustRegister(c)
+	r.MustRegister(cb)
 
 	assert.NoError(t, testutil.GatherAndCompare(r, strings.NewReader(`
 # HELP mediamon_plex_library_bytes Library size in bytes

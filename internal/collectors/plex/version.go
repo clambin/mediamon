@@ -2,7 +2,9 @@ package plex
 
 import (
 	"context"
+	"fmt"
 	"github.com/clambin/mediaclients/plex"
+	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 )
@@ -14,7 +16,7 @@ var versionMetric = prometheus.NewDesc(
 	nil,
 )
 
-var _ prometheus.Collector = versionCollector{}
+var _ collector_breaker.Collector = versionCollector{}
 
 type versionCollector struct {
 	versionGetter
@@ -30,13 +32,12 @@ func (c versionCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- versionMetric
 }
 
-func (c versionCollector) Collect(ch chan<- prometheus.Metric) {
+func (c versionCollector) CollectE(ch chan<- prometheus.Metric) error {
 	identity, err := c.versionGetter.GetIdentity(context.Background())
 	if err != nil {
-		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error","Error getting Plex version", nil, nil),err)
-		c.logger.Error("failed to collect version", "err", err)
-		return
+		return fmt.Errorf("identity: %w", err)
 	}
 
 	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), identity.Version, c.url)
+	return nil
 }

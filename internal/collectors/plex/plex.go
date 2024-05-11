@@ -4,14 +4,16 @@ import (
 	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/plex"
+	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	customMetrics "github.com/clambin/mediamon/v2/pkg/metrics"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
+	"time"
 )
 
 // Collector presents Plex statistics as Prometheus metrics
@@ -33,7 +35,7 @@ type IPLocator interface {
 	Locate(string) (float64, float64, error)
 }
 
-var _ prometheus.Collector = &Collector{}
+var _ collectorBreaker.Collector = &Collector{}
 
 // Config to create a Collector
 type Config struct {
@@ -43,11 +45,11 @@ type Config struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(version, url, username, password string, logger *slog.Logger) *Collector {
+func NewCollector(version, url, username, password string, logger *slog.Logger) *collectorBreaker.CBCollector {
 	m := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "plex"}, chopPath)
 	r := roundtripper.New(roundtripper.WithRequestMetrics(m))
 	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, r)
-	return &Collector{
+	c := Collector{
 		versionCollector: versionCollector{
 			versionGetter: p,
 			url:           url,
@@ -67,6 +69,7 @@ func NewCollector(version, url, username, password string, logger *slog.Logger) 
 		metrics: m,
 		logger:  logger,
 	}
+	return collectorBreaker.New(&c, 6, time.Minute, 6, logger)
 }
 
 func chopPath(r *http.Request) *http.Request {
@@ -92,13 +95,13 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	c.metrics.Describe(ch)
 }
 
-// Collect implements the prometheus.Collector interface
-func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	var wg sync.WaitGroup
-	wg.Add(3)
-	go func() { defer wg.Done(); c.versionCollector.Collect(ch) }()
-	go func() { defer wg.Done(); c.sessionCollector.Collect(ch) }()
-	go func() { defer wg.Done(); c.libraryCollector.Collect(ch) }()
-	wg.Wait()
+// CollectE implements the prometheus.Collector interface
+func (c *Collector) CollectE(ch chan<- prometheus.Metric) error {
+	var g errgroup.Group
+	g.Go(func() error { return c.versionCollector.CollectE(ch) })
+	g.Go(func() error { return c.sessionCollector.CollectE(ch) })
+	g.Go(func() error { return c.libraryCollector.CollectE(ch) })
+	err := g.Wait()
 	c.metrics.Collect(ch)
+	return err
 }

@@ -105,5 +105,5 @@ func (c *CircuitBreaker) setState(state State) {
 	if state == StateOpen {
 		c.openExpiration = time.Now().Add(c.OpenDuration)
 	}
-	c.Logger.Info("circuit breaker", "state", c.state)
+	c.Logger.Debug("circuit breaker", "state", c.state)
 }

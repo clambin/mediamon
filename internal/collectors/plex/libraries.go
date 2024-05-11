@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/mediaclients/plex"
+	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"sync"
@@ -24,6 +25,8 @@ var (
 		nil,
 	)
 )
+
+var _ collector_breaker.Collector = &libraryCollector{}
 
 type libraryCollector struct {
 	libraryGetter
@@ -47,11 +50,10 @@ func (c *libraryCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- libraryCountMetric
 }
 
-func (c *libraryCollector) Collect(ch chan<- prometheus.Metric) {
+func (c *libraryCollector) CollectE(ch chan<- prometheus.Metric) error {
 	sizes, err := c.reportLibraries()
 	if err != nil {
-		c.logger.Error("failed to collect plex library stats", "err", err)
-		return
+		return fmt.Errorf("libraries: %w", err)
 	}
 
 	for library, entries := range sizes {
@@ -62,6 +64,7 @@ func (c *libraryCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 		ch <- prometheus.MustNewConstMetric(libraryBytesMetric, prometheus.GaugeValue, float64(size), c.url, library)
 	}
+	return nil
 }
 
 type libraryEntry struct {
