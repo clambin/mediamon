@@ -43,7 +43,7 @@ func TestCollector_Collect(t *testing.T) {
 	g.EXPECT().GetSessionParameters(mock.Anything).Return(sessionParameters, nil)
 
 	c := transmission.NewCollector("", slog.Default())
-	c.Transmission = g
+	c.Collector.(*transmission.Collector).Transmission = g
 
 	e := strings.NewReader(`# HELP mediamon_transmission_active_torrent_count Number of active torrents
 # TYPE mediamon_transmission_active_torrent_count gauge
