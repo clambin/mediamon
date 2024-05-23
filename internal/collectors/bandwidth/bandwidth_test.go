@@ -24,10 +24,9 @@ func TestCollector_Describe(t *testing.T) {
 }
 
 func TestCollector_Collect(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		name    string
 		content []byte
-		pass    bool
 		output  string
 	}{
 		{
@@ -37,7 +36,6 @@ Updated,Fri Dec 18 11:24:01 2020
 TCP/UDP read bytes,5624951995
 TCP/UDP write bytes,2048
 END`),
-			pass: true,
 			output: `
 # HELP openvpn_client_tcp_udp_read_bytes_total OpenVPN client bytes read
 # TYPE openvpn_client_tcp_udp_read_bytes_total gauge
@@ -48,30 +46,37 @@ openvpn_client_tcp_udp_write_bytes_total 2048
 `,
 		},
 		{
-			name: "invalid",
+			name: "invalid values",
 			content: []byte(`OpenVPN STATISTICS
 			Updated,Fri Dec 18 11:24:01 2020
 			TCP/UDP read bytes,A
 			TCP/UDP write bytes,B
 			END
 `),
-			pass: true,
+		},
+		{
+			name: "incomplete file",
+			content: []byte(`OpenVPN STATISTICS
+			Updated,Fri Dec 18 11:24:01 2020
+			TCP/UDP read bytes,1
+			TCP/UDP read bytes,1
+			END
+`),
 		},
 	}
 
-	for _, testCase := range testCases {
-		filename, err := tempFile(testCase.content)
-		require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-		c := bandwidth.NewCollector(filename, slog.Default())
-		if testCase.pass {
-			assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCase.output)))
-		} else {
-			err = testutil.CollectAndCompare(c, strings.NewReader(""))
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`)
-		}
-		_ = os.Remove(filename)
+			filename, err := tempFile(tt.content)
+			require.NoError(t, err)
+
+			c := bandwidth.NewCollector(filename, slog.Default())
+			assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(tt.output)))
+
+			assert.NoError(t, os.Remove(filename))
+		})
 	}
 }
 

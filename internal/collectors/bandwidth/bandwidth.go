@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
+	"io"
 	"log/slog"
 	"os"
 	"regexp"
@@ -59,9 +60,8 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	stats, err := c.getStats()
+	stats, err := c.getStats(c.Filename)
 	if err != nil {
-		// ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting bandwidth statistics", nil, nil), err)
 		c.logger.Error("failed to collect bandwidth metrics", "err", err)
 		return
 	}
@@ -73,33 +73,35 @@ var (
 	statusFileRegEx = regexp.MustCompile(`^(.+),(\d+)$`)
 )
 
-func (c *Collector) getStats() (bandwidthStats, error) {
-	var stats bandwidthStats
-	statusFile, err := os.Open(c.Filename)
+func (c *Collector) getStats(filename string) (bandwidthStats, error) {
+	statusFile, err := os.Open(filename)
 	if err != nil {
-		return stats, err
+		return bandwidthStats{}, err
 	}
 	defer func() { _ = statusFile.Close() }()
 
-	fieldsFound := 0
-	scanner := bufio.NewScanner(statusFile)
+	return c.readStats(statusFile)
+}
+
+func (c *Collector) readStats(r io.Reader) (stats bandwidthStats, err error) {
+	var fieldsFound int
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		line := scanner.Text()
-		for _, match := range statusFileRegEx.FindAllStringSubmatch(line, -1) {
+		for _, match := range statusFileRegEx.FindAllStringSubmatch(scanner.Text(), -1) {
+			// regexp only matches on valid numbers, so ParseInt won't fail
 			value, _ := strconv.ParseInt(match[2], 10, 64)
 			switch match[1] {
 			case "TCP/UDP read bytes":
 				stats.read = value
-				fieldsFound++
+				fieldsFound |= 0x1
 			case "TCP/UDP write bytes":
 				stats.written = value
-				fieldsFound++
+				fieldsFound |= 0x2
 			}
 		}
 	}
-	if fieldsFound != 2 {
+	if fieldsFound != 0x3 {
 		err = fmt.Errorf("not all fields were found in the openvpn status file")
 	}
-
 	return stats, err
 }
