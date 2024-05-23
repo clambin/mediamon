@@ -18,9 +18,9 @@ func TestVersionCollector_Collect(t *testing.T) {
 	p := mocks.NewGetter(t)
 	p.EXPECT().GetIdentity(mock.Anything).Return(plex.Identity{Version: "1.2.3"}, nil)
 	c := versionCollector{
-		versionGetter: p,
-		url:           "http://localhost:8080",
-		logger:        slog.Default(),
+		identityGetter: p,
+		url:            "http://localhost:8080",
+		logger:         slog.Default(),
 	}
 	cfg := breaker.Configuration{
 		FailureThreshold: 1,

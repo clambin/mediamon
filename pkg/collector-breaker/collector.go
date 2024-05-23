@@ -1,6 +1,7 @@
 package collector_breaker
 
 import (
+	"errors"
 	"github.com/clambin/mediamon/v2/pkg/breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
@@ -22,7 +23,7 @@ type CBCollector struct {
 func New(c Collector, cfg breaker.Configuration, logger *slog.Logger) *CBCollector {
 	return &CBCollector{
 		Collector: c,
-		breaker:   breaker.New(cfg, logger.With("component", "breaker")),
+		breaker:   &breaker.CircuitBreaker{Configuration: cfg},
 		logger:    logger,
 	}
 }
@@ -32,11 +33,11 @@ func (c *CBCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *CBCollector) Collect(ch chan<- prometheus.Metric) {
-	c.breaker.Do(func() error {
-		err := c.Collector.CollectE(ch)
-		if err != nil {
-			c.logger.Warn("collection failed", "err", err)
-		}
-		return err
+	err := c.breaker.Do(func() error {
+		return c.Collector.CollectE(ch)
 	})
+
+	if err != nil && !errors.Is(err, breaker.ErrCircuitOpen) {
+		c.logger.Warn("collection failed", "err", err)
+	}
 }

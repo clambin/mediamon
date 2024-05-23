@@ -28,7 +28,7 @@ func TestCollector_Collect(t *testing.T) {
 
 	cb := NewCollector("1.0", "http://localhost:8080", "", "", slog.Default())
 	cb.Collector.(*Collector).libraryCollector.libraryGetter = p
-	cb.Collector.(*Collector).versionCollector.versionGetter = p
+	cb.Collector.(*Collector).versionCollector.identityGetter = p
 	cb.Collector.(*Collector).sessionCollector.sessionGetter = p
 
 	assert.NoError(t, testutil.CollectAndCompare(cb, strings.NewReader(`

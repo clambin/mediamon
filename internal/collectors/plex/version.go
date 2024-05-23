@@ -19,12 +19,12 @@ var versionMetric = prometheus.NewDesc(
 var _ collector_breaker.Collector = versionCollector{}
 
 type versionCollector struct {
-	versionGetter
+	identityGetter
 	url    string
 	logger *slog.Logger
 }
 
-type versionGetter interface {
+type identityGetter interface {
 	GetIdentity(context.Context) (plex.Identity, error)
 }
 
@@ -33,7 +33,7 @@ func (c versionCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c versionCollector) CollectE(ch chan<- prometheus.Metric) error {
-	identity, err := c.versionGetter.GetIdentity(context.Background())
+	identity, err := c.identityGetter.GetIdentity(context.Background())
 	if err != nil {
 		return fmt.Errorf("identity: %w", err)
 	}

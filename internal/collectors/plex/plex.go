@@ -27,7 +27,7 @@ type Collector struct {
 }
 
 type Getter interface {
-	versionGetter
+	identityGetter
 	sessionGetter
 	libraryGetter
 }
@@ -58,9 +58,9 @@ func NewCollector(version, url, username, password string, logger *slog.Logger) 
 	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, r)
 	c := Collector{
 		versionCollector: versionCollector{
-			versionGetter: p,
-			url:           url,
-			logger:        logger,
+			identityGetter: p,
+			url:            url,
+			logger:         logger,
 		},
 		sessionCollector: sessionCollector{
 			sessionGetter: p,

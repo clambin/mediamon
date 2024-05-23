@@ -1,7 +1,7 @@
 package breaker
 
 import (
-	"log/slog"
+	"errors"
 	"sync"
 	"time"
 )
@@ -13,6 +13,8 @@ const (
 	StateHalfOpen
 	StateOpen
 )
+
+var ErrCircuitOpen = errors.New("circuit is open")
 
 var stateStrings = map[State]string{
 	StateClosed:   "closed",
@@ -29,7 +31,6 @@ func (s State) String() string {
 
 type CircuitBreaker struct {
 	Configuration
-	Logger         *slog.Logger
 	lock           sync.Mutex
 	failures       int
 	successes      int
@@ -43,50 +44,18 @@ type Configuration struct {
 	SuccessThreshold int
 }
 
-func New(cfg Configuration, logger *slog.Logger) *CircuitBreaker {
-	if logger == nil {
-		logger = slog.Default()
-	}
-	return &CircuitBreaker{
-		Configuration: cfg,
-		Logger:        logger,
-	}
-}
-func (c *CircuitBreaker) Do(f func() error) {
-	state := c.getState()
-	if state == StateOpen {
-		return
+func (c *CircuitBreaker) Do(f func() error) error {
+	if state := c.getState(); state == StateOpen {
+		return ErrCircuitOpen
 	}
 
 	err := f()
-
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	switch state {
-	case StateClosed:
-		if err != nil {
-			c.failures++
-			if c.failures >= c.FailureThreshold {
-				c.setState(StateOpen)
-			}
-		} else {
-			c.failures = 0
-		}
-	case StateHalfOpen:
-		if err != nil {
-			// one error during half-open state opens the circuit again
-			// alternatively: move after c.FailureThreshold errors?
-			c.setState(StateOpen)
-		} else {
-			c.successes++
-			if c.successes >= c.SuccessThreshold {
-				c.setState(StateClosed)
-			}
-		}
-	default:
-		// never called
+	if err == nil {
+		c.onSuccess()
+	} else {
+		c.onFailure()
 	}
+	return err
 }
 
 func (c *CircuitBreaker) getState() State {
@@ -100,6 +69,26 @@ func (c *CircuitBreaker) getState() State {
 	return state
 }
 
+func (c *CircuitBreaker) onSuccess() {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	c.successes++
+	c.failures = 0
+	if c.state == StateHalfOpen && c.successes >= c.SuccessThreshold {
+		c.setState(StateClosed)
+	}
+}
+
+func (c *CircuitBreaker) onFailure() {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	c.successes = 0
+	c.failures++
+	if c.state == StateHalfOpen || c.failures >= c.FailureThreshold {
+		c.setState(StateOpen)
+	}
+}
+
 func (c *CircuitBreaker) setState(state State) {
 	c.state = state
 	c.successes = 0
@@ -107,5 +96,4 @@ func (c *CircuitBreaker) setState(state State) {
 	if state == StateOpen {
 		c.openExpiration = time.Now().Add(c.OpenDuration)
 	}
-	c.Logger.Debug("circuit breaker", "state", c.state)
 }
