@@ -3,27 +3,24 @@ package iplocator
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/go-common/http/roundtripper"
 	"log/slog"
 	"net/http"
-	"time"
 )
 
 // Client finds the geographic coordinates of an IP address.  It uses https://ip-api.com to look an IP address' location.
 type Client struct {
 	httpClient *http.Client
 	url        string
-	logger     *slog.Logger
 }
 
 // New creates a new Client
-func New(logger *slog.Logger) *Client {
+func New(httpClient *http.Client) *Client {
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
 	return &Client{
-		httpClient: &http.Client{
-			Transport: roundtripper.New(roundtripper.WithCache(roundtripper.DefaultCacheTable, 24*time.Hour, 36*time.Hour)),
-		},
-		url:    ipAPIURL,
-		logger: logger,
+		httpClient: httpClient,
+		url:        ipAPIURL,
 	}
 }
 
@@ -39,8 +36,6 @@ func (c Client) Locate(ipAddress string) (float64, float64, error) {
 	if response.Status != "success" {
 		return 0, 0, fmt.Errorf("ip locate failed: %s", response.Message)
 	}
-
-	c.logger.Debug("ip located", "ip", ipAddress, "location", response)
 
 	return response.Lon, response.Lat, err
 }

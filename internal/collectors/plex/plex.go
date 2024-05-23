@@ -64,9 +64,11 @@ func NewCollector(version, url, username, password string, logger *slog.Logger) 
 		},
 		sessionCollector: sessionCollector{
 			sessionGetter: p,
-			IPLocator:     iplocator.New(logger),
-			url:           url,
-			logger:        logger,
+			IPLocator: iplocator.New(&http.Client{
+				Transport: roundtripper.New(roundtripper.WithCache(roundtripper.DefaultCacheTable, 24*time.Hour, time.Hour)),
+			}),
+			url:    url,
+			logger: logger,
 		},
 		libraryCollector: libraryCollector{
 			libraryGetter: p,

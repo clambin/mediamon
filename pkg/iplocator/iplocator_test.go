@@ -3,10 +3,8 @@ package iplocator
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 )
 
@@ -26,10 +24,8 @@ func TestClient_Locate(t *testing.T) {
 	}
 	ts := httptest.NewServer(http.HandlerFunc(s.handle))
 
-	c := New(slog.Default())
+	c := New(nil)
 	c.url = ts.URL
-
-	c.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	testCases := []struct {
 		name    string
@@ -38,13 +34,6 @@ func TestClient_Locate(t *testing.T) {
 		wantLon float64
 		wantLat float64
 	}{
-		{
-			name:    "valid",
-			address: "8.8.8.8",
-			wantErr: assert.NoError,
-			wantLon: -77.5,
-			wantLat: 39.03,
-		},
 		{
 			name:    "valid",
 			address: "8.8.8.8",
