@@ -1,7 +1,6 @@
 package bandwidth
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"io"
@@ -69,10 +68,6 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
 }
 
-var (
-	statusFileRegEx = regexp.MustCompile(`^(.+),(\d+)$`)
-)
-
 func (c *Collector) getStats(filename string) (bandwidthStats, error) {
 	statusFile, err := os.Open(filename)
 	if err != nil {
@@ -83,25 +78,25 @@ func (c *Collector) getStats(filename string) (bandwidthStats, error) {
 	return c.readStats(statusFile)
 }
 
+var (
+	reRead  = regexp.MustCompile(`\nTCP/UDP read bytes,(\d+)\n`)
+	reWrite = regexp.MustCompile(`\nTCP/UDP write bytes,(\d+)\n`)
+)
+
 func (c *Collector) readStats(r io.Reader) (stats bandwidthStats, err error) {
-	var fieldsFound int
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		for _, match := range statusFileRegEx.FindAllStringSubmatch(scanner.Text(), -1) {
-			// regexp only matches on valid numbers, so ParseInt won't fail
-			value, _ := strconv.ParseInt(match[2], 10, 64)
-			switch match[1] {
-			case "TCP/UDP read bytes":
-				stats.read = value
-				fieldsFound |= 0x1
-			case "TCP/UDP write bytes":
-				stats.written = value
-				fieldsFound |= 0x2
-			}
-		}
+	content, _ := io.ReadAll(r)
+	body := string(content)
+	matches := reRead.FindStringSubmatch(body)
+	if matches == nil {
+		return bandwidthStats{}, fmt.Errorf("no TCP/UDP read field in status file")
 	}
-	if fieldsFound != 0x3 {
-		err = fmt.Errorf("not all fields were found in the openvpn status file")
+	stats.read, _ = strconv.ParseInt(matches[1], 10, 64)
+
+	matches = reWrite.FindStringSubmatch(body)
+	if matches == nil {
+		return bandwidthStats{}, fmt.Errorf("no TCP/UDP write field in status file")
 	}
-	return stats, err
+	stats.written, _ = strconv.ParseInt(matches[1], 10, 64)
+
+	return stats, nil
 }
