@@ -23,7 +23,7 @@ type CBCollector struct {
 func New(c Collector, cfg breaker.Configuration, logger *slog.Logger) *CBCollector {
 	return &CBCollector{
 		Collector: c,
-		breaker:   &breaker.CircuitBreaker{Configuration: cfg},
+		breaker:   breaker.New(cfg),
 		logger:    logger,
 	}
 }

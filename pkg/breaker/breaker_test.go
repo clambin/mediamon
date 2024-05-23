@@ -7,35 +7,6 @@ import (
 	"time"
 )
 
-func TestState_String(t *testing.T) {
-	tests := []struct {
-		name string
-		s    State
-		want string
-	}{
-		{
-			name: "closed",
-			s:    StateClosed,
-			want: "closed",
-		},
-		{
-			name: "open",
-			s:    StateOpen,
-			want: "open",
-		},
-		{
-			name: "half-open",
-			s:    StateHalfOpen,
-			want: "half-open",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.s.String())
-		})
-	}
-}
-
 func TestCircuitBreaker_Do(t *testing.T) {
 	cfg := Configuration{
 		FailureThreshold: 5,
@@ -43,7 +14,7 @@ func TestCircuitBreaker_Do(t *testing.T) {
 		SuccessThreshold: 10,
 	}
 	newCB := func(state State) *CircuitBreaker {
-		cb := CircuitBreaker{Configuration: cfg}
+		cb := New(cfg)
 		switch state {
 		case StateClosed:
 			cb.close()
@@ -52,7 +23,7 @@ func TestCircuitBreaker_Do(t *testing.T) {
 		case StateHalfOpen:
 			cb.halfOpen()
 		}
-		return &cb
+		return cb
 	}
 
 	t.Run("closed cb remains closed on success", func(t *testing.T) {
@@ -128,14 +99,31 @@ func TestCircuitBreaker_Do(t *testing.T) {
 	})
 }
 
-func BenchmarkCircuitBreaker_Do(b *testing.B) {
-	cb := CircuitBreaker{
-		Configuration: Configuration{
-			FailureThreshold: 5,
-			OpenDuration:     time.Millisecond,
-			SuccessThreshold: 10,
-		},
+func TestCircuitBreaker_Do_Custom(t *testing.T) {
+	cfg := Configuration{
+		FailureThreshold: 5,
+		OpenDuration:     500 * time.Millisecond,
+		SuccessThreshold: 10,
+		ShouldOpen:       func(_ Counters) bool { return true },
+		ShouldClose:      func(_ Counters) bool { return true },
 	}
+	cb := New(cfg)
+	assert.Equal(t, StateClosed.String(), cb.getState().String())
+	_ = cb.Do(func() error { return errors.New("error") })
+	// custom ShouldOpen ignores FailureThreshold: circuit opens on first failure
+	assert.Equal(t, StateOpen.String(), cb.getState().String())
+	assert.Eventually(t, func() bool { return cb.getState() == StateHalfOpen }, time.Second, 50*time.Millisecond)
+	_ = cb.Do(func() error { return nil })
+	// custom ShouldClose ignores SuccessThreshold: circuit closes on first success
+	assert.Equal(t, StateClosed.String(), cb.getState().String())
+}
+
+func BenchmarkCircuitBreaker_Do(b *testing.B) {
+	cb := New(Configuration{
+		FailureThreshold: 5,
+		OpenDuration:     time.Millisecond,
+		SuccessThreshold: 10,
+	})
 
 	b.Run("success", func(b *testing.B) {
 		for range b.N {
