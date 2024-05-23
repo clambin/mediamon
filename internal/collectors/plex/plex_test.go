@@ -3,7 +3,6 @@ package plex
 import (
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -32,10 +31,7 @@ func TestCollector_Collect(t *testing.T) {
 	cb.Collector.(*Collector).versionCollector.versionGetter = p
 	cb.Collector.(*Collector).sessionCollector.sessionGetter = p
 
-	r := prometheus.NewPedanticRegistry()
-	r.MustRegister(cb)
-
-	assert.NoError(t, testutil.GatherAndCompare(r, strings.NewReader(`
+	assert.NoError(t, testutil.CollectAndCompare(cb, strings.NewReader(`
 # HELP mediamon_plex_library_bytes Library size in bytes
 # TYPE mediamon_plex_library_bytes gauge
 mediamon_plex_library_bytes{library="movies",url="http://localhost:8080"} 1024

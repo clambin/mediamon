@@ -4,7 +4,6 @@ import (
 	"github.com/clambin/mediamon/v2/pkg/breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
-	"time"
 )
 
 type Collector interface {
@@ -20,10 +19,10 @@ type CBCollector struct {
 	logger  *slog.Logger
 }
 
-func New(c Collector, failureThreshold int, openDuration time.Duration, successThreshold int, logger *slog.Logger) *CBCollector {
+func New(c Collector, cfg breaker.Configuration, logger *slog.Logger) *CBCollector {
 	return &CBCollector{
 		Collector: c,
-		breaker:   breaker.New(failureThreshold, openDuration, successThreshold, logger.With("component", "breaker")),
+		breaker:   breaker.New(cfg, logger.With("component", "breaker")),
 		logger:    logger,
 	}
 }

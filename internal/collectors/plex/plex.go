@@ -4,6 +4,7 @@ import (
 	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/plex"
+	"github.com/clambin/mediamon/v2/pkg/breaker"
 	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	customMetrics "github.com/clambin/mediamon/v2/pkg/metrics"
@@ -33,6 +34,12 @@ type Getter interface {
 
 type IPLocator interface {
 	Locate(string) (float64, float64, error)
+}
+
+var breakerConfiguration = breaker.Configuration{
+	FailureThreshold: 6,
+	OpenDuration:     time.Minute,
+	SuccessThreshold: 6,
 }
 
 var _ collectorBreaker.Collector = &Collector{}
@@ -69,7 +76,7 @@ func NewCollector(version, url, username, password string, logger *slog.Logger) 
 		metrics: m,
 		logger:  logger,
 	}
-	return collectorBreaker.New(&c, 6, time.Minute, 6, logger)
+	return collectorBreaker.New(&c, breakerConfiguration, logger)
 }
 
 func chopPath(r *http.Request) *http.Request {

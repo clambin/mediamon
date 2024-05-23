@@ -28,26 +28,28 @@ func (s State) String() string {
 }
 
 type CircuitBreaker struct {
+	Configuration
+	Logger         *slog.Logger
+	lock           sync.Mutex
+	failures       int
+	successes      int
+	state          State
+	openExpiration time.Time
+}
+
+type Configuration struct {
 	FailureThreshold int
 	OpenDuration     time.Duration
 	SuccessThreshold int
-	Logger           *slog.Logger
-	lock             sync.Mutex
-	failures         int
-	successes        int
-	state            State
-	openExpiration   time.Time
 }
 
-func New(failureThreshold int, openDuration time.Duration, successThreshold int, logger *slog.Logger) *CircuitBreaker {
+func New(cfg Configuration, logger *slog.Logger) *CircuitBreaker {
 	if logger == nil {
 		logger = slog.Default()
 	}
 	return &CircuitBreaker{
-		FailureThreshold: failureThreshold,
-		OpenDuration:     openDuration,
-		SuccessThreshold: successThreshold,
-		Logger:           logger,
+		Configuration: cfg,
+		Logger:        logger,
 	}
 }
 func (c *CircuitBreaker) Do(f func() error) {
@@ -74,7 +76,7 @@ func (c *CircuitBreaker) Do(f func() error) {
 	case StateHalfOpen:
 		if err != nil {
 			// one error during half-open state opens the circuit again
-			// alternatively: one move after c.FailureThreshold errors?
+			// alternatively: move after c.FailureThreshold errors?
 			c.setState(StateOpen)
 		} else {
 			c.successes++

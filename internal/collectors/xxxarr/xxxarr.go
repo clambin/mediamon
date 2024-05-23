@@ -7,6 +7,7 @@ import (
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/xxxarr"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
+	"github.com/clambin/mediamon/v2/pkg/breaker"
 	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	customMetrics "github.com/clambin/mediamon/v2/pkg/metrics"
 	"github.com/prometheus/client_golang/prometheus"
@@ -48,6 +49,12 @@ var (
 		{Path: `/api/v3/series/[\d+]`, IsRegExp: true},
 		{Path: `/api/v3/episode/[\d+]`, IsRegExp: true},
 	}
+
+	breakerConfiguration = breaker.Configuration{
+		FailureThreshold: 10,
+		OpenDuration:     time.Minute,
+		SuccessThreshold: 10,
+	}
 )
 
 const (
@@ -73,7 +80,7 @@ func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreak
 		cacheMetrics: cacheMetrics,
 		logger:       logger,
 	}
-	return collectorBreaker.New(&c, 10, time.Minute, 10, logger)
+	return collectorBreaker.New(&c, breakerConfiguration, logger)
 }
 
 // NewSonarrCollector creates a new SonarrCollector
@@ -94,7 +101,7 @@ func NewSonarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreak
 		cacheMetrics: cacheMetrics,
 		logger:       logger,
 	}
-	return collectorBreaker.New(&c, 10, time.Minute, 10, logger)
+	return collectorBreaker.New(&c, breakerConfiguration, logger)
 }
 
 // Describe implements the prometheus.Collector interface

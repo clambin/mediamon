@@ -39,8 +39,13 @@ func TestState_String(t *testing.T) {
 }
 
 func TestCircuitBreaker_Do(t *testing.T) {
+	cfg := Configuration{
+		FailureThreshold: 5,
+		OpenDuration:     500 * time.Millisecond,
+		SuccessThreshold: 10,
+	}
 	newCB := func(state State) *CircuitBreaker {
-		cb := New(5, 500*time.Millisecond, 10, slog.Default())
+		cb := New(cfg, slog.Default())
 		cb.setState(state)
 		return cb
 	}
@@ -119,10 +124,12 @@ func TestCircuitBreaker_Do(t *testing.T) {
 
 func BenchmarkCircuitBreaker_Do(b *testing.B) {
 	cb := CircuitBreaker{
-		FailureThreshold: 5,
-		OpenDuration:     time.Millisecond,
-		SuccessThreshold: 10,
-		Logger:           slog.Default(),
+		Configuration: Configuration{
+			FailureThreshold: 5,
+			OpenDuration:     time.Millisecond,
+			SuccessThreshold: 10,
+		},
+		Logger: slog.Default(),
 	}
 
 	for range b.N {
