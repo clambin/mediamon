@@ -44,7 +44,14 @@ func TestCircuitBreaker_Do(t *testing.T) {
 	}
 	newCB := func(state State) *CircuitBreaker {
 		cb := CircuitBreaker{Configuration: cfg}
-		cb.setState(state)
+		switch state {
+		case StateClosed:
+			cb.close()
+		case StateOpen:
+			cb.open()
+		case StateHalfOpen:
+			cb.halfOpen()
+		}
 		return &cb
 	}
 
