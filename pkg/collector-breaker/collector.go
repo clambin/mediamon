@@ -2,9 +2,10 @@ package collector_breaker
 
 import (
 	"errors"
-	"github.com/clambin/mediamon/v2/pkg/breaker"
+	"github.com/clambin/breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
+	"time"
 )
 
 type Collector interface {
@@ -20,7 +21,17 @@ type CBCollector struct {
 	logger  *slog.Logger
 }
 
-func New(c Collector, cfg breaker.Configuration, logger *slog.Logger) *CBCollector {
+var defaultConfiguration = breaker.Configuration{
+	FailureThreshold: 2,
+	OpenDuration:     5 * time.Minute,
+	SuccessThreshold: 1,
+}
+
+func New(c Collector, logger *slog.Logger) *CBCollector {
+	return NewWithConfiguration(c, defaultConfiguration, logger)
+}
+
+func NewWithConfiguration(c Collector, cfg breaker.Configuration, logger *slog.Logger) *CBCollector {
 	return &CBCollector{
 		Collector: c,
 		breaker:   breaker.New(cfg),

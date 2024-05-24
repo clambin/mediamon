@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	"github.com/clambin/mediamon/v2/pkg/breaker"
 	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"log/slog"
 	"testing"
-	"time"
 )
 
 func TestVersionCollector_Collect(t *testing.T) {
@@ -22,12 +20,7 @@ func TestVersionCollector_Collect(t *testing.T) {
 		url:            "http://localhost:8080",
 		logger:         slog.Default(),
 	}
-	cfg := breaker.Configuration{
-		FailureThreshold: 1,
-		OpenDuration:     time.Minute,
-		SuccessThreshold: 1,
-	}
-	cb := collector_breaker.New(c, cfg, slog.Default())
+	cb := collector_breaker.New(c, slog.Default())
 
 	expected := bytes.NewBufferString(`
 # HELP mediamon_plex_version version info

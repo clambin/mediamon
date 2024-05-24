@@ -2,7 +2,6 @@ package collector_breaker
 
 import (
 	"errors"
-	"github.com/clambin/mediamon/v2/pkg/breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"log/slog"
@@ -12,12 +11,8 @@ import (
 
 func TestCBCollector(t *testing.T) {
 	c := collector{}
-	cfg := breaker.Configuration{
-		FailureThreshold: 3,
-		OpenDuration:     500 * time.Millisecond,
-		SuccessThreshold: 1,
-	}
-	cbCollector := New(&c, cfg, slog.Default())
+	defaultConfiguration.OpenDuration = 500 * time.Millisecond
+	cbCollector := New(&c, slog.Default())
 
 	cbCollector.Describe(make(chan *prometheus.Desc))
 
@@ -35,7 +30,6 @@ func TestCBCollector(t *testing.T) {
 		m, ok := <-ch
 		assert.Nil(t, m)
 		assert.False(t, ok)
-
 	})
 
 	t.Run("collection works. circuit eventually closes again", func(t *testing.T) {

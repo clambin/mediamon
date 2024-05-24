@@ -6,12 +6,10 @@ import (
 	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/transmission"
-	"github.com/clambin/mediamon/v2/pkg/breaker"
 	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
-	"time"
 )
 
 var (
@@ -65,12 +63,6 @@ type Collector struct {
 	logger       *slog.Logger
 }
 
-var breakerConfiguration = breaker.Configuration{
-	FailureThreshold: 2,
-	OpenDuration:     time.Minute,
-	SuccessThreshold: 2,
-}
-
 var _ collectorBreaker.Collector = &Collector{}
 
 // NewCollector creates a new Collector
@@ -82,7 +74,7 @@ func NewCollector(url string, logger *slog.Logger) *collectorBreaker.CBCollector
 		metrics:      m,
 		logger:       logger,
 	}
-	return collectorBreaker.New(&c, breakerConfiguration, logger)
+	return collectorBreaker.New(&c, logger)
 }
 
 // Describe implements the prometheus.Collector interface

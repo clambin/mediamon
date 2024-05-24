@@ -3,7 +3,6 @@ package plex
 import (
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	"github.com/clambin/mediamon/v2/pkg/breaker"
 	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -11,7 +10,6 @@ import (
 	"log/slog"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestSessionsCollector_Collector(t *testing.T) {
@@ -93,12 +91,7 @@ mediamon_plex_transcoder_speed{url="http://localhost:8080"} 21
 				url:           "http://localhost:8080",
 				logger:        slog.Default(),
 			}
-			cfg := breaker.Configuration{
-				FailureThreshold: 1,
-				OpenDuration:     time.Minute,
-				SuccessThreshold: 1,
-			}
-			cb := collector_breaker.New(&c, cfg, slog.Default())
+			cb := collector_breaker.New(&c, slog.Default())
 			assert.NoError(t, testutil.CollectAndCompare(cb, strings.NewReader(tt.want)))
 		})
 	}
