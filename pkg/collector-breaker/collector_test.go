@@ -14,8 +14,6 @@ func TestCBCollector(t *testing.T) {
 	defaultConfiguration.OpenDuration = 500 * time.Millisecond
 	cbCollector := New("test", &c, slog.Default())
 
-	go cbCollector.Describe(make(chan *prometheus.Desc))
-
 	t.Run("circuit is closed: collection returns metrics", func(tt *testing.T) {
 		ch := make(chan prometheus.Metric)
 		go func() { cbCollector.Collect(ch); close(ch) }()
