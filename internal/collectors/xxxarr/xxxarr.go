@@ -73,7 +73,7 @@ func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreak
 		cacheMetrics: cacheMetrics,
 		logger:       logger,
 	}
-	return collectorBreaker.New(&c, logger)
+	return collectorBreaker.New("radarr", &c, logger)
 }
 
 // NewSonarrCollector creates a new SonarrCollector
@@ -94,7 +94,7 @@ func NewSonarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreak
 		cacheMetrics: cacheMetrics,
 		logger:       logger,
 	}
-	return collectorBreaker.New(&c, logger)
+	return collectorBreaker.New("sonarr", &c, logger)
 }
 
 // Describe implements the prometheus.Collector interface

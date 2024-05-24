@@ -6,7 +6,6 @@ import (
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
 	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -149,7 +148,7 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 	}
 
 	breakerConfiguration := breaker.Configuration{
-		FailureThreshold: 1,
+		ErrorThreshold:   1,
 		OpenDuration:     time.Minute,
 		SuccessThreshold: 1,
 	}
@@ -165,10 +164,11 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 				url:           "http://localhost:8080",
 				logger:        slog.Default(),
 			}
-			cb := collectorBreaker.NewWithConfiguration(&c, breakerConfiguration, slog.Default())
-			r := prometheus.NewPedanticRegistry()
-			r.MustRegister(cb)
-			assert.NoError(t, testutil.GatherAndCompare(r, strings.NewReader(tt.want)))
+			assert.NoError(t, testutil.CollectAndCompare(
+				collectorBreaker.NewWithConfiguration(&c, breakerConfiguration, slog.Default()),
+				strings.NewReader(tt.want),
+				"mediamon_plex_library_bytes", "mediamon_plex_library_count",
+			))
 		})
 	}
 }
@@ -186,7 +186,7 @@ func TestLibraryCollector_Collect_cached(t *testing.T) {
 		url:           "http://localhost:8080",
 		logger:        slog.Default(),
 	}
-	cb := collectorBreaker.New(&c, slog.Default())
+	cb := collectorBreaker.New("plex", &c, slog.Default())
 	assert.NotZero(t, testutil.CollectAndCount(cb))
 	assert.NotZero(t, testutil.CollectAndCount(cb))
 }

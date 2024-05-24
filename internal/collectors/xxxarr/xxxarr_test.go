@@ -208,8 +208,13 @@ mediamon_xxxarr_version{application="radarr",url="",version="foo"} 1
 			tt.setup(client, context.Background())
 			c.Collector.(*Collector).client = client
 
-			err := testutil.CollectAndCompare(c, bytes.NewBufferString(tt.want))
-			assert.NoError(t, err)
+			assert.NoError(t, testutil.CollectAndCompare(
+				c,
+				bytes.NewBufferString(tt.want),
+				"mediamon_xxxarr_calendar", "mediamon_xxxarr_monitored_count", "mediamon_xxxarr_queued_count",
+				"mediamon_xxxarr_queued_downloaded_bytes", "mediamon_xxxarr_queued_total_bytes", "mediamon_xxxarr_unmonitored_count",
+				"mediamon_xxxarr_version",
+			))
 		})
 	}
 }

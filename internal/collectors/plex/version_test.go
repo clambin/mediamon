@@ -20,12 +20,15 @@ func TestVersionCollector_Collect(t *testing.T) {
 		url:            "http://localhost:8080",
 		logger:         slog.Default(),
 	}
-	cb := collector_breaker.New(c, slog.Default())
 
 	expected := bytes.NewBufferString(`
 # HELP mediamon_plex_version version info
 # TYPE mediamon_plex_version gauge
 mediamon_plex_version{url="http://localhost:8080",version="1.2.3"} 1
 `)
-	assert.NoError(t, testutil.CollectAndCompare(cb, expected))
+	assert.NoError(t, testutil.CollectAndCompare(
+		collector_breaker.New("plex", c, slog.Default()),
+		expected,
+		"mediamon_plex_version",
+	))
 }

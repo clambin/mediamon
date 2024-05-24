@@ -71,7 +71,7 @@ func NewCollector(version, url, username, password string, logger *slog.Logger) 
 		metrics: m,
 		logger:  logger,
 	}
-	return collectorBreaker.New(&c, logger)
+	return collectorBreaker.New("plex", &c, logger)
 }
 
 func chopPath(r *http.Request) *http.Request {

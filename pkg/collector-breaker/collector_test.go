@@ -12,9 +12,9 @@ import (
 func TestCBCollector(t *testing.T) {
 	c := collector{}
 	defaultConfiguration.OpenDuration = 500 * time.Millisecond
-	cbCollector := New(&c, slog.Default())
+	cbCollector := New("test", &c, slog.Default())
 
-	cbCollector.Describe(make(chan *prometheus.Desc))
+	go cbCollector.Describe(make(chan *prometheus.Desc))
 
 	t.Run("circuit is closed: collection returns metrics", func(tt *testing.T) {
 		ch := make(chan prometheus.Metric)
@@ -27,9 +27,9 @@ func TestCBCollector(t *testing.T) {
 		c.err = errors.New("err")
 		ch := make(chan prometheus.Metric)
 		go func() { cbCollector.Collect(ch); close(ch) }()
-		m, ok := <-ch
-		assert.Nil(t, m)
-		assert.False(t, ok)
+		for m := range ch {
+			assert.Contains(t, m.Desc().String(), `Desc{fqName: "circuit_breaker_`)
+		}
 	})
 
 	t.Run("collection works. circuit eventually closes again", func(t *testing.T) {
@@ -38,8 +38,12 @@ func TestCBCollector(t *testing.T) {
 			ch := make(chan prometheus.Metric)
 			go func() { cbCollector.Collect(ch); close(ch) }()
 
-			m := <-ch
-			return m.Desc().String() == `Desc{fqName: "foo", help: "", constLabels: {}, variableLabels: {}}`
+			for m := range ch {
+				if m.Desc().String() == `Desc{fqName: "foo", help: "", constLabels: {}, variableLabels: {}}` {
+					return true
+				}
+			}
+			return false
 		}, time.Second, 100*time.Millisecond)
 	})
 }

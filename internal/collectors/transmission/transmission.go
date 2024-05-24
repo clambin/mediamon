@@ -74,7 +74,7 @@ func NewCollector(url string, logger *slog.Logger) *collectorBreaker.CBCollector
 		metrics:      m,
 		logger:       logger,
 	}
-	return collectorBreaker.New(&c, logger)
+	return collectorBreaker.New("transmission", &c, logger)
 }
 
 // Describe implements the prometheus.Collector interface

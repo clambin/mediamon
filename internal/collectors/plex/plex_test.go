@@ -43,7 +43,7 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 # HELP mediamon_plex_version version info
 # TYPE mediamon_plex_version gauge
 mediamon_plex_version{url="http://localhost:8080",version="1.0"} 1
-`)))
+`), "mediamon_plex_library_bytes", "mediamon_plex_library_count", "mediamon_plex_version"))
 }
 
 func Test_chopPath(t *testing.T) {

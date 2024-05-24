@@ -91,8 +91,11 @@ mediamon_plex_transcoder_speed{url="http://localhost:8080"} 21
 				url:           "http://localhost:8080",
 				logger:        slog.Default(),
 			}
-			cb := collector_breaker.New(&c, slog.Default())
-			assert.NoError(t, testutil.CollectAndCompare(cb, strings.NewReader(tt.want)))
+			assert.NoError(t, testutil.CollectAndCompare(
+				collector_breaker.New("plex", &c, slog.Default()),
+				strings.NewReader(tt.want),
+				"mediamon_plex_session_bandwidth", "mediamon_plex_session_count", "mediamon_plex_transcoder_count", "mediamon_plex_transcoder_speed",
+			))
 		})
 	}
 }
