@@ -59,11 +59,9 @@ openvpn:
     filename: <file path>
   # OpenVPN monitoring. Includes connectivity monitoring (up/down) and bandwidth consumption
   connectivity:
-    # mediamon will connect to https://ipinfo.io through a proxy running inside the OpenVPN container
+    # mediamon will connect to http://ip-api.com through a proxy running inside the OpenVPN container
     # URL of the Proxy. If not set, connectivity won't be monitored
     proxy: <url>
-    # Token supplied by ipinfo.io. You will need to register to obtain this
-    token: <token>
     # interval limits how often connectivity is checked 
     interval: <duration>
 ```

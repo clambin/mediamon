@@ -61,7 +61,6 @@ var arguments = charmer.Arguments{
 	"plex.username":                 {Default: ""},
 	"plex.password":                 {Default: ""},
 	"openvpn.connectivity.proxy":    {Default: ""},
-	"openvpn.connectivity.token":    {Default: ""},
 	"openvpn.connectivity.interval": {Default: ""},
 	"openvpn.bandwidth.filename":    {Default: ""},
 }

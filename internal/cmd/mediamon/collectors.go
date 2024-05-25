@@ -57,7 +57,6 @@ var constructors = map[string]constructor{
 				return nil, fmt.Errorf("invalid proxy. connectivity won't be monitored: %w", err)
 			}
 			return connectivity.NewCollector(
-				v.GetString("openvpn.connectivity.token"),
 				proxy,
 				v.GetDuration("openvpn.connectivity.interval"),
 				logger,
@@ -73,8 +72,7 @@ var constructors = map[string]constructor{
 }
 
 func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []prometheus.Collector {
-	var collectors []prometheus.Collector
-
+	collectors := make([]prometheus.Collector, 0, len(constructors))
 	for key, c := range constructors {
 		l := logger.With("collector", c.name)
 		if value := v.GetString(key); value != "" {
@@ -84,7 +82,7 @@ func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []pro
 				continue
 			}
 			collectors = append(collectors, collector)
-			l.Info("collector started", "source", value)
+			l.Info("collector added", "source", value)
 		}
 	}
 	return collectors

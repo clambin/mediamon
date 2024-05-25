@@ -3,7 +3,6 @@ package iplocator
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 )
 
@@ -74,13 +73,4 @@ type ipAPIResponse struct {
 	Isp         string  `json:"isp"`
 	Org         string  `json:"org"`
 	As          string  `json:"as"`
-}
-
-func (r ipAPIResponse) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.Float64("lat", r.Lat),
-		slog.Float64("lon", r.Lat),
-		slog.String("country", r.Country),
-		slog.String("city", r.City),
-	)
 }
