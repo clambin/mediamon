@@ -3,74 +3,56 @@ package iplocator
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 )
 
 func TestClient_Locate(t *testing.T) {
-	s := server{
-		responses: map[string]ipAPIResponse{
-			"/json/8.8.8.8": {
-				Status: "success",
-				Lon:    -77.5,
-				Lat:    39.03,
-			},
-			"/json/192.168.0.1": {
-				Status:  "fail",
-				Message: "private range",
-			},
-		},
+	type want struct {
+		err assert.ErrorAssertionFunc
+		lon float64
+		lat float64
 	}
-	ts := httptest.NewServer(http.HandlerFunc(s.handle))
-
-	c := New(slog.Default())
-	c.url = ts.URL
-
-	c.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
-
-	testCases := []struct {
+	tests := []struct {
 		name    string
 		address string
-		wantErr assert.ErrorAssertionFunc
-		wantLon float64
-		wantLat float64
+		want
 	}{
 		{
 			name:    "valid",
 			address: "8.8.8.8",
-			wantErr: assert.NoError,
-			wantLon: -77.5,
-			wantLat: 39.03,
-		},
-		{
-			name:    "valid",
-			address: "8.8.8.8",
-			wantErr: assert.NoError,
-			wantLon: -77.5,
-			wantLat: 39.03,
+			want: want{
+				err: assert.NoError,
+				lon: -77.5,
+				lat: 39.03,
+			},
 		},
 		{
 			name:    "invalid",
 			address: "192.168.0.1",
-			wantErr: assert.Error,
+			want:    want{err: assert.Error},
 		},
 		{
 			name:    "unknown",
 			address: "unknown",
-			wantErr: assert.Error,
+			want:    want{err: assert.Error},
 		},
 	}
 
-	for _, tt := range testCases {
+	s := server{responses: defaultResponses}
+	ts := httptest.NewServer(&s)
+
+	c := New(nil)
+	c.url = ts.URL
+
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			lon, lat, err := c.Locate(tt.address)
-			tt.wantErr(t, err)
+			tt.want.err(t, err)
 			if err == nil {
-				assert.Equal(t, tt.wantLon, lon)
-				assert.Equal(t, tt.wantLat, lat)
+				assert.Equal(t, tt.want.lon, lon)
+				assert.Equal(t, tt.want.lat, lat)
 			}
 		})
 	}
@@ -87,12 +69,23 @@ type server struct {
 	responses map[string]ipAPIResponse
 }
 
-func (s *server) handle(w http.ResponseWriter, req *http.Request) {
+var defaultResponses = map[string]ipAPIResponse{
+	"/json/8.8.8.8": {
+		Status: "success",
+		Lon:    -77.5,
+		Lat:    39.03,
+	},
+	"/json/192.168.0.1": {
+		Status:  "fail",
+		Message: "private range",
+	},
+}
+
+func (s *server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	s.calls++
-	resp, ok := s.responses[req.URL.Path]
-	if ok == false {
-		http.Error(w, "not found", http.StatusNotFound)
+	if resp, ok := s.responses[req.URL.Path]; ok {
+		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
-	_ = json.NewEncoder(w).Encode(resp)
+	http.Error(w, "not found", http.StatusNotFound)
 }

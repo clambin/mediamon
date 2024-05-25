@@ -1,0 +1,71 @@
+package collector_breaker
+
+import (
+	"errors"
+	"github.com/clambin/breaker"
+	"github.com/prometheus/client_golang/prometheus"
+	"log/slog"
+	"time"
+)
+
+type Collector interface {
+	Describe(ch chan<- *prometheus.Desc)
+	CollectE(ch chan<- prometheus.Metric) error
+}
+
+var _ prometheus.Collector = &CBCollector{}
+
+type CBCollector struct {
+	Collector
+	breaker *breaker.CircuitBreaker
+	logger  *slog.Logger
+}
+
+var defaultConfiguration = breaker.Configuration{
+	ErrorThreshold:   2,
+	OpenDuration:     5 * time.Minute,
+	SuccessThreshold: 1,
+}
+
+func New(name string, c Collector, logger *slog.Logger) *CBCollector {
+	cfg := defaultConfiguration
+	cfg.Name = name
+	return NewWithConfiguration(c, cfg, logger)
+}
+
+func NewWithConfiguration(c Collector, cfg breaker.Configuration, logger *slog.Logger) *CBCollector {
+	return &CBCollector{
+		Collector: c,
+		breaker:   breaker.New(cfg),
+		logger:    logger,
+	}
+}
+
+func (c *CBCollector) Describe(ch chan<- *prometheus.Desc) {
+	c.Collector.Describe(ch)
+	c.breaker.Describe(ch)
+}
+
+func (c *CBCollector) Collect(ch chan<- prometheus.Metric) {
+	err := c.breaker.Do(func() error {
+		return c.Collector.CollectE(ch)
+	})
+
+	if err != nil && !errors.Is(err, breaker.ErrCircuitOpen) {
+		c.logger.Warn("collection failed", "err", err)
+	}
+	c.breaker.Collect(ch)
+}
+
+var _ prometheus.Collector = PassThroughCollector{}
+
+// PassThroughCollector implements the prometheus Collector interface and passes the Collect call through
+// to a collector_breaker.Collector's CollectE method.  It's used for unit testing a collector_breaker.Collector
+// without getting the prometheus metrics.
+type PassThroughCollector struct {
+	Collector
+}
+
+func (p PassThroughCollector) Collect(metrics chan<- prometheus.Metric) {
+	_ = p.CollectE(metrics)
+}

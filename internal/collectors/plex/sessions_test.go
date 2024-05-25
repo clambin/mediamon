@@ -3,7 +3,7 @@ package plex
 import (
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	"github.com/prometheus/client_golang/prometheus"
+	collectorbreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -91,10 +91,10 @@ mediamon_plex_transcoder_speed{url="http://localhost:8080"} 21
 				url:           "http://localhost:8080",
 				logger:        slog.Default(),
 			}
-
-			r := prometheus.NewPedanticRegistry()
-			r.MustRegister(c)
-			assert.NoError(t, testutil.GatherAndCompare(r, strings.NewReader(tt.want)))
+			assert.NoError(t, testutil.CollectAndCompare(
+				collectorbreaker.PassThroughCollector{Collector: c},
+				strings.NewReader(tt.want),
+			))
 		})
 	}
 }

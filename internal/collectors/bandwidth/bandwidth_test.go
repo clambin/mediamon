@@ -1,8 +1,6 @@
-package bandwidth_test
+package bandwidth
 
 import (
-	"github.com/clambin/mediamon/v2/internal/collectors/bandwidth"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,67 +10,28 @@ import (
 	"testing"
 )
 
-func TestCollector_Describe(t *testing.T) {
-	c := bandwidth.NewCollector("", slog.Default())
-	ch := make(chan *prometheus.Desc)
-	go c.Describe(ch)
-
-	for _, metricName := range []string{"openvpn_client_tcp_udp_read_bytes_total", "openvpn_client_tcp_udp_write_bytes_total"} {
-		metric := <-ch
-		assert.Contains(t, metric.String(), "\""+metricName+"\"")
-	}
-}
-
 func TestCollector_Collect(t *testing.T) {
-	testCases := []struct {
-		name    string
-		content []byte
-		pass    bool
-		output  string
-	}{
-		{
-			name: "valid",
-			content: []byte(`OpenVPN STATISTICS
+	content := []byte(`OpenVPN STATISTICS
 Updated,Fri Dec 18 11:24:01 2020
 TCP/UDP read bytes,5624951995
 TCP/UDP write bytes,2048
-END`),
-			pass: true,
-			output: `
+END`)
+	want := `
 # HELP openvpn_client_tcp_udp_read_bytes_total OpenVPN client bytes read
 # TYPE openvpn_client_tcp_udp_read_bytes_total gauge
 openvpn_client_tcp_udp_read_bytes_total 5.624951995e+09
 # HELP openvpn_client_tcp_udp_write_bytes_total OpenVPN client bytes written
 # TYPE openvpn_client_tcp_udp_write_bytes_total gauge
 openvpn_client_tcp_udp_write_bytes_total 2048
-`,
-		},
-		{
-			name: "invalid",
-			content: []byte(`OpenVPN STATISTICS
-			Updated,Fri Dec 18 11:24:01 2020
-			TCP/UDP read bytes,A
-			TCP/UDP write bytes,B
-			END
-`),
-			pass: true,
-		},
-	}
+`
 
-	for _, testCase := range testCases {
-		filename, err := tempFile(testCase.content)
-		require.NoError(t, err)
+	filename, err := tempFile(content)
+	require.NoError(t, err)
 
-		c := bandwidth.NewCollector(filename, slog.Default())
-		if testCase.pass {
-			assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(testCase.output)))
-		} else {
-			err = testutil.CollectAndCompare(c, strings.NewReader(""))
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), `Desc{fqName: "mediamon_error", help: "Error getting bandwidth statistics", constLabels: {}, variableLabels: []}`)
-		}
-		_ = os.Remove(filename)
-	}
+	c := NewCollector(filename, slog.Default())
+	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(want)))
+	assert.NoError(t, os.Remove(filename))
+	assert.Error(t, testutil.CollectAndCompare(c, strings.NewReader(want)))
 }
 
 func tempFile(content []byte) (string, error) {
@@ -84,4 +43,66 @@ func tempFile(content []byte) (string, error) {
 		_ = file.Close()
 	}
 	return filename, err
+}
+
+func TestCollector_readStats(t *testing.T) {
+	type want struct {
+		err   assert.ErrorAssertionFunc
+		stats bandwidthStats
+	}
+	tests := []struct {
+		name    string
+		content string
+		want
+	}{
+		{
+			name: "valid",
+			content: `OpenVPN STATISTICS
+Updated,Fri Dec 18 11:24:01 2020
+TCP/UDP read bytes,1024
+TCP/UDP write bytes,2048
+END`,
+			want: want{
+				err:   assert.NoError,
+				stats: bandwidthStats{read: 1024, written: 2048},
+			},
+		},
+		{
+			name:    "empty",
+			content: ``,
+			want: want{
+				err: assert.Error,
+			},
+		},
+		{
+			name: "no read bytes",
+			content: `OpenVPN STATISTICS
+Updated,Fri Dec 18 11:24:01 2020
+TCP/UDP write bytes,2048
+END`,
+			want: want{
+				err: assert.Error,
+			},
+		},
+		{
+			name: "no write bytes",
+			content: `OpenVPN STATISTICS
+Updated,Fri Dec 18 11:24:01 2020
+TCP/UDP read bytes,1024
+END`,
+			want: want{
+				err: assert.Error,
+			},
+		},
+	}
+
+	var c Collector
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			stats, err := c.readStats(strings.NewReader(tt.content))
+			tt.want.err(t, err)
+			assert.Equal(t, tt.want.stats, stats)
+		})
+	}
 }

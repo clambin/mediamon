@@ -2,8 +2,10 @@ package plex
 
 import (
 	"context"
+	"fmt"
 	"github.com/clambin/go-common/set"
 	"github.com/clambin/mediaclients/plex"
+	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"math"
@@ -41,7 +43,7 @@ var (
 	)
 )
 
-var _ prometheus.Collector = sessionCollector{}
+var _ collector_breaker.Collector = sessionCollector{}
 
 type sessionCollector struct {
 	sessionGetter
@@ -61,12 +63,10 @@ func (c sessionCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- speedMetric
 }
 
-func (c sessionCollector) Collect(ch chan<- prometheus.Metric) {
+func (c sessionCollector) CollectE(ch chan<- prometheus.Metric) error {
 	sessions, err := c.sessionGetter.GetSessions(context.Background())
 	if err != nil {
-		//ch <- prometheus.NewInvalidMetric(prometheus.NewDesc("mediamon_error", "Error getting Plex session stats", nil, nil), err)
-		c.logger.Error("failed to collect session stats", "err", err)
-		return
+		return fmt.Errorf("sessions: %w", err)
 	}
 
 	var active, throttled, speed float64
@@ -99,6 +99,7 @@ func (c sessionCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, throttled, c.url, "throttled")
 		ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, speed, c.url)
 	}
+	return nil
 }
 
 func (c sessionCollector) locateAddress(address string) (lonAsString, latAsString string) {

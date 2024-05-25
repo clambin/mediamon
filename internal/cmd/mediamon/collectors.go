@@ -83,8 +83,8 @@ func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []pro
 				l.Error("error creating collector", "err", err)
 				continue
 			}
-			l.Info("monitoring " + value)
 			collectors = append(collectors, collector)
+			l.Info("collector started", "source", value)
 		}
 	}
 	return collectors

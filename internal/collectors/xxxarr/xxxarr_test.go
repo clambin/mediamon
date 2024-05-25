@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/mocks"
+	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"log/slog"
@@ -194,7 +195,7 @@ mediamon_xxxarr_version{application="radarr",url="",version="foo"} 1
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			var c *Collector
+			var c *collector_breaker.CBCollector
 			switch tt.collector {
 			case "sonarr":
 				c = NewSonarrCollector("", "", slog.Default())
@@ -205,10 +206,15 @@ mediamon_xxxarr_version{application="radarr",url="",version="foo"} 1
 			}
 			client := mocks.NewClient(t)
 			tt.setup(client, context.Background())
-			c.client = client
+			c.Collector.(*Collector).client = client
 
-			err := testutil.CollectAndCompare(c, bytes.NewBufferString(tt.want))
-			assert.NoError(t, err)
+			assert.NoError(t, testutil.CollectAndCompare(
+				c,
+				bytes.NewBufferString(tt.want),
+				"mediamon_xxxarr_calendar", "mediamon_xxxarr_monitored_count", "mediamon_xxxarr_queued_count",
+				"mediamon_xxxarr_queued_downloaded_bytes", "mediamon_xxxarr_queued_total_bytes", "mediamon_xxxarr_unmonitored_count",
+				"mediamon_xxxarr_version",
+			))
 		})
 	}
 }

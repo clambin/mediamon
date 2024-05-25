@@ -3,7 +3,6 @@ package plex
 import (
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,15 +26,12 @@ func TestCollector_Collect(t *testing.T) {
 	}, nil)
 	p.EXPECT().GetShows(mock.Anything, "2").Return([]plex.Show{}, nil)
 
-	c := NewCollector("1.0", "http://localhost:8080", "", "", slog.Default())
-	c.libraryCollector.libraryGetter = p
-	c.versionCollector.versionGetter = p
-	c.sessionCollector.sessionGetter = p
+	cb := NewCollector("1.0", "http://localhost:8080", "", "", slog.Default())
+	cb.Collector.(*Collector).libraryCollector.libraryGetter = p
+	cb.Collector.(*Collector).versionCollector.identityGetter = p
+	cb.Collector.(*Collector).sessionCollector.sessionGetter = p
 
-	r := prometheus.NewPedanticRegistry()
-	r.MustRegister(c)
-
-	assert.NoError(t, testutil.GatherAndCompare(r, strings.NewReader(`
+	assert.NoError(t, testutil.CollectAndCompare(cb, strings.NewReader(`
 # HELP mediamon_plex_library_bytes Library size in bytes
 # TYPE mediamon_plex_library_bytes gauge
 mediamon_plex_library_bytes{library="movies",url="http://localhost:8080"} 1024
@@ -47,7 +43,7 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 # HELP mediamon_plex_version version info
 # TYPE mediamon_plex_version gauge
 mediamon_plex_version{url="http://localhost:8080",version="1.0"} 1
-`)))
+`), "mediamon_plex_library_bytes", "mediamon_plex_library_count", "mediamon_plex_version"))
 }
 
 func Test_chopPath(t *testing.T) {
