@@ -2,7 +2,6 @@ package plex
 
 import (
 	"errors"
-	"github.com/clambin/breaker"
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
 	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
@@ -12,7 +11,6 @@ import (
 	"log/slog"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestLibraryCollector_Collect(t *testing.T) {
@@ -147,11 +145,6 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 		},
 	}
 
-	breakerConfiguration := breaker.Configuration{
-		ErrorThreshold:   1,
-		OpenDuration:     time.Minute,
-		SuccessThreshold: 1,
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -165,9 +158,8 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 				logger:        slog.Default(),
 			}
 			assert.NoError(t, testutil.CollectAndCompare(
-				collectorBreaker.NewWithConfiguration(&c, breakerConfiguration, slog.Default()),
+				collectorBreaker.PassThroughCollector{Collector: &c},
 				strings.NewReader(tt.want),
-				"mediamon_plex_library_bytes", "mediamon_plex_library_count",
 			))
 		})
 	}
@@ -186,7 +178,7 @@ func TestLibraryCollector_Collect_cached(t *testing.T) {
 		url:           "http://localhost:8080",
 		logger:        slog.Default(),
 	}
-	cb := collectorBreaker.New("plex", &c, slog.Default())
+	cb := collectorBreaker.PassThroughCollector{Collector: &c}
 	assert.NotZero(t, testutil.CollectAndCount(cb))
 	assert.NotZero(t, testutil.CollectAndCount(cb))
 }

@@ -56,3 +56,16 @@ func (c *CBCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	c.breaker.Collect(ch)
 }
+
+var _ prometheus.Collector = PassThroughCollector{}
+
+// PassThroughCollector implements the prometheus Collector interface and passes the Collect call through
+// to a collector_breaker.Collector's CollectE method.  It's used for unit testing a collector_breaker.Collector
+// without getting the prometheus metrics.
+type PassThroughCollector struct {
+	Collector
+}
+
+func (p PassThroughCollector) Collect(metrics chan<- prometheus.Metric) {
+	_ = p.CollectE(metrics)
+}

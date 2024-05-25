@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
+	collectorbreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,8 +27,7 @@ func TestVersionCollector_Collect(t *testing.T) {
 mediamon_plex_version{url="http://localhost:8080",version="1.2.3"} 1
 `)
 	assert.NoError(t, testutil.CollectAndCompare(
-		collector_breaker.New("plex", c, slog.Default()),
+		collectorbreaker.PassThroughCollector{Collector: c},
 		expected,
-		"mediamon_plex_version",
 	))
 }
