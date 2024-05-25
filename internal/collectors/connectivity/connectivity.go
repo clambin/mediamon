@@ -24,13 +24,12 @@ type Locator interface {
 	Locate(string) (float64, float64, error)
 }
 
-// Collector tests VPN connectivity by checking connection to https://ipinfo.io through a
-// configured proxy
+// Collector tests connectivity through a configured VPN proxy
 type Collector struct {
 	Locator
-	tpMetrics    metrics.RequestMetrics
-	cacheMetrics roundtripper.CacheMetrics
-	logger       *slog.Logger
+	requestMetrics metrics.RequestMetrics
+	cacheMetrics   roundtripper.CacheMetrics
+	logger         *slog.Logger
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -47,10 +46,10 @@ const httpTimeout = 10 * time.Second
 // NewCollector creates a new Collector
 func NewCollector(proxyURL *url.URL, expiry time.Duration, logger *slog.Logger) *Collector {
 	cacheMetrics := roundtripper.NewCacheMetrics("mediamon", "", "connectivity")
-	tpMetrics := metrics.NewRequestSummaryMetrics("mediamon", "", map[string]string{"application": "connectivity"})
+	requestMetrics := metrics.NewRequestSummaryMetrics("mediamon", "", map[string]string{"application": "connectivity"})
 	options := []roundtripper.Option{
 		roundtripper.WithInstrumentedCache(roundtripper.DefaultCacheTable, expiry, 2*expiry, cacheMetrics),
-		roundtripper.WithRequestMetrics(tpMetrics),
+		roundtripper.WithRequestMetrics(requestMetrics),
 	}
 	if proxyURL != nil {
 		options = append(options, roundtripper.WithRoundTripper(&http.Transport{Proxy: http.ProxyURL(proxyURL)}))
@@ -61,17 +60,17 @@ func NewCollector(proxyURL *url.URL, expiry time.Duration, logger *slog.Logger) 
 	}
 
 	return &Collector{
-		Locator:      iplocator.New(&httpClient),
-		tpMetrics:    tpMetrics,
-		cacheMetrics: cacheMetrics,
-		logger:       logger,
+		Locator:        iplocator.New(&httpClient),
+		requestMetrics: requestMetrics,
+		cacheMetrics:   cacheMetrics,
+		logger:         logger,
 	}
 }
 
 // Describe implements the prometheus.Collector interface
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- upMetric
-	c.tpMetrics.Describe(ch)
+	c.requestMetrics.Describe(ch)
 	c.cacheMetrics.Describe(ch)
 }
 
@@ -82,6 +81,6 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		value = 1.0
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
-	c.tpMetrics.Collect(ch)
+	c.requestMetrics.Collect(ch)
 	c.cacheMetrics.Collect(ch)
 }
