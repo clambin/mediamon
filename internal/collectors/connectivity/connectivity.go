@@ -24,7 +24,7 @@ type Locator interface {
 	Locate(string) (iplocator.Location, error)
 }
 
-// Collector tests connectivity through a configured VPN proxy
+// Collector tests network connectivity by querying the IP address location through ip-api.com
 type Collector struct {
 	Locator
 	requestMetrics metrics.RequestMetrics
@@ -43,14 +43,17 @@ type Config struct {
 
 const httpTimeout = 10 * time.Second
 
-// NewCollector creates a new Collector
-func NewCollector(proxyURL *url.URL, expiry time.Duration, logger *slog.Logger) *Collector {
+// NewCollector creates a new Collector. proxyURL should be the URL of the transmission openvpn proxy. If expiration is set,
+// IP address location requests are cached for that amount of time.
+func NewCollector(proxyURL *url.URL, expiration time.Duration, logger *slog.Logger) *Collector {
 	cacheMetrics := roundtripper.NewCacheMetrics("mediamon", "", "connectivity")
 	requestMetrics := metrics.NewRequestSummaryMetrics("mediamon", "", map[string]string{"application": "connectivity"})
-	options := []roundtripper.Option{
-		roundtripper.WithInstrumentedCache(roundtripper.DefaultCacheTable, expiry, 2*expiry, cacheMetrics),
-		roundtripper.WithRequestMetrics(requestMetrics),
+
+	options := make([]roundtripper.Option, 0, 3)
+	if expiration > 0 {
+		options = append(options, roundtripper.WithInstrumentedCache(roundtripper.DefaultCacheTable, expiration, 2*expiration, cacheMetrics))
 	}
+	options = append(options, roundtripper.WithRequestMetrics(requestMetrics))
 	if proxyURL != nil {
 		options = append(options, roundtripper.WithRoundTripper(&http.Transport{Proxy: http.ProxyURL(proxyURL)}))
 	}
@@ -77,9 +80,7 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	var value float64
-	location, err := c.Locate("")
-	if err == nil {
-		c.logger.Debug("openVPN is up", "country", location.Country, "isp", location.Isp)
+	if _, err := c.Locate(""); err == nil {
 		value = 1.0
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)
