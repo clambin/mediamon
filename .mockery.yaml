@@ -4,6 +4,9 @@ dir: "{{.InterfaceDir}}/mocks"
 mockname: "{{.InterfaceName}}"
 outpkg: "mocks"
 packages:
+  github.com/clambin/mediamon/v2/internal/collectors/connectivity:
+    interfaces:
+      Locator:
   github.com/clambin/mediamon/v2/internal/collectors/plex:
     interfaces:
       Getter:

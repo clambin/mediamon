@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - circuit-breaker
+      - connectivity
     paths-ignore:
       - 'assets/**'
 

@@ -4,6 +4,7 @@ import (
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
 	collectorbreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
+	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -14,7 +15,7 @@ import (
 
 func TestSessionsCollector_Collector(t *testing.T) {
 	i := mocks.NewIPLocator(t)
-	i.EXPECT().Locate("1.2.3.4").Return(10, 20, nil)
+	i.EXPECT().Locate("1.2.3.4").Return(iplocator.Location{Lon: 10, Lat: 20}, nil)
 
 	tests := []struct {
 		name    string

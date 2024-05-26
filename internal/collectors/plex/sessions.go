@@ -103,9 +103,9 @@ func (c sessionCollector) CollectE(ch chan<- prometheus.Metric) error {
 }
 
 func (c sessionCollector) locateAddress(address string) (lonAsString, latAsString string) {
-	if lon, lat, err := c.IPLocator.Locate(address); err == nil {
-		lonAsString = strconv.FormatFloat(lon, 'f', 2, 64)
-		latAsString = strconv.FormatFloat(lat, 'f', 2, 64)
+	if location, err := c.IPLocator.Locate(address); err == nil {
+		lonAsString = strconv.FormatFloat(location.Lon, 'f', 2, 64)
+		latAsString = strconv.FormatFloat(location.Lat, 'f', 2, 64)
 	}
 	return
 }
