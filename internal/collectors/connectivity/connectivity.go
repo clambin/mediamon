@@ -21,7 +21,7 @@ var (
 )
 
 type Locator interface {
-	Locate(string) (float64, float64, error)
+	Locate(string) (iplocator.Location, error)
 }
 
 // Collector tests connectivity through a configured VPN proxy
@@ -77,7 +77,9 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	var value float64
-	if _, _, err := c.Locate(""); err == nil {
+	location, err := c.Locate("")
+	if err == nil {
+		c.logger.Debug("openVPN is up", "country", location.Country, "isp", location.Isp)
 		value = 1.0
 	}
 	ch <- prometheus.MustNewConstMetric(upMetric, prometheus.GaugeValue, value)

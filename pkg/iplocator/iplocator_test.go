@@ -10,9 +10,8 @@ import (
 
 func TestClient_Locate(t *testing.T) {
 	type want struct {
-		err assert.ErrorAssertionFunc
-		lon float64
-		lat float64
+		err      assert.ErrorAssertionFunc
+		location Location
 	}
 	tests := []struct {
 		name    string
@@ -23,9 +22,8 @@ func TestClient_Locate(t *testing.T) {
 			name:    "valid",
 			address: "8.8.8.8",
 			want: want{
-				err: assert.NoError,
-				lon: -77.5,
-				lat: 39.03,
+				err:      assert.NoError,
+				location: Location{Status: "success", Lon: -77.5, Lat: 39.03},
 			},
 		},
 		{
@@ -48,11 +46,10 @@ func TestClient_Locate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			lon, lat, err := c.Locate(tt.address)
+			location, err := c.Locate(tt.address)
 			tt.want.err(t, err)
 			if err == nil {
-				assert.Equal(t, tt.want.lon, lon)
-				assert.Equal(t, tt.want.lat, lat)
+				assert.Equal(t, tt.want.location, location)
 			}
 		})
 	}
@@ -60,16 +57,11 @@ func TestClient_Locate(t *testing.T) {
 	assert.Equal(t, 3, s.calls)
 
 	ts.Close()
-	_, _, err := c.Locate("8.8.4.4")
+	_, err := c.Locate("8.8.4.4")
 	assert.Error(t, err)
 }
 
-type server struct {
-	calls     int
-	responses map[string]ipAPIResponse
-}
-
-var defaultResponses = map[string]ipAPIResponse{
+var defaultResponses = map[string]Location{
 	"/json/8.8.8.8": {
 		Status: "success",
 		Lon:    -77.5,
@@ -79,6 +71,11 @@ var defaultResponses = map[string]ipAPIResponse{
 		Status:  "fail",
 		Message: "private range",
 	},
+}
+
+type server struct {
+	calls     int
+	responses map[string]Location
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, req *http.Request) {

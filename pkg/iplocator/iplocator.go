@@ -25,23 +25,11 @@ func New(httpClient *http.Client) *Client {
 
 const ipAPIURL = "http://ip-api.com"
 
-// Locate finds the longitude and latitude of the specified IP address. No internal validation of the provided IP address is done.
+// Locate returns the Location of the specified IP address. No internal validation of the provided IP address is done.
 // This is left up entirely to the underlying API.
-func (c Client) Locate(ipAddress string) (float64, float64, error) {
-	response, err := c.lookup(ipAddress)
-	if err != nil {
-		return 0, 0, fmt.Errorf("ip locate failed: %w", err)
-	}
-	if response.Status != "success" {
-		return 0, 0, fmt.Errorf("ip locate failed: %s", response.Message)
-	}
-
-	return response.Lon, response.Lat, err
-}
-
-func (c Client) lookup(ipAddress string) (ipAPIResponse, error) {
-	var response ipAPIResponse
-	resp, err := c.httpClient.Get(c.url + "/json/" + ipAddress)
+func (c Client) Locate(address string) (Location, error) {
+	var response Location
+	resp, err := c.httpClient.Get(c.url + "/json/" + address)
 	if err != nil {
 		return response, err
 	}
@@ -54,10 +42,16 @@ func (c Client) lookup(ipAddress string) (ipAPIResponse, error) {
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return response, fmt.Errorf("invalid response: %w", err)
+	}
+	if response.Status != "success" {
+		err = fmt.Errorf("ip locate failed: %s", response.Status)
+	}
 	return response, err
 }
 
-type ipAPIResponse struct {
+type Location struct {
 	Query       string  `json:"query"`
 	Status      string  `json:"status"`
 	Message     string  `json:"message"`

@@ -32,7 +32,7 @@ type Getter interface {
 }
 
 type IPLocator interface {
-	Locate(string) (float64, float64, error)
+	Locate(string) (iplocator.Location, error)
 }
 
 var _ collectorBreaker.Collector = &Collector{}

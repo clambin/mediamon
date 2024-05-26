@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/clambin/mediamon/v2/internal/collectors/connectivity"
 	"github.com/clambin/mediamon/v2/internal/collectors/connectivity/mocks"
+	"github.com/clambin/mediamon/v2/pkg/iplocator"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"log/slog"
@@ -19,7 +20,7 @@ func TestCollector_Collect(t *testing.T) {
 	l := mocks.NewLocator(t)
 	c.Locator = l
 
-	l.EXPECT().Locate("").Return(0, 0, nil).Once()
+	l.EXPECT().Locate("").Return(iplocator.Location{}, nil).Once()
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP openvpn_client_status OpenVPN client status
@@ -27,7 +28,7 @@ func TestCollector_Collect(t *testing.T) {
 openvpn_client_status 1
 `)))
 
-	l.EXPECT().Locate("").Return(0, 0, errors.New("fail")).Once()
+	l.EXPECT().Locate("").Return(iplocator.Location{}, errors.New("fail")).Once()
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP openvpn_client_status OpenVPN client status
