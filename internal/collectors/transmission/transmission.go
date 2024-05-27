@@ -67,7 +67,10 @@ var _ collectorBreaker.Collector = &Collector{}
 
 // NewCollector creates a new Collector
 func NewCollector(url string, logger *slog.Logger) *collectorBreaker.CBCollector {
-	m := metrics.NewRequestSummaryMetrics("mediamon", "", map[string]string{"application": "transmission"})
+	m := metrics.NewRequestMetrics(metrics.Options{
+		Namespace:   "mediamon",
+		ConstLabels: prometheus.Labels{"application": "transmission"},
+	})
 	c := Collector{
 		Transmission: transmission.NewClient(url, roundtripper.New(roundtripper.WithRequestMetrics(m))),
 		url:          url,

@@ -8,10 +8,11 @@ import (
 	"github.com/clambin/mediaclients/xxxarr"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
 	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
-	customMetrics "github.com/clambin/mediamon/v2/pkg/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
+	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -57,11 +58,23 @@ const (
 
 // NewRadarrCollector creates a new RadarrCollector
 func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreaker.CBCollector {
-	tpMetrics := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "radarr"}, chopPath)
-	cacheMetrics := customMetrics.NewCustomizedCacheMetrics("mediamon", "", "radarr", chopPath)
+	tpMetrics := metrics.NewRequestMetrics(metrics.Options{
+		Namespace:   "mediamon",
+		ConstLabels: prometheus.Labels{"application": "radarr"},
+		LabelValues: func(request *http.Request, i int) (method string, path string, code string) {
+			return request.Method, choppedPath(request), strconv.Itoa(i)
+		},
+	})
+	cacheMetrics := roundtripper.NewCacheMetrics("mediamon", "", "radarr")
 
 	r := roundtripper.New(
-		roundtripper.WithInstrumentedCache(radarrCacheTable, cacheExpiry, cleanupInterval, cacheMetrics),
+		roundtripper.WithCache(roundtripper.CacheOptions{
+			CacheTable:        radarrCacheTable,
+			DefaultExpiration: cacheExpiry,
+			CleanupInterval:   cleanupInterval,
+			GetKey:            choppedPath,
+			CacheMetrics:      cacheMetrics,
+		}),
 		roundtripper.WithRequestMetrics(tpMetrics),
 	)
 
@@ -78,11 +91,23 @@ func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreak
 
 // NewSonarrCollector creates a new SonarrCollector
 func NewSonarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreaker.CBCollector {
-	tpMetrics := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "sonarr"}, chopPath)
-	cacheMetrics := customMetrics.NewCustomizedCacheMetrics("mediamon", "", "sonarr", chopPath)
+	tpMetrics := metrics.NewRequestMetrics(metrics.Options{
+		Namespace:   "mediamon",
+		ConstLabels: prometheus.Labels{"application": "sonarr"},
+		LabelValues: func(request *http.Request, i int) (method string, path string, code string) {
+			return request.Method, choppedPath(request), strconv.Itoa(i)
+		},
+	})
+	cacheMetrics := roundtripper.NewCacheMetrics("mediamon", "", "sonarr")
 
 	r := roundtripper.New(
-		roundtripper.WithInstrumentedCache(sonarrCacheTable, cacheExpiry, cleanupInterval, cacheMetrics),
+		roundtripper.WithCache(roundtripper.CacheOptions{
+			CacheTable:        sonarrCacheTable,
+			DefaultExpiration: cacheExpiry,
+			CleanupInterval:   cleanupInterval,
+			GetKey:            choppedPath,
+			CacheMetrics:      cacheMetrics,
+		}),
 		roundtripper.WithRequestMetrics(tpMetrics),
 	)
 
