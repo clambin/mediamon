@@ -18,6 +18,10 @@ github.com/clambin/go-common/http v0.4.5-0.20240527092140-44d7c0db1609 h1:Kv++nB
 github.com/clambin/go-common/http v0.4.5-0.20240527092140-44d7c0db1609/go.mod h1:F+wnT2n34Sb6wgOxd/V8f/7Z0JkSYDda4hphWJGpnyk=
 github.com/clambin/go-common/http v0.4.5-0.20240528170747-1b170eb934f7 h1:adiuR54VzlfRSpqLuERXlwgtdv3KYLJcfroXoYdIX64=
 github.com/clambin/go-common/http v0.4.5-0.20240528170747-1b170eb934f7/go.mod h1:F+wnT2n34Sb6wgOxd/V8f/7Z0JkSYDda4hphWJGpnyk=
+github.com/clambin/go-common/http v0.4.5-0.20240528184630-7cc51773c187 h1:eu1Fb/ZpNQ2BJYqVaxYO2pHTmqRDew9tMEdY0Wacelo=
+github.com/clambin/go-common/http v0.4.5-0.20240528184630-7cc51773c187/go.mod h1:F+wnT2n34Sb6wgOxd/V8f/7Z0JkSYDda4hphWJGpnyk=
+github.com/clambin/go-common/http v0.5.0 h1:b/RwKQtJfbf3jIpNSeoXH2k3MFtLIXLVo7dA4Qj2iTI=
+github.com/clambin/go-common/http v0.5.0/go.mod h1:F+wnT2n34Sb6wgOxd/V8f/7Z0JkSYDda4hphWJGpnyk=
 github.com/clambin/go-common/set v0.4.3 h1:Sm9lkAJsh82j40RDpfQIziHyHjwr07+KsQF6vgCVXm4=
 github.com/clambin/go-common/set v0.4.3/go.mod h1:Q5GpBoM7B7abNV2Wzys+wQMInBHMoHyh/h0Cn2OmY4A=
 github.com/clambin/go-common/testutils v0.1.0 h1:/nGWaOCIhW+Ew1c2NU7GLY/YPb8dp9SV8+MTgWksAgk=
