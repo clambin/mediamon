@@ -17,8 +17,9 @@ var _ prometheus.Collector = &CBCollector{}
 
 type CBCollector struct {
 	Collector
-	breaker *breaker.CircuitBreaker
-	logger  *slog.Logger
+	breaker   *breaker.CircuitBreaker
+	cbMetrics *breaker.Metrics
+	logger    *slog.Logger
 }
 
 var defaultConfiguration = breaker.Configuration{
@@ -29,7 +30,8 @@ var defaultConfiguration = breaker.Configuration{
 
 func New(name string, c Collector, logger *slog.Logger) *CBCollector {
 	cfg := defaultConfiguration
-	cfg.Name = name
+	cfg.Metrics = breaker.NewMetrics("", "", name, nil)
+	cfg.Logger = logger
 	return NewWithConfiguration(c, cfg, logger)
 }
 
@@ -37,13 +39,16 @@ func NewWithConfiguration(c Collector, cfg breaker.Configuration, logger *slog.L
 	return &CBCollector{
 		Collector: c,
 		breaker:   breaker.New(cfg),
+		cbMetrics: cfg.Metrics,
 		logger:    logger,
 	}
 }
 
 func (c *CBCollector) Describe(ch chan<- *prometheus.Desc) {
 	c.Collector.Describe(ch)
-	c.breaker.Describe(ch)
+	if c.cbMetrics != nil {
+		c.cbMetrics.Describe(ch)
+	}
 }
 
 func (c *CBCollector) Collect(ch chan<- prometheus.Metric) {
@@ -54,7 +59,9 @@ func (c *CBCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil && !errors.Is(err, breaker.ErrCircuitOpen) {
 		c.logger.Warn("collection failed", "err", err)
 	}
-	c.breaker.Collect(ch)
+	if c.cbMetrics != nil {
+		c.cbMetrics.Collect(ch)
+	}
 }
 
 var _ prometheus.Collector = PassThroughCollector{}
