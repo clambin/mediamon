@@ -5,7 +5,7 @@ go 1.22.3
 require (
 	github.com/clambin/breaker v0.3.0
 	github.com/clambin/go-common/charmer v0.2.0
-	github.com/clambin/go-common/http v0.4.4
+	github.com/clambin/go-common/http v0.5.0
 	github.com/clambin/go-common/set v0.4.3
 	github.com/clambin/mediaclients v0.4.2
 	github.com/prometheus/client_golang v1.19.1
