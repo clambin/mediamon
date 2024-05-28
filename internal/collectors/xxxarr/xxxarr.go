@@ -65,7 +65,11 @@ func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreak
 			return request.Method, choppedPath(request), strconv.Itoa(i)
 		},
 	})
-	cacheMetrics := roundtripper.NewCacheMetrics("mediamon", "", "radarr")
+	cacheMetrics := roundtripper.NewCacheMetrics(roundtripper.CacheMetricsOptions{
+		Namespace:   "mediamon",
+		ConstLabels: prometheus.Labels{"application": "radarr"},
+		GetPath:     choppedPath,
+	})
 
 	r := roundtripper.New(
 		roundtripper.WithCache(roundtripper.CacheOptions{
@@ -97,7 +101,11 @@ func NewSonarrCollector(url, apiKey string, logger *slog.Logger) *collectorBreak
 			return request.Method, choppedPath(request), strconv.Itoa(i)
 		},
 	})
-	cacheMetrics := roundtripper.NewCacheMetrics("mediamon", "", "sonarr")
+	cacheMetrics := roundtripper.NewCacheMetrics(roundtripper.CacheMetricsOptions{
+		Namespace:   "mediamon",
+		ConstLabels: prometheus.Labels{"application": "sonarr"},
+		GetPath:     choppedPath,
+	})
 
 	r := roundtripper.New(
 		roundtripper.WithCache(roundtripper.CacheOptions{
