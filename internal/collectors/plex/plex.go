@@ -6,12 +6,12 @@ import (
 	"github.com/clambin/mediaclients/plex"
 	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/clambin/mediamon/v2/pkg/iplocator"
-	customMetrics "github.com/clambin/mediamon/v2/pkg/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -46,7 +46,14 @@ type Config struct {
 
 // NewCollector creates a new Collector
 func NewCollector(version, url, username, password string, logger *slog.Logger) *collectorBreaker.CBCollector {
-	m := customMetrics.NewCustomizedRoundTripMetrics("mediamon", "", map[string]string{"application": "plex"}, chopPath)
+	m := metrics.NewRequestMetrics(metrics.Options{
+		Namespace:   "mediamon",
+		ConstLabels: prometheus.Labels{"application": "plex"},
+		LabelValues: func(request *http.Request, i int) (method string, path string, code string) {
+			r2 := chopPath(request)
+			return request.Method, r2.URL.Path, strconv.Itoa(i)
+		},
+	})
 	r := roundtripper.New(roundtripper.WithRequestMetrics(m))
 	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, r)
 	c := Collector{
@@ -58,7 +65,10 @@ func NewCollector(version, url, username, password string, logger *slog.Logger) 
 		sessionCollector: sessionCollector{
 			sessionGetter: p,
 			IPLocator: iplocator.New(&http.Client{
-				Transport: roundtripper.New(roundtripper.WithCache(roundtripper.DefaultCacheTable, 24*time.Hour, time.Hour)),
+				Transport: roundtripper.New(roundtripper.WithCache(roundtripper.CacheOptions{
+					DefaultExpiration: 24 * time.Hour,
+					CleanupInterval:   time.Hour,
+				})),
 			}),
 			url:    url,
 			logger: logger,

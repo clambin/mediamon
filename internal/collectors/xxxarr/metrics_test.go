@@ -34,12 +34,11 @@ func Test_chopPath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			out := chopPath(&http.Request{
+			out := choppedPath(&http.Request{
 				Method: http.MethodPost,
 				URL:    &url.URL{Path: tt.path},
 			})
-			assert.Equal(t, http.MethodPost, out.Method)
-			assert.Equal(t, tt.want, out.URL.Path)
+			assert.Equal(t, tt.want, out)
 		})
 	}
 }

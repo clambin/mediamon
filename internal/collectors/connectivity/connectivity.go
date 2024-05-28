@@ -46,12 +46,19 @@ const httpTimeout = 10 * time.Second
 // NewCollector creates a new Collector. proxyURL should be the URL of the transmission openvpn proxy. If expiration is set,
 // IP address location requests are cached for that amount of time.
 func NewCollector(proxyURL *url.URL, expiration time.Duration, logger *slog.Logger) *Collector {
-	cacheMetrics := roundtripper.NewCacheMetrics("mediamon", "", "connectivity")
-	requestMetrics := metrics.NewRequestSummaryMetrics("mediamon", "", map[string]string{"application": "connectivity"})
+	cacheMetrics := roundtripper.NewCacheMetrics(roundtripper.CacheMetricsOptions{Namespace: "mediamon", ConstLabels: prometheus.Labels{"application": "connectivity"}})
+	requestMetrics := metrics.NewRequestMetrics(metrics.Options{
+		Namespace:   "mediamon",
+		ConstLabels: prometheus.Labels{"application": "connectivity"},
+	})
 
 	options := make([]roundtripper.Option, 0, 3)
 	if expiration > 0 {
-		options = append(options, roundtripper.WithInstrumentedCache(roundtripper.DefaultCacheTable, expiration, 2*expiration, cacheMetrics))
+		options = append(options, roundtripper.WithCache(roundtripper.CacheOptions{
+			DefaultExpiration: expiration,
+			CleanupInterval:   2 * expiration,
+			CacheMetrics:      cacheMetrics,
+		}))
 	}
 	options = append(options, roundtripper.WithRequestMetrics(requestMetrics))
 	if proxyURL != nil {
