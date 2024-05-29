@@ -66,7 +66,9 @@ func (c *Collector) CollectE(ch chan<- prometheus.Metric) error {
 			name := indexer.IndexerName
 			ch <- prometheus.MustNewConstMetric(c.metrics["indexerResponseTime"], prometheus.GaugeValue, time.Duration(indexer.AverageResponseTime).Seconds(), name)
 			ch <- prometheus.MustNewConstMetric(c.metrics["indexerQueryTotal"], prometheus.CounterValue, float64(indexer.NumberOfQueries), name)
+			ch <- prometheus.MustNewConstMetric(c.metrics["indexerFailedQueryTotal"], prometheus.CounterValue, float64(indexer.NumberOfFailedQueries), name)
 			ch <- prometheus.MustNewConstMetric(c.metrics["indexerGrabTotal"], prometheus.CounterValue, float64(indexer.NumberOfGrabs), name)
+			ch <- prometheus.MustNewConstMetric(c.metrics["indexerFailedGrabTotal"], prometheus.CounterValue, float64(indexer.NumberOfFailedGrabs), name)
 		}
 		for _, userAgent := range stats.UserAgents {
 			agent := userAgent.UserAgent

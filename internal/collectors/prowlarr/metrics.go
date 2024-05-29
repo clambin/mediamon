@@ -23,6 +23,18 @@ func newMetrics(url string) map[string]*prometheus.Desc {
 			[]string{"indexer"},
 			constLabels,
 		),
+		"indexerFailedQueryTotal": prometheus.NewDesc(
+			prometheus.BuildFQName("mediamon", "prowlarr", "indexer_failed_query_total"),
+			"Total number of failed queries to this indexer",
+			[]string{"indexer"},
+			constLabels,
+		),
+		"indexerFailedGrabTotal": prometheus.NewDesc(
+			prometheus.BuildFQName("mediamon", "prowlarr", "indexer_failed_grab_total"),
+			"Total number of failed grabs from this indexer",
+			[]string{"indexer"},
+			constLabels,
+		),
 		"userAgentQueryTotal": prometheus.NewDesc(
 			prometheus.BuildFQName("mediamon", "prowlarr", "user_agent_query_total"),
 			"Total number of queries by user agent",
