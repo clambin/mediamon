@@ -64,36 +64,17 @@ func (c *Collector) CollectE(ch chan<- prometheus.Metric) error {
 	if err == nil {
 		for _, indexer := range stats.Indexers {
 			name := indexer.IndexerName
-			ch <- prometheus.MustNewConstMetric(c.metrics["responseTime"], prometheus.GaugeValue, time.Duration(indexer.AverageResponseTime).Seconds(), name)
-			ch <- prometheus.MustNewConstMetric(c.metrics["queryTotal"], prometheus.CounterValue, float64(indexer.NumberOfQueries), name)
-			ch <- prometheus.MustNewConstMetric(c.metrics["grabTotal"], prometheus.CounterValue, float64(indexer.NumberOfGrabs), name)
+			ch <- prometheus.MustNewConstMetric(c.metrics["indexerResponseTime"], prometheus.GaugeValue, time.Duration(indexer.AverageResponseTime).Seconds(), name)
+			ch <- prometheus.MustNewConstMetric(c.metrics["indexerQueryTotal"], prometheus.CounterValue, float64(indexer.NumberOfQueries), name)
+			ch <- prometheus.MustNewConstMetric(c.metrics["indexerGrabTotal"], prometheus.CounterValue, float64(indexer.NumberOfGrabs), name)
+		}
+		for _, userAgent := range stats.UserAgents {
+			agent := userAgent.UserAgent
+			ch <- prometheus.MustNewConstMetric(c.metrics["userAgentQueryTotal"], prometheus.CounterValue, float64(userAgent.NumberOfQueries), agent)
+			ch <- prometheus.MustNewConstMetric(c.metrics["userAgentGrabTotal"], prometheus.CounterValue, float64(userAgent.NumberOfGrabs), agent)
 		}
 	}
 	c.tpMetrics.Collect(ch)
 	c.cacheMetrics.Collect(ch)
 	return err
-}
-
-func newMetrics(url string) map[string]*prometheus.Desc {
-	constLabels := prometheus.Labels{"application": "prowlarr"}
-	return map[string]*prometheus.Desc{
-		"responseTime": prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "prowlarr", "response_time"),
-			"Average response time in seconds",
-			[]string{"indexer"},
-			constLabels,
-		),
-		"queryTotal": prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "prowlarr", "query_total"),
-			"Total number of queries to this indexer",
-			[]string{"indexer"},
-			constLabels,
-		),
-		"grabTotal": prometheus.NewDesc(
-			prometheus.BuildFQName("mediamon", "prowlarr", "grab_total"),
-			"Total number of grabs from this indexer",
-			[]string{"indexer"},
-			constLabels,
-		),
-	}
 }
