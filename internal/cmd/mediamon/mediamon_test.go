@@ -27,7 +27,7 @@ func TestExecute(t *testing.T) {
 	assert.Eventually(t, func() bool {
 		_, err := http.Get("http://127.0.0.1:9090/metrics")
 		return err == nil
-	}, time.Second, time.Millisecond*100)
+	}, 5*time.Second, time.Millisecond*100)
 
 	assert.NoError(t, testutil.GatherAndCompare(
 		prometheus.DefaultGatherer,

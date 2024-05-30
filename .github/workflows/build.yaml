@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - http
+      - prowlarr
     paths-ignore:
       - 'assets/**'
 

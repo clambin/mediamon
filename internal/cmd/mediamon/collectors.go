@@ -5,6 +5,7 @@ import (
 	"github.com/clambin/mediamon/v2/internal/collectors/bandwidth"
 	"github.com/clambin/mediamon/v2/internal/collectors/connectivity"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex"
+	"github.com/clambin/mediamon/v2/internal/collectors/prowlarr"
 	"github.com/clambin/mediamon/v2/internal/collectors/transmission"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr"
 	"github.com/prometheus/client_golang/prometheus"
@@ -35,6 +36,12 @@ var constructors = map[string]constructor{
 		name: "radarr",
 		make: func(url, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
 			return xxxarr.NewRadarrCollector(url, v.GetString("radarr.apikey"), logger), nil
+		},
+	},
+	"prowlarr.url": {
+		name: "prowlarr",
+		make: func(url, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
+			return prowlarr.New(url, v.GetString("prowlarr.apikey"), logger), nil
 		},
 	},
 	"plex.url": {
