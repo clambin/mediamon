@@ -64,6 +64,7 @@ func (c *Collector) CollectE(ch chan<- prometheus.Metric) error {
 	if err == nil {
 		for _, indexer := range stats.Indexers {
 			name := indexer.IndexerName
+			c.logger.Debug("indexer found", "indexer", name, "queries", indexer.NumberOfQueries, "grabs", indexer.NumberOfGrabs)
 			ch <- prometheus.MustNewConstMetric(c.metrics["indexerResponseTime"], prometheus.GaugeValue, time.Duration(indexer.AverageResponseTime).Seconds(), name)
 			ch <- prometheus.MustNewConstMetric(c.metrics["indexerQueryTotal"], prometheus.CounterValue, float64(indexer.NumberOfQueries), name)
 			ch <- prometheus.MustNewConstMetric(c.metrics["indexerFailedQueryTotal"], prometheus.CounterValue, float64(indexer.NumberOfFailedQueries), name)
@@ -72,6 +73,7 @@ func (c *Collector) CollectE(ch chan<- prometheus.Metric) error {
 		}
 		for _, userAgent := range stats.UserAgents {
 			agent := userAgent.UserAgent
+			c.logger.Debug("user agent found", "agent", agent, "queries", userAgent.NumberOfQueries, "grabs", userAgent.NumberOfGrabs)
 			ch <- prometheus.MustNewConstMetric(c.metrics["userAgentQueryTotal"], prometheus.CounterValue, float64(userAgent.NumberOfQueries), agent)
 			ch <- prometheus.MustNewConstMetric(c.metrics["userAgentGrabTotal"], prometheus.CounterValue, float64(userAgent.NumberOfGrabs), agent)
 		}
