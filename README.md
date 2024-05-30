@@ -5,10 +5,10 @@
 ![Go Report Card](https://goreportcard.com/badge/github.com/clambin/mediamon)
 ![GitHub](https://img.shields.io/github/license/clambin/mediamon?style=plastic)
 
-Prometheus exporter for various media applications. Currently, supports Transmission, OpenVPN Client, Sonarr, Radarr and Plex.
+Prometheus exporter for various media applications. Currently, supports Transmission, OpenVPN Client, Sonarr, Radarr, Prowlarr and Plex.
 
 ## Installation
-Binaries are available on the [release](https://github.com/clambin/mediamon/releases) page. Docker images are available on [ghcr.io](https://ghcr.io/clambin/mediamon).
+Docker images are available on [ghcr.io](https://ghcr.io/clambin/mediamon).
 
 ## Running mediamon
 ### Command-line options
@@ -41,6 +41,11 @@ sonarr:
   apikey: <key>
 
 radarr:
+  # All these are equivalent to sonarr
+  url: <url>
+  apikey: <key>
+
+prowlarr:
   # All these are equivalent to sonarr
   url: <url>
   apikey: <key>
@@ -99,22 +104,31 @@ mediamon exposes the following metrics:
 
 | metric | type |  labels | help |
 | --- | --- |  --- | --- |
-| mediamon_api_cache_hit_total | COUNTER | application, method, path|Number of times the cache was used |
-| mediamon_api_cache_total | COUNTER | application, method, path|Number of times the cache was consulted |
-| mediamon_api_errors_total | COUNTER | application, method, path|Number of failed HTTP calls |
-| mediamon_api_latency | SUMMARY | application, method, path|latency of HTTP calls |
+| mediamon_http_cache_hit_total | COUNTER | application, method, path|Number of times the cache was used |
+| mediamon_http_cache_total | COUNTER | application, method, path|Number of times the cache was consulted |
+| mediamon_http_request_duration_seconds | SUMMARY | application, code, method, path|duration of http requests |
+| mediamon_http_requests_total | COUNTER | application, code, method, path|total number of http requests |
 | mediamon_plex_library_bytes | GAUGE | library, url|Library size in bytes |
 | mediamon_plex_library_count | GAUGE | library, url|Library size in number of entries |
-| mediamon_plex_session_bandwidth | GAUGE | address, audioCodec, lat, location, lon, mode, player, title, url, user, videoCodec|Active Plex session Bandwidth usage (in kbps) |
-| mediamon_plex_session_count | GAUGE | address, audioCodec, lat, location, lon, mode, player, title, url, user, videoCodec|Active Plex session progress |
 | mediamon_plex_version | GAUGE | url, version|version info |
+| mediamon_prowlarr_indexer_failed_grab_total | COUNTER | application, indexer, url|Total number of failed grabs from this indexer |
+| mediamon_prowlarr_indexer_failed_query_total | COUNTER | application, indexer, url|Total number of failed queries to this indexer |
+| mediamon_prowlarr_indexer_grab_total | COUNTER | application, indexer, url|Total number of grabs from this indexer |
+| mediamon_prowlarr_indexer_query_total | COUNTER | application, indexer, url|Total number of queries to this indexer |
+| mediamon_prowlarr_indexer_response_time | GAUGE | application, indexer, url|Average response time in seconds |
+| mediamon_prowlarr_user_agent_grab_total | COUNTER | application, url, user_agent|Total number of grabs by user agent |
+| mediamon_prowlarr_user_agent_query_total | COUNTER | application, url, user_agent|Total number of queries by user agent |
 | mediamon_transmission_active_torrent_count | GAUGE | url|Number of active torrents |
 | mediamon_transmission_download_speed | GAUGE | url|Transmission download speed in bytes / sec |
 | mediamon_transmission_paused_torrent_count | GAUGE | url|Number of paused torrents |
 | mediamon_transmission_upload_speed | GAUGE | url|Transmission upload speed in bytes / sec |
 | mediamon_transmission_version | GAUGE | url, version|version info |
+| mediamon_xxxarr_calendar | GAUGE | application, title, url|Upcoming episodes / movies |
+| mediamon_xxxarr_health | GAUGE | application, type, url|Server health |
 | mediamon_xxxarr_monitored_count | GAUGE | application, url|Number of Monitored series / movies |
 | mediamon_xxxarr_queued_count | GAUGE | application, url|Episodes / movies being downloaded |
+| mediamon_xxxarr_queued_downloaded_bytes | GAUGE | application, title, url|Downloaded size of episode / movie being downloaded in bytes |
+| mediamon_xxxarr_queued_total_bytes | GAUGE | application, title, url|Size of episode / movie being downloaded in bytes |
 | mediamon_xxxarr_unmonitored_count | GAUGE | application, url|Number of Unmonitored series / movies |
 | mediamon_xxxarr_version | GAUGE | application, url, version|Version info |
 
