@@ -1,7 +1,6 @@
 package collector_breaker
 
 import (
-	"errors"
 	"github.com/clambin/breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
@@ -52,13 +51,13 @@ func (c *CBCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *CBCollector) Collect(ch chan<- prometheus.Metric) {
-	err := c.breaker.Do(func() error {
-		return c.Collector.CollectE(ch)
+	_ = c.breaker.Do(func() (err error) {
+		if err = c.Collector.CollectE(ch); err != nil {
+			c.logger.Warn("collection failed", "err", err)
+		}
+		return err
 	})
 
-	if err != nil && !errors.Is(err, breaker.ErrCircuitOpen) {
-		c.logger.Warn("collection failed", "err", err)
-	}
 	if c.cbMetrics != nil {
 		c.cbMetrics.Collect(ch)
 	}
