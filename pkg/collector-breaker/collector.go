@@ -24,7 +24,7 @@ type CBCollector struct {
 var defaultConfiguration = breaker.Configuration{
 	ErrorThreshold:   2,
 	OpenDuration:     5 * time.Minute,
-	SuccessThreshold: 1,
+	SuccessThreshold: 5,
 }
 
 func New(name string, c Collector, logger *slog.Logger) *CBCollector {

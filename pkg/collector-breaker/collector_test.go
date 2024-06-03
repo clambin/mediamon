@@ -61,9 +61,8 @@ func (c collector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c collector) CollectE(ch chan<- prometheus.Metric) error {
-	if c.err != nil {
-		return c.err
+	if c.err == nil {
+		ch <- prometheus.MustNewConstMetric(c.metric, prometheus.CounterValue, 1.0)
 	}
-	ch <- prometheus.MustNewConstMetric(c.metric, prometheus.CounterValue, 1.0)
-	return nil
+	return c.err
 }
