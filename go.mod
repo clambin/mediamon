@@ -9,7 +9,7 @@ require (
 	github.com/clambin/go-common/set v0.4.3
 	github.com/clambin/mediaclients v0.5.0
 	github.com/prometheus/client_golang v1.19.1
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/sync v0.7.0
