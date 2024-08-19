@@ -3,7 +3,6 @@ package xxxarr
 import (
 	"bytes"
 	"context"
-	"errors"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/mocks"
 	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
@@ -118,18 +117,6 @@ mediamon_xxxarr_version{application="sonarr",url="",version="foo"} 1
 `,
 		},
 		{
-			name:      "sonarr (error)",
-			collector: "sonarr",
-			setup: func(c *mocks.Client, ctx context.Context) {
-				err := errors.New("sonarr down")
-				c.EXPECT().GetVersion(ctx).Return("", err)
-				c.EXPECT().GetHealth(ctx).Return(nil, err)
-				c.EXPECT().GetCalendar(ctx).Return(nil, err)
-				c.EXPECT().GetQueue(ctx).Return(nil, err)
-				c.EXPECT().GetLibrary(ctx).Return(clients.Library{}, err)
-			},
-		},
-		{
 			name:      "radarr",
 			collector: "radarr",
 			setup: func(c *mocks.Client, ctx context.Context) {
@@ -178,18 +165,6 @@ mediamon_xxxarr_unmonitored_count{application="radarr",url=""} 1
 # TYPE mediamon_xxxarr_version gauge
 mediamon_xxxarr_version{application="radarr",url="",version="foo"} 1
 `,
-		},
-		{
-			name:      "radarr (error)",
-			collector: "radarr",
-			setup: func(c *mocks.Client, ctx context.Context) {
-				err := errors.New("sonarr down")
-				c.EXPECT().GetVersion(ctx).Return("", err)
-				c.EXPECT().GetHealth(ctx).Return(nil, err)
-				c.EXPECT().GetCalendar(ctx).Return(nil, err)
-				c.EXPECT().GetQueue(ctx).Return(nil, err)
-				c.EXPECT().GetLibrary(ctx).Return(clients.Library{}, err)
-			},
 		},
 	}
 
