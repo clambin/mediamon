@@ -1,6 +1,6 @@
 module github.com/clambin/mediamon/v2
 
-go 1.23
+go 1.23.0
 
 require (
 	github.com/clambin/breaker v0.4.0
