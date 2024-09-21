@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/clambin/go-common/set"
 	"github.com/clambin/mediaclients/plex"
-	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
+	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"math"
@@ -43,7 +43,7 @@ var (
 	)
 )
 
-var _ collector_breaker.Collector = sessionCollector{}
+var _ collectorbreaker.Collector = sessionCollector{}
 
 type sessionCollector struct {
 	sessionGetter

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/clambin/mediamon/v2/internal/collectors/connectivity"
 	"github.com/clambin/mediamon/v2/internal/collectors/connectivity/mocks"
-	"github.com/clambin/mediamon/v2/pkg/iplocator"
+	"github.com/clambin/mediamon/v2/iplocator"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"log/slog"

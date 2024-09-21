@@ -3,9 +3,9 @@ package xxxarr
 import (
 	"bytes"
 	"context"
+	"github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/mocks"
-	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"log/slog"
@@ -25,7 +25,7 @@ func TestCollector(t *testing.T) {
 			setup: func(c *mocks.Client, ctx context.Context) {
 				c.EXPECT().GetVersion(ctx).Return("foo", nil)
 				c.EXPECT().GetHealth(ctx).Return(nil, nil)
-				c.EXPECT().GetCalendar(ctx).Return([]string{
+				c.EXPECT().GetCalendar(ctx, 1).Return([]string{
 					"foo - S01E01 - 1",
 					"foo - S01E02 - 2",
 					"foo - S01E03 - 3",
@@ -74,7 +74,7 @@ mediamon_xxxarr_version{application="sonarr",url="",version="foo"} 1
 			setup: func(c *mocks.Client, ctx context.Context) {
 				c.EXPECT().GetVersion(ctx).Return("foo", nil)
 				c.EXPECT().GetHealth(ctx).Return(nil, nil)
-				c.EXPECT().GetCalendar(ctx).Return([]string{
+				c.EXPECT().GetCalendar(ctx, 1).Return([]string{
 					"foo - S01E01 - 1",
 					"foo - S01E01 - 1",
 					"foo - S01E02 - 2",
@@ -122,7 +122,7 @@ mediamon_xxxarr_version{application="sonarr",url="",version="foo"} 1
 			setup: func(c *mocks.Client, ctx context.Context) {
 				c.EXPECT().GetVersion(ctx).Return("foo", nil)
 				c.EXPECT().GetHealth(ctx).Return(nil, nil)
-				c.EXPECT().GetCalendar(ctx).Return([]string{
+				c.EXPECT().GetCalendar(ctx, 1).Return([]string{
 					"1",
 					"2",
 					"3",

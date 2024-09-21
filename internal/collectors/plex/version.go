@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/mediaclients/plex"
-	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
+	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 )
@@ -16,7 +16,7 @@ var versionMetric = prometheus.NewDesc(
 	nil,
 )
 
-var _ collector_breaker.Collector = versionCollector{}
+var _ collectorbreaker.Collector = versionCollector{}
 
 type versionCollector struct {
 	identityGetter

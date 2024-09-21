@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/mediaclients/plex"
-	collector_breaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
+	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"sync"
@@ -26,7 +26,7 @@ var (
 	)
 )
 
-var _ collector_breaker.Collector = &libraryCollector{}
+var _ collectorbreaker.Collector = &libraryCollector{}
 
 type libraryCollector struct {
 	libraryGetter

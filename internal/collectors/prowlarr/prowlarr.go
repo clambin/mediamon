@@ -5,7 +5,7 @@ import (
 	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/xxxarr"
-	collectorbreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
+	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"time"
