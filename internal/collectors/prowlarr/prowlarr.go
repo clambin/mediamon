@@ -4,10 +4,12 @@ import (
 	"context"
 	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
-	"github.com/clambin/mediaclients/xxxarr"
+	"github.com/clambin/mediaclients/prowlarr"
 	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
+	"github.com/clambin/mediamon/v2/internal/collectors/prowlarr/client"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
+	"net/http"
 	"time"
 )
 
@@ -20,7 +22,7 @@ type Collector struct {
 }
 
 type Client interface {
-	GetIndexStats(context.Context) (xxxarr.ProwlarrIndexersStats, error)
+	GetIndexStats(context.Context) (*prowlarr.IndexerStatsResource, error)
 }
 
 func New(url, apiKey string, logger *slog.Logger) *collectorbreaker.CBCollector {
@@ -41,8 +43,15 @@ func New(url, apiKey string, logger *slog.Logger) *collectorbreaker.CBCollector 
 		}),
 		roundtripper.WithRequestMetrics(tpMetrics),
 	)
+
+	client, err := client.NewProwlarrClient(url, apiKey, &http.Client{Transport: r})
+	if err != nil {
+		// TODO
+		panic(err)
+	}
+
 	c := Collector{
-		client:       xxxarr.NewProwlarrClient(url, apiKey, r),
+		client:       client,
 		metrics:      newMetrics(url),
 		tpMetrics:    tpMetrics,
 		cacheMetrics: cacheMetrics,
@@ -62,20 +71,21 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 func (c *Collector) CollectE(ch chan<- prometheus.Metric) error {
 	stats, err := c.client.GetIndexStats(context.Background())
 	if err == nil {
-		for _, indexer := range stats.Indexers {
-			name := indexer.IndexerName
+		for _, indexer := range *stats.Indexers {
+			name := *indexer.IndexerName
 			//c.logger.Debug("indexer found", "indexer", name, "queries", indexer.NumberOfQueries, "grabs", indexer.NumberOfGrabs)
-			ch <- prometheus.MustNewConstMetric(c.metrics["indexerResponseTime"], prometheus.GaugeValue, time.Duration(indexer.AverageResponseTime).Seconds(), name)
-			ch <- prometheus.MustNewConstMetric(c.metrics["indexerQueryTotal"], prometheus.CounterValue, float64(indexer.NumberOfQueries), name)
-			ch <- prometheus.MustNewConstMetric(c.metrics["indexerFailedQueryTotal"], prometheus.CounterValue, float64(indexer.NumberOfFailedQueries), name)
-			ch <- prometheus.MustNewConstMetric(c.metrics["indexerGrabTotal"], prometheus.CounterValue, float64(indexer.NumberOfGrabs), name)
-			ch <- prometheus.MustNewConstMetric(c.metrics["indexerFailedGrabTotal"], prometheus.CounterValue, float64(indexer.NumberOfFailedGrabs), name)
+			responseTimeMsec := *indexer.AverageResponseTime
+			ch <- prometheus.MustNewConstMetric(c.metrics["indexerResponseTime"], prometheus.GaugeValue, float64(responseTimeMsec)/1000, name)
+			ch <- prometheus.MustNewConstMetric(c.metrics["indexerQueryTotal"], prometheus.CounterValue, float64(*indexer.NumberOfQueries), name)
+			ch <- prometheus.MustNewConstMetric(c.metrics["indexerFailedQueryTotal"], prometheus.CounterValue, float64(*indexer.NumberOfFailedQueries), name)
+			ch <- prometheus.MustNewConstMetric(c.metrics["indexerGrabTotal"], prometheus.CounterValue, float64(*indexer.NumberOfGrabs), name)
+			ch <- prometheus.MustNewConstMetric(c.metrics["indexerFailedGrabTotal"], prometheus.CounterValue, float64(*indexer.NumberOfFailedGrabs), name)
 		}
-		for _, userAgent := range stats.UserAgents {
-			agent := userAgent.UserAgent
+		for _, userAgent := range *stats.UserAgents {
+			agent := *userAgent.UserAgent
 			//c.logger.Debug("user agent found", "agent", agent, "queries", userAgent.NumberOfQueries, "grabs", userAgent.NumberOfGrabs)
-			ch <- prometheus.MustNewConstMetric(c.metrics["userAgentQueryTotal"], prometheus.CounterValue, float64(userAgent.NumberOfQueries), agent)
-			ch <- prometheus.MustNewConstMetric(c.metrics["userAgentGrabTotal"], prometheus.CounterValue, float64(userAgent.NumberOfGrabs), agent)
+			ch <- prometheus.MustNewConstMetric(c.metrics["userAgentQueryTotal"], prometheus.CounterValue, float64(*userAgent.NumberOfQueries), agent)
+			ch <- prometheus.MustNewConstMetric(c.metrics["userAgentGrabTotal"], prometheus.CounterValue, float64(*userAgent.NumberOfGrabs), agent)
 		}
 	}
 	c.tpMetrics.Collect(ch)
