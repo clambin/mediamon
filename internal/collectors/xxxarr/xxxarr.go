@@ -46,7 +46,7 @@ var (
 		{Path: `/api/v3/calendar`, Expiry: time.Minute},
 		{Path: `/api/v3/series`},
 		{Path: `/api/v3/series/[\d+]`, IsRegExp: true},
-		{Path: `/api/v3/episode/[\d+]`, IsRegExp: true},
+		{Path: `/api/v3/episode`, IsRegExp: true},
 	}
 )
 
