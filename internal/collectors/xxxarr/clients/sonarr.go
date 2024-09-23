@@ -66,7 +66,7 @@ func (s Sonarr) GetCalendar(ctx context.Context, days int) ([]string, error) {
 	for i, episode := range *resp.JSON200 {
 		name, err := s.getEpisodeNameFromEpisodeResource(ctx, episode)
 		if err != nil {
-			return nil, fmt.Errorf("getEpisodeName: %w", err)
+			return nil, fmt.Errorf("getEpisodeNameFromEpisodeResource: %w", err)
 		}
 		calendar[i] = name
 	}
@@ -102,7 +102,7 @@ func (s Sonarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
 		for _, record := range *resp.JSON200.Records {
 			name, err := s.getEpisodeNameFromQueueResource(ctx, record)
 			if err != nil {
-				return nil, fmt.Errorf("getEpisodeName: %w", err)
+				return nil, fmt.Errorf("getEpisodeNameFromQueueResource: %w", err)
 			}
 			entries = append(entries, QueuedItem{
 				Name:            name,
