@@ -1,11 +1,11 @@
 name: Test
 
 on:
+  pull_request_target:
   push:
     branches-ignore:
       - master
       - openapi
-  pull_request_target:
 
 jobs:
   test:
