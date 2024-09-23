@@ -14,8 +14,8 @@ github.com/clambin/go-common/set v0.4.3 h1:Sm9lkAJsh82j40RDpfQIziHyHjwr07+KsQF6v
 github.com/clambin/go-common/set v0.4.3/go.mod h1:Q5GpBoM7B7abNV2Wzys+wQMInBHMoHyh/h0Cn2OmY4A=
 github.com/clambin/go-common/testutils v0.1.0 h1:/nGWaOCIhW+Ew1c2NU7GLY/YPb8dp9SV8+MTgWksAgk=
 github.com/clambin/go-common/testutils v0.1.0/go.mod h1:bV0j8D4zhNkleCeluFKLBeLQ0L/dqkxbaR/joLn8kzg=
-github.com/clambin/mediaclients v0.5.1 h1:C2Hw3IjxXtS/ICAEKnKcyXauGtu0qa4AnWKCOQsQBtk=
-github.com/clambin/mediaclients v0.5.1/go.mod h1:Wj0Nkp6ssC0o/HQz10rujWD1SETGXzom6P3/iatXNHw=
+github.com/clambin/mediaclients v0.6.0 h1:t5/RVr76hkpCSuskuEqd6/Q1KlhL4C1DY4EHx8/H/nI=
+github.com/clambin/mediaclients v0.6.0/go.mod h1:mIkHVQR/JxtwzufxfKr1lQqrmsLSET83pks9P7/Xd4k=
 github.com/cpuguy83/go-md2man/v2 v2.0.4/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
