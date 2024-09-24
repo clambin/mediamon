@@ -7,12 +7,14 @@ import (
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"net/http"
 	"testing"
 )
 
 func TestRadarrGetVersion(t *testing.T) {
 	r := mocks.NewRadarrClient(t)
-	c := Radarr{Client: r}
+	c, _ := NewRadarrClient("http://localhost", "token", http.DefaultClient)
+	c.Client = r
 
 	ctx := context.Background()
 	r.EXPECT().
@@ -32,7 +34,8 @@ func TestRadarrGetVersion(t *testing.T) {
 
 func TestRadarrGetHealth(t *testing.T) {
 	r := mocks.NewRadarrClient(t)
-	c := Radarr{Client: r}
+	c, _ := NewRadarrClient("http://localhost", "token", http.DefaultClient)
+	c.Client = r
 
 	ctx := context.Background()
 	healthResources := []radarr.HealthResource{
@@ -55,7 +58,8 @@ func TestRadarrGetHealth(t *testing.T) {
 
 func TestRadarrGetCalendar(t *testing.T) {
 	r := mocks.NewRadarrClient(t)
-	c := Radarr{Client: r}
+	c, _ := NewRadarrClient("http://localhost", "token", http.DefaultClient)
+	c.Client = r
 
 	ctx := context.Background()
 	movies := []radarr.MovieResource{
@@ -79,7 +83,8 @@ func TestRadarrGetCalendar(t *testing.T) {
 
 func TestRadarrGetQueue(t *testing.T) {
 	r := mocks.NewRadarrClient(t)
-	c := Radarr{Client: r}
+	c, _ := NewRadarrClient("http://localhost", "token", http.DefaultClient)
+	c.Client = r
 
 	ctx := context.Background()
 	r.EXPECT().
@@ -117,7 +122,8 @@ func TestRadarrGetQueue(t *testing.T) {
 
 func TestRadarrGetLibrary(t *testing.T) {
 	r := mocks.NewRadarrClient(t)
-	c := Radarr{Client: r}
+	c, _ := NewRadarrClient("http://localhost", "token", http.DefaultClient)
+	c.Client = r
 
 	ctx := context.Background()
 	r.EXPECT().

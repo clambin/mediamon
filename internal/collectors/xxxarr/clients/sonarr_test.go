@@ -9,13 +9,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/exp/maps"
+	"net/http"
 	"slices"
 	"testing"
 )
 
 func TestSonarrGetVersion(t *testing.T) {
 	s := mocks.NewSonarrClient(t)
-	c := Sonarr{Client: s}
+	c, _ := NewSonarrClient("http://localhost", "token", http.DefaultClient)
+	c.Client = s
 
 	ctx := context.Background()
 	s.EXPECT().
@@ -35,7 +37,8 @@ func TestSonarrGetVersion(t *testing.T) {
 
 func TestSonarrGetHealth(t *testing.T) {
 	s := mocks.NewSonarrClient(t)
-	c := Sonarr{Client: s}
+	c, _ := NewSonarrClient("http://localhost", "token", http.DefaultClient)
+	c.Client = s
 
 	ctx := context.Background()
 	healthResources := []sonarr.HealthResource{
@@ -58,7 +61,8 @@ func TestSonarrGetHealth(t *testing.T) {
 
 func TestSonarrGetCalendar(t *testing.T) {
 	s := mocks.NewSonarrClient(t)
-	c := Sonarr{Client: s}
+	c, _ := NewSonarrClient("http://localhost", "token", http.DefaultClient)
+	c.Client = s
 
 	ctx := context.Background()
 	episodes := map[int32]sonarr.EpisodeResource{
@@ -99,7 +103,8 @@ func TestSonarrGetCalendar(t *testing.T) {
 
 func TestSonarrGetQueue(t *testing.T) {
 	s := mocks.NewSonarrClient(t)
-	c := Sonarr{Client: s}
+	c, _ := NewSonarrClient("http://localhost", "token", http.DefaultClient)
+	c.Client = s
 
 	ctx := context.Background()
 	s.EXPECT().
@@ -170,7 +175,8 @@ func TestSonarrGetQueue(t *testing.T) {
 
 func TestSonarrGetLibrary(t *testing.T) {
 	s := mocks.NewSonarrClient(t)
-	c := Sonarr{Client: s}
+	c, _ := NewSonarrClient("http://localhost", "token", http.DefaultClient)
+	c.Client = s
 
 	ctx := context.Background()
 	s.EXPECT().
