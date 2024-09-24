@@ -12,8 +12,6 @@ type SonarrClient interface {
 	GetApiV3SystemStatusWithResponse(ctx context.Context, reqEditors ...sonarr.RequestEditorFn) (*sonarr.GetApiV3SystemStatusResponse, error)
 	GetApiV3HealthWithResponse(ctx context.Context, reqEditors ...sonarr.RequestEditorFn) (*sonarr.GetApiV3HealthResponse, error)
 	GetApiV3CalendarWithResponse(ctx context.Context, params *sonarr.GetApiV3CalendarParams, reqEditors ...sonarr.RequestEditorFn) (*sonarr.GetApiV3CalendarResponse, error)
-	GetApiV3EpisodeWithResponse(ctx context.Context, params *sonarr.GetApiV3EpisodeParams, reqEditors ...sonarr.RequestEditorFn) (*sonarr.GetApiV3EpisodeResponse, error)
-	GetApiV3SeriesIdWithResponse(ctx context.Context, id int32, params *sonarr.GetApiV3SeriesIdParams, reqEditors ...sonarr.RequestEditorFn) (*sonarr.GetApiV3SeriesIdResponse, error)
 	GetApiV3QueueWithResponse(ctx context.Context, params *sonarr.GetApiV3QueueParams, reqEditors ...sonarr.RequestEditorFn) (*sonarr.GetApiV3QueueResponse, error)
 	GetApiV3SeriesWithResponse(ctx context.Context, params *sonarr.GetApiV3SeriesParams, reqEditors ...sonarr.RequestEditorFn) (*sonarr.GetApiV3SeriesResponse, error)
 }
