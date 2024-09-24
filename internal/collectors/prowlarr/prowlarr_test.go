@@ -2,37 +2,38 @@ package prowlarr
 
 import (
 	"context"
-	"github.com/clambin/mediaclients/xxxarr"
+	"github.com/clambin/mediaclients/prowlarr"
 	"github.com/clambin/mediamon/v2/internal/collectors/prowlarr/mocks"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"log/slog"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestCollector(t *testing.T) {
-	prowlarr := mocks.NewClient(t)
-	prowlarr.EXPECT().GetIndexStats(context.Background()).Return(xxxarr.ProwlarrIndexersStats{
-		Indexers: []xxxarr.ProwlarrIndexerStats{{
-			IndexerId:             1,
-			IndexerName:           "foo",
-			AverageResponseTime:   xxxarr.ProwlarrResponseTime(100 * time.Millisecond),
-			NumberOfQueries:       10,
-			NumberOfFailedQueries: 1,
-			NumberOfGrabs:         2,
-			NumberOfFailedGrabs:   1,
-		}},
-		UserAgents: []xxxarr.ProwlarrUserAgentStats{{
-			UserAgent:       "foo",
-			NumberOfQueries: 10,
-			NumberOfGrabs:   1,
-		}},
-	}, nil)
+	p := mocks.NewProwlarrClient(t)
+	p.EXPECT().
+		GetApiV1IndexerstatsWithResponse(context.Background(), (*prowlarr.GetApiV1IndexerstatsParams)(nil)).
+		Return(&prowlarr.GetApiV1IndexerstatsResponse{JSON200: &prowlarr.IndexerStatsResource{
+			Indexers: &[]prowlarr.IndexerStatistics{{
+				IndexerId:             constP[int32](1),
+				IndexerName:           constP("foo"),
+				AverageResponseTime:   constP[int32](100),
+				NumberOfQueries:       constP[int32](10),
+				NumberOfFailedQueries: constP[int32](1),
+				NumberOfGrabs:         constP[int32](2),
+				NumberOfFailedGrabs:   constP[int32](1),
+			}},
+			UserAgents: &[]prowlarr.UserAgentStatistics{{
+				UserAgent:       constP("foo"),
+				NumberOfQueries: constP[int32](10),
+				NumberOfGrabs:   constP[int32](1),
+			}}}}, nil).
+		Once()
 
-	c := New("http://localhost", "", slog.Default())
-	c.Collector.(*Collector).client = prowlarr
+	c, _ := New("http://localhost", "", slog.Default())
+	c.Collector.(*Collector).ProwlarrClient = p
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP mediamon_prowlarr_indexer_failed_grab_total Total number of failed grabs from this indexer
@@ -71,4 +72,8 @@ mediamon_prowlarr_user_agent_query_total{application="prowlarr",url="http://loca
 		"mediamon_prowlarr_user_agent_query_total",
 		"mediamon_prowlarr_user_agent_grab_total",
 	))
+}
+
+func constP[T any](t T) *T {
+	return &t
 }

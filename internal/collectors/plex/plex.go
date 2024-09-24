@@ -4,8 +4,8 @@ import (
 	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/plex"
-	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
-	"github.com/clambin/mediamon/v2/pkg/iplocator"
+	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
+	"github.com/clambin/mediamon/v2/iplocator"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
@@ -35,7 +35,7 @@ type IPLocator interface {
 	Locate(string) (iplocator.Location, error)
 }
 
-var _ collectorBreaker.Collector = &Collector{}
+var _ collectorbreaker.Collector = &Collector{}
 
 // Config to create a Collector
 type Config struct {
@@ -45,7 +45,7 @@ type Config struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(version, url, username, password string, logger *slog.Logger) *collectorBreaker.CBCollector {
+func NewCollector(version, url, username, password string, logger *slog.Logger) *collectorbreaker.CBCollector {
 	m := metrics.NewRequestMetrics(metrics.Options{
 		Namespace:   "mediamon",
 		ConstLabels: prometheus.Labels{"application": "plex"},
@@ -81,7 +81,7 @@ func NewCollector(version, url, username, password string, logger *slog.Logger) 
 		metrics: m,
 		logger:  logger,
 	}
-	return collectorBreaker.New("plex", &c, logger)
+	return collectorbreaker.New("plex", &c, logger)
 }
 
 func chopPath(r *http.Request) *http.Request {

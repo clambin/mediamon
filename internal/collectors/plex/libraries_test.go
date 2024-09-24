@@ -3,8 +3,8 @@ package plex
 import (
 	"errors"
 	"github.com/clambin/mediaclients/plex"
+	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	collectorBreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -158,7 +158,7 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 				logger:        slog.Default(),
 			}
 			assert.NoError(t, testutil.CollectAndCompare(
-				collectorBreaker.PassThroughCollector{Collector: &c},
+				collectorbreaker.PassThroughCollector{Collector: &c},
 				strings.NewReader(tt.want),
 			))
 		})
@@ -178,7 +178,7 @@ func TestLibraryCollector_Collect_cached(t *testing.T) {
 		url:           "http://localhost:8080",
 		logger:        slog.Default(),
 	}
-	cb := collectorBreaker.PassThroughCollector{Collector: &c}
+	cb := collectorbreaker.PassThroughCollector{Collector: &c}
 	assert.NotZero(t, testutil.CollectAndCount(cb))
 	assert.NotZero(t, testutil.CollectAndCount(cb))
 }

@@ -3,8 +3,8 @@ package plex
 import (
 	"bytes"
 	"github.com/clambin/mediaclients/plex"
+	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	collectorbreaker "github.com/clambin/mediamon/v2/pkg/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
