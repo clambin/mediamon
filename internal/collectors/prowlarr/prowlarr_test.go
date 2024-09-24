@@ -32,7 +32,7 @@ func TestCollector(t *testing.T) {
 			}}}}, nil).
 		Once()
 
-	c := New("http://localhost", "", slog.Default())
+	c, _ := New("http://localhost", "", slog.Default())
 	c.Collector.(*Collector).ProwlarrClient = p
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`

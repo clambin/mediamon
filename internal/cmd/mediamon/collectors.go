@@ -23,25 +23,25 @@ var constructors = map[string]constructor{
 	"transmission.url": {
 		name: "transmission",
 		make: func(url, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
-			return transmission.NewCollector(url, logger), nil
+			return transmission.NewCollector(url, logger)
 		},
 	},
 	"sonarr.url": {
 		name: "sonarr",
 		make: func(url, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
-			return xxxarr.NewSonarrCollector(url, v.GetString("sonarr.apikey"), logger), nil
+			return xxxarr.NewSonarrCollector(url, v.GetString("sonarr.apikey"), logger)
 		},
 	},
 	"radarr.url": {
 		name: "radarr",
 		make: func(url, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
-			return xxxarr.NewRadarrCollector(url, v.GetString("radarr.apikey"), logger), nil
+			return xxxarr.NewRadarrCollector(url, v.GetString("radarr.apikey"), logger)
 		},
 	},
 	"prowlarr.url": {
 		name: "prowlarr",
 		make: func(url, _ string, v *viper.Viper, logger *slog.Logger) (prometheus.Collector, error) {
-			return prowlarr.New(url, v.GetString("prowlarr.apikey"), logger), nil
+			return prowlarr.New(url, v.GetString("prowlarr.apikey"), logger)
 		},
 	},
 	"plex.url": {

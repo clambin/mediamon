@@ -56,7 +56,7 @@ const (
 )
 
 // NewRadarrCollector creates a new RadarrCollector
-func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *collectorbreaker.CBCollector {
+func NewRadarrCollector(url, apiKey string, logger *slog.Logger) (*collectorbreaker.CBCollector, error) {
 	tpMetrics := metrics.NewRequestMetrics(metrics.Options{
 		Namespace:   "mediamon",
 		ConstLabels: prometheus.Labels{"application": "radarr"},
@@ -87,8 +87,7 @@ func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *collectorbreak
 
 	client, err := clients.NewRadarrClient(url, apiKey, &httpClient)
 	if err != nil {
-		// TODO
-		panic(err)
+		return nil, fmt.Errorf("create radarr client: %w", err)
 	}
 
 	c := Collector{
@@ -99,11 +98,11 @@ func NewRadarrCollector(url, apiKey string, logger *slog.Logger) *collectorbreak
 		cacheMetrics: cacheMetrics,
 		logger:       logger,
 	}
-	return collectorbreaker.New("radarr", &c, logger)
+	return collectorbreaker.New("radarr", &c, logger), nil
 }
 
 // NewSonarrCollector creates a new SonarrCollector
-func NewSonarrCollector(target, apiKey string, logger *slog.Logger) *collectorbreaker.CBCollector {
+func NewSonarrCollector(target, apiKey string, logger *slog.Logger) (*collectorbreaker.CBCollector, error) {
 	tpMetrics := metrics.NewRequestMetrics(metrics.Options{
 		Namespace:   "mediamon",
 		ConstLabels: prometheus.Labels{"application": "sonarr"},
@@ -134,8 +133,7 @@ func NewSonarrCollector(target, apiKey string, logger *slog.Logger) *collectorbr
 
 	client, err := clients.NewSonarrClient(target, apiKey, &httpClient)
 	if err != nil {
-		// TODO
-		panic(err)
+		return nil, fmt.Errorf("create sonarr client: %w", err)
 	}
 
 	c := Collector{
@@ -146,7 +144,7 @@ func NewSonarrCollector(target, apiKey string, logger *slog.Logger) *collectorbr
 		cacheMetrics: cacheMetrics,
 		logger:       logger,
 	}
-	return collectorbreaker.New("sonarr", &c, logger)
+	return collectorbreaker.New("sonarr", &c, logger), nil
 }
 
 // Describe implements the prometheus.Collector interface

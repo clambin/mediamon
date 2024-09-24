@@ -2,6 +2,7 @@ package prowlarr
 
 import (
 	"context"
+	"fmt"
 	"github.com/clambin/go-common/http/metrics"
 	"github.com/clambin/go-common/http/roundtripper"
 	"github.com/clambin/mediaclients/prowlarr"
@@ -25,7 +26,7 @@ type ProwlarrClient interface {
 	GetApiV1IndexerstatsWithResponse(ctx context.Context, params *prowlarr.GetApiV1IndexerstatsParams, reqEditors ...prowlarr.RequestEditorFn) (*prowlarr.GetApiV1IndexerstatsResponse, error)
 }
 
-func New(url, apiKey string, logger *slog.Logger) *collectorbreaker.CBCollector {
+func New(url, apiKey string, logger *slog.Logger) (*collectorbreaker.CBCollector, error) {
 	c := Collector{
 		metrics: newMetrics(url),
 		tpMetrics: metrics.NewRequestMetrics(metrics.Options{
@@ -55,11 +56,10 @@ func New(url, apiKey string, logger *slog.Logger) *collectorbreaker.CBCollector 
 		prowlarr.WithHTTPClient(&http.Client{Transport: r}),
 	)
 	if err != nil {
-		// TODO
-		panic(err)
+		return nil, fmt.Errorf("error creating prowlarr client: %w", err)
 	}
 
-	return collectorbreaker.New("prowlarr", &c, logger)
+	return collectorbreaker.New("prowlarr", &c, logger), nil
 }
 
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {

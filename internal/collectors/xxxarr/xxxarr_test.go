@@ -173,9 +173,9 @@ mediamon_xxxarr_version{application="radarr",url="",version="foo"} 1
 			var c *collector_breaker.CBCollector
 			switch tt.collector {
 			case "sonarr":
-				c = NewSonarrCollector("", "", slog.Default())
+				c, _ = NewSonarrCollector("", "", slog.Default())
 			case "radarr":
-				c = NewRadarrCollector("", "", slog.Default())
+				c, _ = NewRadarrCollector("", "", slog.Default())
 			default:
 				t.Fatalf("invalid collector type: %s", tt.collector)
 			}

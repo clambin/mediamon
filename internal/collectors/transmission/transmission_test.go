@@ -14,7 +14,7 @@ import (
 )
 
 func TestCollector_Describe(t *testing.T) {
-	c := transmission.NewCollector("http://localhost:8888", slog.Default())
+	c, _ := transmission.NewCollector("http://localhost:8888", slog.Default())
 	ch := make(chan *prometheus.Desc)
 	go c.Describe(ch)
 
@@ -42,7 +42,7 @@ func TestCollector_Collect(t *testing.T) {
 	sessionArguments := transmissionrpc.SessionArguments{Version: constP("foo")}
 	g.EXPECT().SessionArgumentsGetAll(mock.Anything).Return(sessionArguments, nil)
 
-	c := transmission.NewCollector("", slog.Default())
+	c, _ := transmission.NewCollector("", slog.Default())
 	c.Collector.(*transmission.Collector).TransmissionClient = g
 
 	e := strings.NewReader(`

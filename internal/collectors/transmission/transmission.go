@@ -68,7 +68,7 @@ type Collector struct {
 var _ collectorBreaker.Collector = &Collector{}
 
 // NewCollector creates a new Collector
-func NewCollector(serverURL string, logger *slog.Logger) *collectorBreaker.CBCollector {
+func NewCollector(serverURL string, logger *slog.Logger) (*collectorBreaker.CBCollector, error) {
 	c := Collector{
 		url: serverURL,
 		metrics: metrics.NewRequestMetrics(metrics.Options{
@@ -80,18 +80,16 @@ func NewCollector(serverURL string, logger *slog.Logger) *collectorBreaker.CBCol
 
 	ep, err := url.Parse(serverURL)
 	if err != nil {
-		// TODO
-		panic(err)
+		return nil, fmt.Errorf("invalid transmission server URL %q: %w", serverURL, err)
 	}
 	c.TransmissionClient, err = transmissionrpc.New(ep, &transmissionrpc.Config{
 		CustomClient: &http.Client{Transport: roundtripper.New(roundtripper.WithRequestMetrics(c.metrics))},
 	})
 	if err != nil {
-		// TODO
-		panic(err)
+		return nil, fmt.Errorf("error creating transmission client: %w", err)
 	}
 
-	return collectorBreaker.New("transmission", &c, logger)
+	return collectorBreaker.New("transmission", &c, logger), nil
 }
 
 // Describe implements the prometheus.Collector interface
