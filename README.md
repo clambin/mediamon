@@ -1,9 +1,9 @@
 # mediamon
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/clambin/mediamon?color=green&label=Release&style=plastic)
-![Codecov](https://img.shields.io/codecov/c/gh/clambin/mediamon?style=plastic)
-![Build](https://github.com/clambin/mediamon/workflows/Build/badge.svg)
-![Go Report Card](https://goreportcard.com/badge/github.com/clambin/mediamon)
-![GitHub](https://img.shields.io/github/license/clambin/mediamon?style=plastic)
+[![release](https://img.shields.io/github/v/tag/clambin/mediamon?color=green&label=release&style=plastic)](https://github.com/clambin/mediamon/releases)
+[![codecov](https://img.shields.io/codecov/c/gh/clambin/mediamon?style=plastic)](https://app.codecov.io/gh/clambin/mediamon)
+[![build](https://github.com/clambin/mediamon/workflows/Build/badge.svg)](https://github.com/clambin/mediamon/actions/workflows/build.yaml)
+[![go report card](https://goreportcard.com/badge/github.com/clambin/mediamon/v2)](https://goreportcard.com/report/github.com/clambin/mediamon/v2)
+[![license](https://img.shields.io/github/license/clambin/mediamon?style=plastic)](LICENSE.md)
 
 Prometheus exporter for various media applications. Currently, supports Transmission, OpenVPN Client, Sonarr, Radarr, Prowlarr and Plex.
 
