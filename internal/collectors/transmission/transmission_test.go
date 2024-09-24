@@ -1,9 +1,9 @@
 package transmission_test
 
 import (
-	transmissionClient "github.com/clambin/mediaclients/transmission"
 	"github.com/clambin/mediamon/v2/internal/collectors/transmission"
 	"github.com/clambin/mediamon/v2/internal/collectors/transmission/mocks"
+	"github.com/hekmon/transmissionrpc/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -31,19 +31,19 @@ func TestCollector_Describe(t *testing.T) {
 }
 
 func TestCollector_Collect(t *testing.T) {
-	g := mocks.NewGetter(t)
-	var sessionStats transmissionClient.SessionStats
-	sessionStats.Arguments.ActiveTorrentCount = 1
-	sessionStats.Arguments.PausedTorrentCount = 2
-	sessionStats.Arguments.UploadSpeed = 25
-	sessionStats.Arguments.DownloadSpeed = 100
-	g.EXPECT().GetSessionStatistics(mock.Anything).Return(sessionStats, nil)
-	var sessionParameters transmissionClient.SessionParameters
-	sessionParameters.Arguments.Version = "foo"
-	g.EXPECT().GetSessionParameters(mock.Anything).Return(sessionParameters, nil)
+	g := mocks.NewTransmissionClient(t)
+	sessionStats := transmissionrpc.SessionStats{
+		ActiveTorrentCount: 1,
+		PausedTorrentCount: 2,
+		UploadSpeed:        25,
+		DownloadSpeed:      100,
+	}
+	g.EXPECT().SessionStats(mock.Anything).Return(sessionStats, nil)
+	sessionArguments := transmissionrpc.SessionArguments{Version: constP("foo")}
+	g.EXPECT().SessionArgumentsGetAll(mock.Anything).Return(sessionArguments, nil)
 
 	c := transmission.NewCollector("", slog.Default())
-	c.Collector.(*transmission.Collector).Transmission = g
+	c.Collector.(*transmission.Collector).TransmissionClient = g
 
 	e := strings.NewReader(`
 # HELP circuit_breaker_consecutive_errors consecutive errors
@@ -79,4 +79,8 @@ mediamon_transmission_upload_speed{url=""} 25
 mediamon_transmission_version{url="",version="foo"} 1
 `)
 	assert.NoError(t, testutil.CollectAndCompare(c, e))
+}
+
+func constP[T any](t T) *T {
+	return &t
 }

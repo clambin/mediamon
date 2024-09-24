@@ -13,7 +13,7 @@ packages:
       IPLocator:
   github.com/clambin/mediamon/v2/internal/collectors/transmission:
     interfaces:
-      Getter:
+      TransmissionClient:
   github.com/clambin/mediamon/v2/internal/collectors/xxxarr:
     interfaces:
       Client:
