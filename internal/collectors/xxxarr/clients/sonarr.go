@@ -54,9 +54,11 @@ func (s Sonarr) GetHealth(ctx context.Context) (map[string]int, error) {
 func (s Sonarr) GetCalendar(ctx context.Context, days int) ([]string, error) {
 	from := time.Now()
 	to := from.AddDate(0, 0, days)
+	yesVar := true
 	params := sonarr.GetApiV3CalendarParams{
-		Start: &from,
-		End:   &to,
+		Start:         &from,
+		End:           &to,
+		IncludeSeries: &yesVar,
 	}
 	resp, err := s.Client.GetApiV3CalendarWithResponse(ctx, &params)
 	if err != nil {
@@ -73,13 +75,9 @@ func (s Sonarr) GetCalendar(ctx context.Context, days int) ([]string, error) {
 	return calendar, err
 }
 
-func (s Sonarr) getEpisodeNameFromEpisodeResource(ctx context.Context, episode sonarr.EpisodeResource) (string, error) {
-	seriesIdResponse, err := s.Client.GetApiV3SeriesIdWithResponse(ctx, *episode.SeriesId, &sonarr.GetApiV3SeriesIdParams{})
-	if err != nil {
-		return "", fmt.Errorf("GetApiV3SeriesIdWithResponse: %w", err)
-	}
+func (s Sonarr) getEpisodeNameFromEpisodeResource(_ context.Context, episode sonarr.EpisodeResource) (string, error) {
 	return fmt.Sprintf("%s - S%02dE%02d - %s",
-		*seriesIdResponse.JSON200.Title,
+		*episode.Series.Title,
 		*episode.SeasonNumber,
 		*episode.EpisodeNumber,
 		*episode.Title,
@@ -89,11 +87,14 @@ func (s Sonarr) getEpisodeNameFromEpisodeResource(ctx context.Context, episode s
 func (s Sonarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
 	var page int32
 	pageSize := int32(100)
+	trueVar := true
 	var entries []QueuedItem
 	for {
 		params := sonarr.GetApiV3QueueParams{
-			Page:     &page,
-			PageSize: &pageSize,
+			Page:           &page,
+			PageSize:       &pageSize,
+			IncludeEpisode: &trueVar,
+			IncludeSeries:  &trueVar,
 		}
 		resp, err := s.Client.GetApiV3QueueWithResponse(ctx, &params)
 		if err != nil {
@@ -118,19 +119,11 @@ func (s Sonarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
 	return entries, nil
 }
 
-func (s Sonarr) getEpisodeNameFromQueueResource(ctx context.Context, episode sonarr.QueueResource) (string, error) {
-	seriesIdResponse, err := s.Client.GetApiV3SeriesIdWithResponse(ctx, *episode.SeriesId, &sonarr.GetApiV3SeriesIdParams{})
-	if err != nil {
-		return "", fmt.Errorf("GetApiV3SeriesIdWithResponse: %w", err)
-	}
-	episodeDetails, err := s.Client.GetApiV3EpisodeWithResponse(ctx, &sonarr.GetApiV3EpisodeParams{EpisodeIds: &[]int32{*episode.EpisodeId}})
-	if err != nil {
-		return "", fmt.Errorf("GetApiV3EpisodeWithResponse: %w", err)
-	}
+func (s Sonarr) getEpisodeNameFromQueueResource(_ context.Context, episode sonarr.QueueResource) (string, error) {
 	return fmt.Sprintf("%s - S%02dE%02d - %s",
-		*seriesIdResponse.JSON200.Title,
+		*episode.Series.Title,
 		*episode.SeasonNumber,
-		*(*episodeDetails.JSON200)[0].EpisodeNumber,
+		*episode.Episode.EpisodeNumber,
 		*episode.Title,
 	), nil
 }
