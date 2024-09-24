@@ -12,26 +12,28 @@ import (
 )
 
 func TestCollector(t *testing.T) {
-	p := mocks.NewClient(t)
-	p.EXPECT().GetIndexStats(context.Background()).Return(&prowlarr.IndexerStatsResource{
-		Indexers: &[]prowlarr.IndexerStatistics{{
-			IndexerId:             constP[int32](1),
-			IndexerName:           constP("foo"),
-			AverageResponseTime:   constP[int32](100),
-			NumberOfQueries:       constP[int32](10),
-			NumberOfFailedQueries: constP[int32](1),
-			NumberOfGrabs:         constP[int32](2),
-			NumberOfFailedGrabs:   constP[int32](1),
-		}},
-		UserAgents: &[]prowlarr.UserAgentStatistics{{
-			UserAgent:       constP("foo"),
-			NumberOfQueries: constP[int32](10),
-			NumberOfGrabs:   constP[int32](1),
-		}},
-	}, nil)
+	p := mocks.NewProwlarrClient(t)
+	p.EXPECT().
+		GetApiV1IndexerstatsWithResponse(context.Background(), (*prowlarr.GetApiV1IndexerstatsParams)(nil)).
+		Return(&prowlarr.GetApiV1IndexerstatsResponse{JSON200: &prowlarr.IndexerStatsResource{
+			Indexers: &[]prowlarr.IndexerStatistics{{
+				IndexerId:             constP[int32](1),
+				IndexerName:           constP("foo"),
+				AverageResponseTime:   constP[int32](100),
+				NumberOfQueries:       constP[int32](10),
+				NumberOfFailedQueries: constP[int32](1),
+				NumberOfGrabs:         constP[int32](2),
+				NumberOfFailedGrabs:   constP[int32](1),
+			}},
+			UserAgents: &[]prowlarr.UserAgentStatistics{{
+				UserAgent:       constP("foo"),
+				NumberOfQueries: constP[int32](10),
+				NumberOfGrabs:   constP[int32](1),
+			}}}}, nil).
+		Once()
 
 	c := New("http://localhost", "", slog.Default())
-	c.Collector.(*Collector).client = p
+	c.Collector.(*Collector).ProwlarrClient = p
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP mediamon_prowlarr_indexer_failed_grab_total Total number of failed grabs from this indexer

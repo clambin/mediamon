@@ -23,7 +23,4 @@ packages:
       SonarrClient:
   github.com/clambin/mediamon/v2/internal/collectors/prowlarr:
     interfaces:
-      Client:
-  github.com/clambin/mediamon/v2/internal/collectors/prowlarr/client:
-    interfaces:
       ProwlarrClient:
