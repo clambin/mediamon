@@ -62,17 +62,27 @@ Updated,Fri Dec 18 11:24:01 2020
 TCP/UDP read bytes,1024
 TCP/UDP write bytes,2048
 END`,
-			want: want{
-				err:   assert.NoError,
-				stats: bandwidthStats{read: 1024, written: 2048},
-			},
+			want: want{err: assert.NoError, stats: bandwidthStats{read: 1024, written: 2048}},
 		},
 		{
 			name:    "empty",
 			content: ``,
-			want: want{
-				err: assert.Error,
-			},
+			want:    want{err: assert.Error},
+		},
+		{
+			name:    "invalid line",
+			content: `TCP/UDP read bytes,1024,100`,
+			want:    want{err: assert.Error},
+		},
+		{
+			name:    "invalid value",
+			content: `TCP/UDP read bytes,102A`,
+			want:    want{err: assert.Error},
+		},
+		{
+			name:    "unknown line",
+			content: `foo`,
+			want:    want{err: assert.Error},
 		},
 		{
 			name: "no read bytes",
@@ -80,9 +90,7 @@ END`,
 Updated,Fri Dec 18 11:24:01 2020
 TCP/UDP write bytes,2048
 END`,
-			want: want{
-				err: assert.Error,
-			},
+			want: want{err: assert.Error},
 		},
 		{
 			name: "no write bytes",
@@ -90,17 +98,14 @@ END`,
 Updated,Fri Dec 18 11:24:01 2020
 TCP/UDP read bytes,1024
 END`,
-			want: want{
-				err: assert.Error,
-			},
+			want: want{err: assert.Error},
 		},
 	}
 
-	var c Collector
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			stats, err := c.readStats(strings.NewReader(tt.content))
+			stats, err := readStats(strings.NewReader(tt.content))
 			tt.want.err(t, err)
 			assert.Equal(t, tt.want.stats, stats)
 		})

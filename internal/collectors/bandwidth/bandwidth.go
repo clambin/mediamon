@@ -1,13 +1,15 @@
 package bandwidth
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"log/slog"
 	"os"
-	"regexp"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -59,44 +61,59 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	stats, err := c.getStats(c.Filename)
+	statusFile, err := os.Open(c.Filename)
+	var stats bandwidthStats
+	if err == nil {
+		stats, err = readStats(statusFile)
+		_ = statusFile.Close()
+	}
 	if err != nil {
 		c.logger.Error("failed to collect bandwidth metrics", "err", err)
 		return
 	}
+
 	ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(stats.read))
 	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
 }
 
-func (c *Collector) getStats(filename string) (bandwidthStats, error) {
-	statusFile, err := os.Open(filename)
+func readStats(r io.Reader) (bandwidthStats, error) {
+	values, err := readClientStatusFile(r)
 	if err != nil {
 		return bandwidthStats{}, err
 	}
-	defer func() { _ = statusFile.Close() }()
-
-	return c.readStats(statusFile)
+	var stats bandwidthStats
+	var ok bool
+	if stats.written, ok = values["TCP/UDP write bytes"]; !ok {
+		return bandwidthStats{}, errors.New("TCP/UDP write bytes not found")
+	}
+	if stats.read, ok = values["TCP/UDP read bytes"]; !ok {
+		return bandwidthStats{}, errors.New("TCP/UDP read bytes not found")
+	}
+	return stats, nil
 }
 
-var (
-	reRead  = regexp.MustCompile(`\nTCP/UDP read bytes,(\d+)\n`)
-	reWrite = regexp.MustCompile(`\nTCP/UDP write bytes,(\d+)\n`)
-)
+var ignoredLines = map[string]struct{}{"OpenVPN STATISTICS": {}, "END": {}}
 
-func (c *Collector) readStats(r io.Reader) (stats bandwidthStats, err error) {
-	content, _ := io.ReadAll(r)
-	body := string(content)
-	matches := reRead.FindStringSubmatch(body)
-	if matches == nil {
-		return bandwidthStats{}, fmt.Errorf("no TCP/UDP read field in status file")
+func readClientStatusFile(r io.Reader) (map[string]int64, error) {
+	values := make(map[string]int64)
+	s := bufio.NewScanner(r)
+	for s.Scan() {
+		line := s.Text()
+		if _, ok := ignoredLines[line]; ok {
+			continue
+		}
+		idx := strings.IndexByte(line, ',')
+		if idx == -1 {
+			return nil, fmt.Errorf("invalid line %q", line)
+		}
+		if line[:idx] == "Updated" {
+			continue
+		}
+		value, err := strconv.ParseInt(line[idx+1:], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value %q: %w", line[idx+1:], err)
+		}
+		values[line[:idx]] = value
 	}
-	stats.read, _ = strconv.ParseInt(matches[1], 10, 64)
-
-	matches = reWrite.FindStringSubmatch(body)
-	if matches == nil {
-		return bandwidthStats{}, fmt.Errorf("no TCP/UDP write field in status file")
-	}
-	stats.written, _ = strconv.ParseInt(matches[1], 10, 64)
-
-	return stats, nil
+	return values, nil
 }
