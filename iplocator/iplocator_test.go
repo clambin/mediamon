@@ -39,8 +39,8 @@ func TestClient_Locate(t *testing.T) {
 	}
 
 	s := testutils.TestServer{Paths: map[string]testutils.Path{
-		"/json/8.8.8.8":     {[]string{http.MethodGet}, http.StatusOK, []byte(`{ "status": "success", "Lon": -77.5, "Lat": 39.03 }`)},
-		"/json/192.168.0.1": {[]string{http.MethodGet}, http.StatusBadRequest, []byte(`{ "status": "fail", "message": "private range""}`)},
+		"/json/8.8.8.8":     {Methods: []string{http.MethodGet}, StatusCode: http.StatusOK, Body: []byte(`{ "status": "success", "Lon": -77.5, "Lat": 39.03 }`)},
+		"/json/192.168.0.1": {Methods: []string{http.MethodGet}, StatusCode: http.StatusBadRequest, Body: []byte(`{ "status": "fail", "message": "private range""}`)},
 	}}
 	ts := httptest.NewServer(&s)
 
