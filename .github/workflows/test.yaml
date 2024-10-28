@@ -5,7 +5,7 @@ on:
   push:
     branches-ignore:
       - master
-      - openapi
+      - refactor
 
 jobs:
   test:

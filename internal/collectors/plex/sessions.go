@@ -7,6 +7,7 @@ import (
 	"github.com/clambin/mediaclients/plex"
 	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/prometheus/client_golang/prometheus"
+	"iter"
 	"log/slog"
 	"math"
 	"strconv"
@@ -71,18 +72,12 @@ func (c sessionCollector) CollectE(ch chan<- prometheus.Metric) error {
 
 	var active, throttled, speed float64
 
-	for _, stats := range parseSessions(sessions) {
-		var lon, lat string
-		if stats.location != "lan" {
-			lon, lat = c.locateAddress(stats.address)
-		}
-
+	for _, stats := range c.plexSessions(sessions) {
 		ch <- prometheus.MustNewConstMetric(sessionMetric, prometheus.GaugeValue, stats.progress,
-			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat, stats.videoCodec, stats.audioCodec,
+			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, stats.longitude, stats.latitude, stats.videoCodec, stats.audioCodec,
 		)
-
 		ch <- prometheus.MustNewConstMetric(bandwidthMetric, prometheus.GaugeValue, float64(stats.bandwidth),
-			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, lon, lat, stats.videoCodec, stats.audioCodec,
+			c.url, stats.user, stats.player, stats.title, stats.videoMode, stats.location, stats.address, stats.longitude, stats.latitude, stats.videoCodec, stats.audioCodec,
 		)
 
 		if stats.videoMode == "transcode" {
@@ -114,6 +109,8 @@ type plexSession struct {
 	user       string
 	player     string
 	location   string
+	longitude  string
+	latitude   string
 	title      string
 	address    string
 	progress   float64
@@ -125,35 +122,42 @@ type plexSession struct {
 	videoCodec string
 }
 
-func parseSessions(sessions []plex.Session) map[string]plexSession {
-	output := make(map[string]plexSession)
+func (c sessionCollector) plexSessions(sessions []plex.Session) iter.Seq2[string, plexSession] {
+	return func(yield func(string, plexSession) bool) {
+		for _, session := range sessions {
+			videoCodecs := set.New[string]()
+			audioCodecs := set.New[string]()
+			for _, media := range session.Media {
+				videoCodecs.Add(media.VideoCodec)
+				audioCodecs.Add(media.AudioCodec)
+			}
+			progress := session.GetProgress()
+			if math.IsNaN(progress) {
+				progress = 0
+			}
 
-	for _, session := range sessions {
-		videoCodecs := set.New[string]()
-		audioCodecs := set.New[string]()
-		for _, media := range session.Media {
-			videoCodecs.Add(media.VideoCodec)
-			audioCodecs.Add(media.AudioCodec)
-		}
-		progress := session.GetProgress()
-		if math.IsNaN(progress) {
-			progress = 0
-		}
+			s := plexSession{
+				user:       session.User.Title,
+				player:     session.Player.Product,
+				location:   session.Session.Location,
+				title:      session.GetTitle(),
+				address:    session.Player.Address,
+				progress:   progress,
+				bandwidth:  session.Session.Bandwidth,
+				videoMode:  session.GetVideoMode(),
+				throttled:  session.TranscodeSession.Throttled,
+				speed:      session.TranscodeSession.Speed,
+				videoCodec: strings.Join(videoCodecs.List(), ","),
+				audioCodec: strings.Join(audioCodecs.List(), ","),
+			}
 
-		output[session.Session.ID] = plexSession{
-			user:       session.User.Title,
-			player:     session.Player.Product,
-			location:   session.Session.Location,
-			title:      session.GetTitle(),
-			address:    session.Player.Address,
-			progress:   progress,
-			bandwidth:  session.Session.Bandwidth,
-			videoMode:  session.GetVideoMode(),
-			throttled:  session.TranscodeSession.Throttled,
-			speed:      session.TranscodeSession.Speed,
-			videoCodec: strings.Join(videoCodecs.List(), ","),
-			audioCodec: strings.Join(audioCodecs.List(), ","),
+			if s.location != "lan" {
+				s.longitude, s.latitude = c.locateAddress(session.Player.Address)
+			}
+
+			if !yield(session.Session.ID, s) {
+				return
+			}
 		}
 	}
-	return output
 }

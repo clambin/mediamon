@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - openapi
+      - refactor
     paths-ignore:
       - 'assets/**'
 

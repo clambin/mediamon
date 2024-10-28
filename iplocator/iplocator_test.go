@@ -1,7 +1,7 @@
 package iplocator
 
 import (
-	"encoding/json"
+	"github.com/clambin/go-common/testutils"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -38,7 +38,10 @@ func TestClient_Locate(t *testing.T) {
 		},
 	}
 
-	s := server{responses: defaultResponses}
+	s := testutils.TestServer{Paths: map[string]testutils.Path{
+		"/json/8.8.8.8":     {[]string{http.MethodGet}, http.StatusOK, []byte(`{ "status": "success", "Lon": -77.5, "Lat": 39.03 }`)},
+		"/json/192.168.0.1": {[]string{http.MethodGet}, http.StatusBadRequest, []byte(`{ "status": "fail", "message": "private range""}`)},
+	}}
 	ts := httptest.NewServer(&s)
 
 	c := New(nil)
@@ -54,35 +57,9 @@ func TestClient_Locate(t *testing.T) {
 		})
 	}
 
-	assert.Equal(t, 3, s.calls)
+	assert.Equal(t, 2, s.TotalCalls())
 
 	ts.Close()
 	_, err := c.Locate("8.8.4.4")
 	assert.Error(t, err)
-}
-
-var defaultResponses = map[string]Location{
-	"/json/8.8.8.8": {
-		Status: "success",
-		Lon:    -77.5,
-		Lat:    39.03,
-	},
-	"/json/192.168.0.1": {
-		Status:  "fail",
-		Message: "private range",
-	},
-}
-
-type server struct {
-	calls     int
-	responses map[string]Location
-}
-
-func (s *server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	s.calls++
-	if resp, ok := s.responses[req.URL.Path]; ok {
-		_ = json.NewEncoder(w).Encode(resp)
-		return
-	}
-	http.Error(w, "not found", http.StatusNotFound)
 }

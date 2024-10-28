@@ -78,16 +78,15 @@ func (c *libraryCollector) reportLibraries() (map[string][]libraryEntry, error) 
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	if c.cache != nil && time.Since(c.age) < libraryRefreshInterval {
-		return *c.cache, nil
-	}
-
-	sizes, err := c.getLibraries()
-	if err == nil {
+	if c.cache == nil || time.Since(c.age) > libraryRefreshInterval {
+		sizes, err := c.getLibraries()
+		if err != nil {
+			return nil, err
+		}
 		c.cache = &sizes
 		c.age = time.Now()
 	}
-	return sizes, err
+	return *c.cache, nil
 }
 
 func (c *libraryCollector) getLibraries() (map[string][]libraryEntry, error) {
