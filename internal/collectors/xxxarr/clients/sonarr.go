@@ -83,7 +83,7 @@ func (s Sonarr) getEpisodeNameFromEpisodeResource(_ context.Context, episode son
 }
 
 func (s Sonarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
-	var page int32
+	page := int32(1)
 	pageSize := int32(100)
 	trueVar := true
 	var entries []QueuedItem

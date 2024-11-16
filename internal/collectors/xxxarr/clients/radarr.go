@@ -68,7 +68,7 @@ func (r Radarr) GetCalendar(ctx context.Context, days int) ([]string, error) {
 }
 
 func (r Radarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
-	var page int32
+	page := int32(1)
 	pageSize := int32(100)
 
 	var entries []QueuedItem

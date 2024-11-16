@@ -93,7 +93,7 @@ func TestRadarrGetQueue(t *testing.T) {
 			var resp = []radarr.GetApiV3QueueResponse{
 				{
 					JSON200: &radarr.QueueResourcePagingResource{
-						Page:         constP[int32](0),
+						Page:         constP[int32](1),
 						PageSize:     constP[int32](100),
 						TotalRecords: constP[int32](2),
 						Records:      &[]radarr.QueueResource{{Title: constP("movie 1"), Size: constP(100.0), Sizeleft: constP(25.0)}},
@@ -101,14 +101,14 @@ func TestRadarrGetQueue(t *testing.T) {
 				},
 				{
 					JSON200: &radarr.QueueResourcePagingResource{
-						Page:         constP[int32](1),
+						Page:         constP[int32](2),
 						PageSize:     constP[int32](100),
 						TotalRecords: constP[int32](2),
 						Records:      &[]radarr.QueueResource{{Title: constP("movie 2"), Size: constP(100.0), Sizeleft: constP(50.0)}},
 					},
 				},
 			}
-			return &resp[*params.Page], nil
+			return &resp[*params.Page-1], nil
 		}).
 		Twice()
 	resp, err := c.GetQueue(ctx)

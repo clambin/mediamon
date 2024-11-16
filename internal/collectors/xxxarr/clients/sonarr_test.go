@@ -115,7 +115,7 @@ func TestSonarrGetQueue(t *testing.T) {
 			var resp = []sonarr.GetApiV3QueueResponse{
 				{
 					JSON200: &sonarr.QueueResourcePagingResource{
-						Page:         constP[int32](0),
+						Page:         constP[int32](1),
 						PageSize:     constP[int32](100),
 						TotalRecords: constP[int32](2),
 						Records: &[]sonarr.QueueResource{
@@ -134,7 +134,7 @@ func TestSonarrGetQueue(t *testing.T) {
 				},
 				{
 					JSON200: &sonarr.QueueResourcePagingResource{
-						Page:         constP[int32](1),
+						Page:         constP[int32](2),
 						PageSize:     constP[int32](100),
 						TotalRecords: constP[int32](2),
 						Records: &[]sonarr.QueueResource{
@@ -152,7 +152,7 @@ func TestSonarrGetQueue(t *testing.T) {
 					},
 				},
 			}
-			return &resp[*params.Page], nil
+			return &resp[*params.Page-1], nil
 		}).
 		Twice()
 	resp, err := c.GetQueue(ctx)
