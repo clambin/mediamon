@@ -3,8 +3,8 @@ package transmission
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/go-common/http/metrics"
-	"github.com/clambin/go-common/http/roundtripper"
+	"github.com/clambin/go-common/httputils/metrics"
+	"github.com/clambin/go-common/httputils/roundtripper"
 	collectorBreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/hekmon/transmissionrpc/v3"
 	"github.com/prometheus/client_golang/prometheus"

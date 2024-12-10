@@ -8,7 +8,7 @@ import (
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"golang.org/x/exp/maps"
+	"maps"
 	"net/http"
 	"slices"
 	"testing"
@@ -83,7 +83,7 @@ func TestSonarrGetCalendar(t *testing.T) {
 			Series:        &sonarr.SeriesResource{Title: constP("series 2")},
 		},
 	}
-	allEpisodes := maps.Values(episodes)
+	allEpisodes := slices.Collect(maps.Values(episodes))
 	s.EXPECT().
 		GetApiV3CalendarWithResponse(ctx, mock.AnythingOfType("*sonarr.GetApiV3CalendarParams")).
 		Return(&sonarr.GetApiV3CalendarResponse{JSON200: &allEpisodes}, nil).

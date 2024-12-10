@@ -3,8 +3,8 @@ package prowlarr
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/go-common/http/metrics"
-	"github.com/clambin/go-common/http/roundtripper"
+	"github.com/clambin/go-common/httputils/metrics"
+	"github.com/clambin/go-common/httputils/roundtripper"
 	"github.com/clambin/mediaclients/prowlarr"
 	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
