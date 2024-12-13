@@ -5,7 +5,7 @@ go 1.23
 require (
 	github.com/clambin/breaker v0.4.0
 	github.com/clambin/go-common/charmer v0.2.0
-	github.com/clambin/go-common/httputils v0.1.0
+	github.com/clambin/go-common/httputils v0.1.1
 	github.com/clambin/go-common/set v0.4.3
 	github.com/clambin/go-common/testutils v0.3.0
 	github.com/clambin/mediaclients v0.7.0
