@@ -7,7 +7,7 @@ require (
 	github.com/clambin/go-common/charmer v0.2.0
 	github.com/clambin/go-common/httputils v0.1.1
 	github.com/clambin/go-common/set v0.4.3
-	github.com/clambin/go-common/testutils v0.3.0
+	github.com/clambin/go-common/testutils v0.4.1
 	github.com/clambin/mediaclients v0.7.0
 	github.com/hekmon/transmissionrpc/v3 v3.0.0
 	github.com/prometheus/client_golang v1.20.5
