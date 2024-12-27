@@ -3,7 +3,7 @@ module github.com/clambin/mediamon/v2
 go 1.23
 
 require (
-	github.com/clambin/breaker v0.4.0
+	github.com/clambin/breaker v0.5.0
 	github.com/clambin/go-common/charmer v0.2.0
 	github.com/clambin/go-common/httputils v0.1.2
 	github.com/clambin/go-common/set v0.4.3
