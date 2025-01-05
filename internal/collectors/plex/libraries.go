@@ -72,7 +72,7 @@ type libraryEntry struct {
 	size  int64
 }
 
-const libraryRefreshInterval = time.Hour
+const libraryRefreshInterval = 12 * time.Hour
 
 func (c *libraryCollector) reportLibraries() (map[string][]libraryEntry, error) {
 	c.lock.Lock()
