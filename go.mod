@@ -2,6 +2,8 @@ module github.com/clambin/mediamon/v2
 
 go 1.23
 
+toolchain go1.23.4
+
 require (
 	github.com/clambin/breaker v0.5.0
 	github.com/clambin/go-common/charmer v0.2.0

@@ -1,5 +1,4 @@
 name: Build
-
 on:
   push:
     branches:
@@ -7,7 +6,9 @@ on:
       - refactor
     paths-ignore:
       - 'assets/**'
-
+permissions:
+  contents: read
+  packages: write
 jobs:
   test:
     uses: clambin/workflows/.github/workflows/test.yaml@main
