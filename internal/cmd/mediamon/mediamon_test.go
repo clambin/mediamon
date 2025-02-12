@@ -1,7 +1,6 @@
 package mediamon
 
 import (
-	"context"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/spf13/viper"
@@ -14,9 +13,8 @@ import (
 )
 
 func TestExecute(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
 	RootCmd.Version = "ci/cd"
-	RootCmd.SetContext(ctx)
+	RootCmd.SetContext(t.Context())
 	RootCmd.SetArgs([]string{
 		"--config", "testdata/config.yaml",
 		"--openvpn.bandwidth.filename", "testdata/client.status",
@@ -43,8 +41,6 @@ openvpn_client_tcp_udp_write_bytes_total 1.882796878e+09
 		"openvpn_client_tcp_udp_read_bytes_total",
 		"openvpn_client_tcp_udp_write_bytes_total",
 	))
-
-	cancel()
 }
 
 func Test_createCollectors(t *testing.T) {
