@@ -2,12 +2,10 @@ module github.com/clambin/mediamon/v2
 
 go 1.24
 
-toolchain go1.24.0
-
 require (
 	github.com/clambin/breaker v0.5.1
 	github.com/clambin/go-common/charmer v0.2.0
-	github.com/clambin/go-common/httputils v0.2.0
+	github.com/clambin/go-common/httputils v0.3.0
 	github.com/clambin/go-common/set v0.5.0
 	github.com/clambin/go-common/testutils v0.5.0
 	github.com/clambin/mediaclients v0.12.0
@@ -23,7 +21,7 @@ require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/clambin/go-common/cache v0.7.1 // indirect
+	github.com/clambin/go-common/cache v0.8.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
