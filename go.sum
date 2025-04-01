@@ -16,8 +16,8 @@ github.com/clambin/go-common/httputils v0.2.0 h1:KlpB3DpzMJZqzDc11FsKeA60vEsHJyQ
 github.com/clambin/go-common/httputils v0.2.0/go.mod h1:wyBTLa017563geWBogq7ZYtIyzgxWks3cktdJReax1E=
 github.com/clambin/go-common/set v0.5.0 h1:BIisdR8LMje4ts+hKUmjgfvEbiK1741mbPCz4P7q72o=
 github.com/clambin/go-common/set v0.5.0/go.mod h1:u7nCKTzg7K2cMgXYvBOExhF2aNjP674wCs6B6z+mNHU=
-github.com/clambin/go-common/testutils v0.5.0 h1:kh/0kuBiFL2oeZJ3EgkRyQphqXQmQYqsS3z07a2R2AM=
-github.com/clambin/go-common/testutils v0.5.0/go.mod h1:bV0j8D4zhNkleCeluFKLBeLQ0L/dqkxbaR/joLn8kzg=
+github.com/clambin/go-common/testutils v0.6.0 h1:12XnB4C4qgxl/U0TF3/GpyrFLqDOxU3xXfF8pp94Yy8=
+github.com/clambin/go-common/testutils v0.6.0/go.mod h1:LEksddXdgSiq3C3yR5FhQNgNX/exEsa1vXV5mTAG9H4=
 github.com/clambin/mediaclients v0.12.0 h1:BPq2EgayPTspF+AOaFhTRbvdkJFtZzDEAM+yFmKqtXI=
 github.com/clambin/mediaclients v0.12.0/go.mod h1:F1xHkTrDOk7J/dDOEJMRMgdKHLD8p/0voGBqI7oEWxk=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
