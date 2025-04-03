@@ -1,8 +1,8 @@
 package mediamon
 
 import (
+	"codeberg.org/clambin/go-common/charmer"
 	"errors"
-	"github.com/clambin/go-common/charmer"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"

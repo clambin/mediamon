@@ -1,7 +1,7 @@
 package iplocator
 
 import (
-	"github.com/clambin/go-common/testutils"
+	"codeberg.org/clambin/go-common/testutils"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
