@@ -18,12 +18,10 @@ github.com/clambin/go-common/cache v0.8.0 h1:3EvO4/QD8P9gel4n9HqAIkO5VOYTFKYiQqh
 github.com/clambin/go-common/cache v0.8.0/go.mod h1:bVgKh3p1ijHFEWGm8JK0VHMo3zN1SSVlP4vzVKtzod4=
 github.com/clambin/go-common/httputils v0.3.0 h1:xb3e6//Y7EhQsmcfwcv/bwgsdXY2n/ztkivP0ePkbkg=
 github.com/clambin/go-common/httputils v0.3.0/go.mod h1:iYADavBTV6JOoDpUXNOLooRxdUM5TcA7UjNJ/uBEqXw=
-github.com/clambin/go-common/set v0.5.1 h1:Mp02RiEK1TmbxQ+hUILBGsVuvz0IzFZI64YnNYp6Qyk=
-github.com/clambin/go-common/set v0.5.1/go.mod h1:u7nCKTzg7K2cMgXYvBOExhF2aNjP674wCs6B6z+mNHU=
 github.com/clambin/go-common/testutils v0.6.0 h1:12XnB4C4qgxl/U0TF3/GpyrFLqDOxU3xXfF8pp94Yy8=
 github.com/clambin/go-common/testutils v0.6.0/go.mod h1:LEksddXdgSiq3C3yR5FhQNgNX/exEsa1vXV5mTAG9H4=
-github.com/clambin/mediaclients v0.12.0 h1:BPq2EgayPTspF+AOaFhTRbvdkJFtZzDEAM+yFmKqtXI=
-github.com/clambin/mediaclients v0.12.0/go.mod h1:F1xHkTrDOk7J/dDOEJMRMgdKHLD8p/0voGBqI7oEWxk=
+github.com/clambin/mediaclients v0.13.0 h1:kb4ZFW+04JkrqzBuIb3BTtc73gFWUfjfGEFTU6Lu3Do=
+github.com/clambin/mediaclients v0.13.0/go.mod h1:lkdTJYY04czkQNk0SNOLn4EtJRawb8yf6PVIl5WQodo=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
