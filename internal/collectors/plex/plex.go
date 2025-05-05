@@ -18,11 +18,11 @@ import (
 
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
-	versionCollector
-	sessionCollector
-	libraryCollector
-	metrics metrics.RequestMetrics
-	logger  *slog.Logger
+	versionCollector versionCollector
+	sessionCollector sessionCollector
+	libraryCollector libraryCollector
+	metrics          metrics.RequestMetrics
+	logger           *slog.Logger
 }
 
 type Getter interface {
@@ -64,7 +64,7 @@ func NewCollector(version, url, username, password string, logger *slog.Logger) 
 		},
 		sessionCollector: sessionCollector{
 			sessionGetter: p,
-			IPLocator: iplocator.New(&http.Client{
+			ipLocator: iplocator.New(&http.Client{
 				Transport: roundtripper.New(roundtripper.WithCache(roundtripper.CacheOptions{
 					DefaultExpiration: 24 * time.Hour,
 					CleanupInterval:   time.Hour,

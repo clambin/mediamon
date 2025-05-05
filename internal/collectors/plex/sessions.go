@@ -47,10 +47,10 @@ var (
 var _ collectorbreaker.Collector = sessionCollector{}
 
 type sessionCollector struct {
-	sessionGetter
-	IPLocator
-	url    string
-	logger *slog.Logger
+	sessionGetter sessionGetter
+	ipLocator     IPLocator
+	url           string
+	logger        *slog.Logger
 }
 
 type sessionGetter interface {
@@ -98,7 +98,7 @@ func (c sessionCollector) CollectE(ch chan<- prometheus.Metric) error {
 }
 
 func (c sessionCollector) locateAddress(address string) (lonAsString, latAsString string) {
-	if location, err := c.IPLocator.Locate(address); err == nil {
+	if location, err := c.ipLocator.Locate(address); err == nil {
 		lonAsString = strconv.FormatFloat(location.Lon, 'f', 2, 64)
 		latAsString = strconv.FormatFloat(location.Lat, 'f', 2, 64)
 	}

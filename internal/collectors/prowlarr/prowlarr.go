@@ -15,11 +15,11 @@ import (
 )
 
 type Collector struct {
-	ProwlarrClient
-	metrics      map[string]*prometheus.Desc
-	tpMetrics    metrics.RequestMetrics
-	cacheMetrics roundtripper.CacheMetrics
-	logger       *slog.Logger
+	ProwlarrClient ProwlarrClient
+	metrics        map[string]*prometheus.Desc
+	tpMetrics      metrics.RequestMetrics
+	cacheMetrics   roundtripper.CacheMetrics
+	logger         *slog.Logger
 }
 
 type ProwlarrClient interface {

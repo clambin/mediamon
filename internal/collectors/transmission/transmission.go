@@ -59,10 +59,10 @@ type TransmissionClient interface {
 
 // Collector presents Transmission statistics as Prometheus metrics
 type Collector struct {
-	TransmissionClient
-	url     string
-	metrics metrics.RequestMetrics
-	logger  *slog.Logger
+	TransmissionClient TransmissionClient
+	url                string
+	metrics            metrics.RequestMetrics
+	logger             *slog.Logger
 }
 
 var _ collectorBreaker.Collector = &Collector{}

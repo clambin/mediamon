@@ -91,7 +91,7 @@ func (c *libraryCollector) reportLibraries() (map[string][]libraryEntry, error) 
 
 func (c *libraryCollector) getLibraries() (map[string][]libraryEntry, error) {
 	ctx := context.Background()
-	libraries, err := c.libraryGetter.GetLibraries(ctx)
+	libraries, err := c.GetLibraries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GetLibraries: %w", err)
 	}

@@ -119,7 +119,7 @@ mediamon_plex_transcoder_speed{url="http://localhost:8080"} 21
 
 			c := sessionCollector{
 				sessionGetter: p,
-				IPLocator:     i,
+				ipLocator:     i,
 				url:           "http://localhost:8080",
 				logger:        slog.Default(),
 			}

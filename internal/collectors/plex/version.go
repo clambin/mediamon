@@ -19,9 +19,9 @@ var versionMetric = prometheus.NewDesc(
 var _ collectorbreaker.Collector = versionCollector{}
 
 type versionCollector struct {
-	identityGetter
-	url    string
-	logger *slog.Logger
+	identityGetter identityGetter
+	url            string
+	logger         *slog.Logger
 }
 
 type identityGetter interface {

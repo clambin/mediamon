@@ -16,7 +16,7 @@ func TestClient_Locate(t *testing.T) {
 	tests := []struct {
 		name    string
 		address string
-		want
+		want    want
 	}{
 		{
 			name:    "valid",

@@ -53,7 +53,7 @@ func TestCollector_readStats(t *testing.T) {
 	tests := []struct {
 		name    string
 		content string
-		want
+		want    want
 	}{
 		{
 			name: "valid",

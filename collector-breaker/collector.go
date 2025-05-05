@@ -52,7 +52,7 @@ func (c *CBCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *CBCollector) Collect(ch chan<- prometheus.Metric) {
 	_ = c.breaker.Do(func() (err error) {
-		if err = c.Collector.CollectE(ch); err != nil {
+		if err = c.CollectE(ch); err != nil {
 			c.logger.Warn("collection failed", "err", err)
 		}
 		return err
