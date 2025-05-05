@@ -2,8 +2,6 @@ module github.com/clambin/mediamon/v2
 
 go 1.24
 
-toolchain go1.24.0
-
 require (
 	codeberg.org/clambin/go-common/charmer v0.3.0
 	codeberg.org/clambin/go-common/set v0.6.0
