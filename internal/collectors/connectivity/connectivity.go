@@ -1,8 +1,8 @@
 package connectivity
 
 import (
-	"github.com/clambin/go-common/httputils/metrics"
-	"github.com/clambin/go-common/httputils/roundtripper"
+	"codeberg.org/clambin/go-common/httputils/metrics"
+	"codeberg.org/clambin/go-common/httputils/roundtripper"
 	"github.com/clambin/mediamon/v2/iplocator"
 	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"

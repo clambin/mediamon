@@ -1,8 +1,8 @@
 package plex
 
 import (
-	"github.com/clambin/go-common/httputils/metrics"
-	"github.com/clambin/go-common/httputils/roundtripper"
+	"codeberg.org/clambin/go-common/httputils/metrics"
+	"codeberg.org/clambin/go-common/httputils/roundtripper"
 	"github.com/clambin/mediaclients/plex"
 	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/clambin/mediamon/v2/iplocator"

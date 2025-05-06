@@ -1,10 +1,10 @@
 package xxxarr
 
 import (
+	"codeberg.org/clambin/go-common/httputils/metrics"
+	"codeberg.org/clambin/go-common/httputils/roundtripper"
 	"context"
 	"fmt"
-	"github.com/clambin/go-common/httputils/metrics"
-	"github.com/clambin/go-common/httputils/roundtripper"
 	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
 	"github.com/prometheus/client_golang/prometheus"

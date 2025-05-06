@@ -1,10 +1,10 @@
 package transmission
 
 import (
+	"codeberg.org/clambin/go-common/httputils/metrics"
+	"codeberg.org/clambin/go-common/httputils/roundtripper"
 	"context"
 	"fmt"
-	"github.com/clambin/go-common/httputils/metrics"
-	"github.com/clambin/go-common/httputils/roundtripper"
 	collectorBreaker "github.com/clambin/mediamon/v2/collector-breaker"
 	"github.com/hekmon/transmissionrpc/v3"
 	"github.com/prometheus/client_golang/prometheus"
