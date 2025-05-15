@@ -6,7 +6,7 @@ require (
 	codeberg.org/clambin/go-common/charmer v0.3.0
 	codeberg.org/clambin/go-common/httputils v0.3.1
 	codeberg.org/clambin/go-common/set v0.6.0
-	codeberg.org/clambin/go-common/testutils v0.6.0
+	codeberg.org/clambin/go-common/testutils v0.7.0
 	github.com/clambin/breaker v0.5.1
 	github.com/clambin/mediaclients v0.14.0
 	github.com/hekmon/transmissionrpc/v3 v3.0.0

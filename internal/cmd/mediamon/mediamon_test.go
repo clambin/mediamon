@@ -52,7 +52,7 @@ func Test_createCollectors(t *testing.T) {
 	v.Set("openvpn.connectivity.proxy", "http://proxy:8080")
 	v.Set("openvpn.bandwidth.filename", "/data/client.status")
 
-	collectors := createCollectors("ci/cd", v, slog.Default())
+	collectors := createCollectors("ci/cd", v, slog.New(slog.DiscardHandler))
 	assert.Len(t, collectors, 6)
 }
 

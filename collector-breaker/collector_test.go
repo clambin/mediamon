@@ -14,7 +14,7 @@ import (
 func TestCBCollector(t *testing.T) {
 	c := collector{metric: prometheus.NewDesc("foo", "", nil, nil)}
 	defaultConfiguration.OpenDuration = 500 * time.Millisecond
-	cbCollector := New("test", &c, slog.Default())
+	cbCollector := New("test", &c, slog.New(slog.DiscardHandler))
 
 	t.Run("circuit is closed: collection returns metrics", func(tt *testing.T) {
 		assert.NoError(tt, testutil.CollectAndCompare(
