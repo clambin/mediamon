@@ -1,10 +1,11 @@
 package collector_breaker
 
 import (
-	"github.com/clambin/breaker"
-	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"time"
+
+	"codeberg.org/clambin/breaker"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Collector interface {

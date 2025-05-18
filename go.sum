@@ -1,3 +1,5 @@
+codeberg.org/clambin/breaker v0.5.2 h1:GqmdS+9dYKnndOP0J3BP6jvUxyuY/yZLdUicvHIboMY=
+codeberg.org/clambin/breaker v0.5.2/go.mod h1:61O85J74NtwyUv+Awcx6mXRuld8VAINDUH/TLE3kOdU=
 codeberg.org/clambin/go-common/cache v0.9.0 h1:hyhVIR2hHqnjR4rH2KfzgixSyKwMIum7OEyCu1LJG3U=
 codeberg.org/clambin/go-common/cache v0.9.0/go.mod h1:/YVsYU5cQsyLqiNT4J/XNJllqM6ll975M/YsznARLIw=
 codeberg.org/clambin/go-common/charmer v0.3.0 h1:MGsCgIWchgGfCCcTgniJirttHG1n26PLeGhQXsN26NQ=
@@ -16,8 +18,6 @@ github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6r
 github.com/bmatcuk/doublestar v1.1.1/go.mod h1:UD6OnuiIn0yFxxA2le/rnRU1G4RaI4UvFv1sNto9p6w=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
-github.com/clambin/breaker v0.5.1 h1:4MLv+nD54S3JwTG6X76nanANyp7TYZb9JkcCO2Rtyvg=
-github.com/clambin/breaker v0.5.1/go.mod h1:VwgjKUbxMeBO4VXa+W5fEJ5Xoj/Z9PA0usXK2PtcFLQ=
 github.com/clambin/mediaclients v0.14.0 h1:RYRE3RVrue3ac3Vcodblv+Ktj7dfkZvK3Uv4Z/gNCBk=
 github.com/clambin/mediaclients v0.14.0/go.mod h1:lkdTJYY04czkQNk0SNOLn4EtJRawb8yf6PVIl5WQodo=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
