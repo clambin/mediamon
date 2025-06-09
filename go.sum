@@ -8,8 +8,8 @@ codeberg.org/clambin/go-common/httputils v0.3.1 h1:nT4ybMRQjHEp6DMXBM6ishbDxw7H3
 codeberg.org/clambin/go-common/httputils v0.3.1/go.mod h1:BWApcqGyJXbNre+PUwupX2OQOuHutpLuNjHwguLp3qc=
 codeberg.org/clambin/go-common/set v0.6.0 h1:R+Pe98XsmW3sdMtBZ/G/FKsgeeynhbqoCTrL+pGApUQ=
 codeberg.org/clambin/go-common/set v0.6.0/go.mod h1:PRd4gka5V+Tn3BmUkXkEjUGlEsLjCqKOFjG1inc+Zpc=
-codeberg.org/clambin/go-common/testutils v0.7.0 h1:zF7CNrm6anw+Imc4cAEa0mhQuZT/hcnjcoKLjNpQr5M=
-codeberg.org/clambin/go-common/testutils v0.7.0/go.mod h1:9tB1/HAyA9ypRrY/nCB1uCs/xXbArm/XOtLbUhD0W6g=
+codeberg.org/clambin/go-common/testutils v0.7.2 h1:6dwCCfhCRbUXPxwBtVMg3/Pi7wV2mS9ZN2ExUCtI11A=
+codeberg.org/clambin/go-common/testutils v0.7.2/go.mod h1:9tB1/HAyA9ypRrY/nCB1uCs/xXbArm/XOtLbUhD0W6g=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0 h1:axGnT1gRIfimI7gJifB699GoE/oq+F2MU7Dml6nw9rQ=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0/go.mod h1:lvDnEdqiQrp0O42VQGgmlKpxL1AP2+08jFMw88y4klk=
