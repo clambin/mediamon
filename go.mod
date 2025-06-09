@@ -5,7 +5,7 @@ go 1.24
 require (
 	codeberg.org/clambin/breaker v0.5.2
 	codeberg.org/clambin/go-common/charmer v0.3.0
-	codeberg.org/clambin/go-common/httputils v0.3.1
+	codeberg.org/clambin/go-common/httputils v0.3.2
 	codeberg.org/clambin/go-common/set v0.6.0
 	codeberg.org/clambin/go-common/testutils v0.7.0
 	github.com/clambin/mediaclients v0.14.0
@@ -14,7 +14,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/sync v0.14.0
+	golang.org/x/sync v0.15.0
 )
 
 require (
