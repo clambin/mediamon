@@ -1,26 +1,28 @@
-with-expecter: true
-filename: "{{.InterfaceName}}.go"
-dir: "{{.InterfaceDir}}/mocks"
-mockname: "{{.InterfaceName}}"
-outpkg: "mocks"
+dir: '{{.InterfaceDir}}/mocks'
+structname: '{{.InterfaceName}}'
+pkgname: mocks
+filename: mocks.go
+template: testify
+template-data:
+  unroll-variadic: true
 packages:
   github.com/clambin/mediamon/v2/internal/collectors/connectivity:
     interfaces:
-      Locator:
+      Locator: {}
   github.com/clambin/mediamon/v2/internal/collectors/plex:
     interfaces:
-      Getter:
-      IPLocator:
-  github.com/clambin/mediamon/v2/internal/collectors/transmission:
-    interfaces:
-      TransmissionClient:
-  github.com/clambin/mediamon/v2/internal/collectors/xxxarr:
-    interfaces:
-      Client:
-  github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients:
-    interfaces:
-      RadarrClient:
-      SonarrClient:
+      Getter: {}
+      IPLocator: {}
   github.com/clambin/mediamon/v2/internal/collectors/prowlarr:
     interfaces:
-      ProwlarrClient:
+      ProwlarrClient: {}
+  github.com/clambin/mediamon/v2/internal/collectors/transmission:
+    interfaces:
+      TransmissionClient: {}
+  github.com/clambin/mediamon/v2/internal/collectors/xxxarr:
+    interfaces:
+      Client: {}
+  github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients:
+    interfaces:
+      RadarrClient: {}
+      SonarrClient: {}
