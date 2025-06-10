@@ -5,6 +5,7 @@ on:
     branches-ignore:
       - master
       - refactor
+  workflow_call:
 permissions:
   contents: read
 jobs:

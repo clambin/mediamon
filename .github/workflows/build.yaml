@@ -11,13 +11,10 @@ permissions:
   packages: write
 jobs:
   test:
-    uses: clambin/workflows/.github/workflows/test.yaml@main
-    secrets:
-      codecov-token: ${{ secrets.CODECOV_TOKEN }}
+    uses: ./.github/workflows/test.yaml
   build:
     needs:
       - test
     uses: clambin/workflows/.github/workflows/build.yaml@main
     with:
       image: ghcr.io/clambin/mediamon
-      dockerfile: Dockerfile
