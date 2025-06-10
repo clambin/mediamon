@@ -4,8 +4,8 @@ codeberg.org/clambin/go-common/cache v0.9.0 h1:hyhVIR2hHqnjR4rH2KfzgixSyKwMIum7O
 codeberg.org/clambin/go-common/cache v0.9.0/go.mod h1:/YVsYU5cQsyLqiNT4J/XNJllqM6ll975M/YsznARLIw=
 codeberg.org/clambin/go-common/charmer v0.3.0 h1:MGsCgIWchgGfCCcTgniJirttHG1n26PLeGhQXsN26NQ=
 codeberg.org/clambin/go-common/charmer v0.3.0/go.mod h1:nK6y2sL2AasTxdBjwtAOM9NKv1YNiR1Yutgm/wVquo0=
-codeberg.org/clambin/go-common/httputils v0.3.1 h1:nT4ybMRQjHEp6DMXBM6ishbDxw7H3EJt3LfCKq7CVL0=
-codeberg.org/clambin/go-common/httputils v0.3.1/go.mod h1:BWApcqGyJXbNre+PUwupX2OQOuHutpLuNjHwguLp3qc=
+codeberg.org/clambin/go-common/httputils v0.3.2 h1:56HHoxh16Pvc5o5BGMYSP38fXQ9Pch7YUlc7JW635Lg=
+codeberg.org/clambin/go-common/httputils v0.3.2/go.mod h1:j+My70qma8F90g6IwgdH0IaYGUKo5KP2RaDCei5I25c=
 codeberg.org/clambin/go-common/set v0.6.0 h1:R+Pe98XsmW3sdMtBZ/G/FKsgeeynhbqoCTrL+pGApUQ=
 codeberg.org/clambin/go-common/set v0.6.0/go.mod h1:PRd4gka5V+Tn3BmUkXkEjUGlEsLjCqKOFjG1inc+Zpc=
 codeberg.org/clambin/go-common/testutils v0.7.0 h1:zF7CNrm6anw+Imc4cAEa0mhQuZT/hcnjcoKLjNpQr5M=
