@@ -8,7 +8,7 @@ ARG VERSION
 ENV VERSION=$VERSION
 
 WORKDIR /app/
-ADD build .
+ADD . .
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build \
     -ldflags="-X main.version=$VERSION" \
