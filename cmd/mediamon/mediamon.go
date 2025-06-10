@@ -3,7 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log/slog"
+	"net/http"
+	_ "net/http/pprof"
 	"net/url"
+	"os"
 	"os/signal"
 	"syscall"
 
@@ -18,12 +22,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"log/slog"
-	"net/http"
-	"os"
-
-	_ "net/http/pprof"
 )
 
 var (

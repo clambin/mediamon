@@ -6,6 +6,13 @@ on:
       - bld
     paths-ignore:
       - 'assets/**'
+  workflow_call:
+    inputs:
+      tags:
+        type: string
+        required: false
+        default: |
+          type=sha
 permissions:
   contents: read
   packages: write
@@ -18,3 +25,4 @@ jobs:
     uses: clambin/workflows/.github/workflows/build.yaml@docker
     with:
       image: ghcr.io/clambin/mediamon
+      tags: ${{ inputs.tags }}
