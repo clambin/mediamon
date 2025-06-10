@@ -1,7 +1,10 @@
-package mediamon
+package main
 
 import (
 	"fmt"
+	"log/slog"
+	"net/url"
+
 	"github.com/clambin/mediamon/v2/internal/collectors/bandwidth"
 	"github.com/clambin/mediamon/v2/internal/collectors/connectivity"
 	"github.com/clambin/mediamon/v2/internal/collectors/plex"
@@ -10,8 +13,6 @@ import (
 	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
-	"log/slog"
-	"net/url"
 )
 
 type constructor struct {

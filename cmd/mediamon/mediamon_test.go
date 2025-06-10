@@ -1,26 +1,27 @@
-package mediamon
+package main
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 	"log/slog"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestExecute(t *testing.T) {
-	RootCmd.Version = "ci/cd"
-	RootCmd.SetContext(t.Context())
-	RootCmd.SetArgs([]string{
+	rootCmd.Version = "ci/cd"
+	rootCmd.SetContext(t.Context())
+	rootCmd.SetArgs([]string{
 		"--config", "testdata/config.yaml",
 		"--openvpn.bandwidth.filename", "testdata/client.status",
 	})
 
-	go func() { _ = RootCmd.Execute() }()
+	go func() { _ = rootCmd.Execute() }()
 
 	assert.Eventually(t, func() bool {
 		_, err := http.Get("http://127.0.0.1:9090/metrics")

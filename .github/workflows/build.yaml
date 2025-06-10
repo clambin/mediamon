@@ -20,4 +20,4 @@ jobs:
     uses: clambin/workflows/.github/workflows/build.yaml@main
     with:
       image: ghcr.io/clambin/mediamon
-      dockerfile: build/Dockerfile
+      dockerfile: Dockerfile
