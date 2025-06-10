@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-      - refactor
+      - bld
     paths-ignore:
       - 'assets/**'
 permissions:
