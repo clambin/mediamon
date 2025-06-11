@@ -25,4 +25,4 @@ jobs:
     uses: clambin/workflows/.github/workflows/build.yaml@docker
     with:
       image: ghcr.io/clambin/mediamon
-      tags: "${{ inputs.foo || 'type=sha' }}"
+      tags: "${{ inputs.tags || 'type=sha' }}"
