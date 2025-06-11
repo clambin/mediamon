@@ -7,16 +7,10 @@ permissions:
   contents: write
   packages: write
 jobs:
-  test:
-    uses: ./.github/workflows/test.yaml
   build:
-    needs:
-      - test
-    uses: clambin/workflows/.github/workflows/build.yaml@main
+    uses: ./.github/workflows/build.yaml
     with:
-      image: ghcr.io/clambin/mediamon
-      tags: |
-        type=semver,pattern={{version}}
+      tags: "type=semver,pattern={{version}}"
   release:
     needs:
       - build
