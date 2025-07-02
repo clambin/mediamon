@@ -8,7 +8,7 @@ require (
 	codeberg.org/clambin/go-common/httputils v0.3.2
 	codeberg.org/clambin/go-common/set v0.6.0
 	codeberg.org/clambin/go-common/testutils v0.7.2
-	github.com/clambin/mediaclients v0.15.1
+	github.com/clambin/mediaclients v0.16.0
 	github.com/hekmon/transmissionrpc/v3 v3.0.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/spf13/cobra v1.9.1
