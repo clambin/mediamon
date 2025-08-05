@@ -1,5 +1,5 @@
-codeberg.org/clambin/breaker v0.5.2 h1:GqmdS+9dYKnndOP0J3BP6jvUxyuY/yZLdUicvHIboMY=
-codeberg.org/clambin/breaker v0.5.2/go.mod h1:61O85J74NtwyUv+Awcx6mXRuld8VAINDUH/TLE3kOdU=
+codeberg.org/clambin/breaker v0.5.3 h1:+3uM4CeIeZ6lRiVOm+1kkpSvTSrqbEILvAm9eLY1YlQ=
+codeberg.org/clambin/breaker v0.5.3/go.mod h1:61O85J74NtwyUv+Awcx6mXRuld8VAINDUH/TLE3kOdU=
 codeberg.org/clambin/go-common/cache v0.9.0 h1:hyhVIR2hHqnjR4rH2KfzgixSyKwMIum7OEyCu1LJG3U=
 codeberg.org/clambin/go-common/cache v0.9.0/go.mod h1:/YVsYU5cQsyLqiNT4J/XNJllqM6ll975M/YsznARLIw=
 codeberg.org/clambin/go-common/charmer v0.3.0 h1:MGsCgIWchgGfCCcTgniJirttHG1n26PLeGhQXsN26NQ=

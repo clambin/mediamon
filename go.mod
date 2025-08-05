@@ -3,7 +3,7 @@ module github.com/clambin/mediamon/v2
 go 1.24
 
 require (
-	codeberg.org/clambin/breaker v0.5.2
+	codeberg.org/clambin/breaker v0.5.3
 	codeberg.org/clambin/go-common/charmer v0.3.0
 	codeberg.org/clambin/go-common/httputils v0.3.2
 	codeberg.org/clambin/go-common/set v0.6.0
