@@ -11,5 +11,7 @@ permissions:
 jobs:
   test:
     uses: clambin/workflows/.github/workflows/test.yaml@docker
+    with:
+      go-version: '1.25'
     secrets:
       codecov-token: ${{ secrets.CODECOV_TOKEN }}
