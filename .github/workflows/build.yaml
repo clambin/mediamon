@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-      - bld
+      - refactor
     paths-ignore:
       - 'assets/**'
   workflow_call:

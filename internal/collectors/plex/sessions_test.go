@@ -1,16 +1,14 @@
 package plex
 
 import (
-	"github.com/clambin/mediaclients/plex"
-	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
-	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	"github.com/clambin/mediamon/v2/iplocator"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"log/slog"
 	"strings"
 	"testing"
+
+	"github.com/clambin/mediaclients/plex"
+	"github.com/clambin/mediamon/v2/iplocator"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSessionsCollector_Collector(t *testing.T) {
@@ -108,25 +106,13 @@ mediamon_plex_transcoder_speed{url="http://localhost:8080"} 21
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			p := mocks.NewGetter(t)
-			p.EXPECT().GetSessions(mock.Anything).Return([]plex.Session{tt.session}, nil).Once()
-			i := mocks.NewIPLocator(t)
-			if tt.session.Session.Location == "wan" {
-				i.EXPECT().Locate("1.2.3.4").Return(iplocator.Location{Lon: 10, Lat: 20}, nil).Once()
-			}
-
 			c := sessionCollector{
-				sessionGetter: p,
-				ipLocator:     i,
+				sessionGetter: fakeGetter{sessions: []plex.Session{tt.session}},
+				ipLocator:     fakeIPLocator{ips: map[string]iplocator.Location{"1.2.3.4": {Lon: 10, Lat: 20}}},
 				url:           "http://localhost:8080",
-				logger:        slog.Default(),
+				logger:        slog.New(slog.DiscardHandler),
 			}
-			assert.NoError(t, testutil.CollectAndCompare(
-				collectorbreaker.PassThroughCollector{Collector: c},
-				strings.NewReader(tt.want),
-			))
+			assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(tt.want)))
 		})
 	}
 }

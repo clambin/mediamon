@@ -2,11 +2,10 @@ package plex
 
 import (
 	"context"
-	"fmt"
-	"github.com/clambin/mediaclients/plex"
-	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
-	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
+
+	"github.com/clambin/mediaclients/plex"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var versionMetric = prometheus.NewDesc(
@@ -16,12 +15,10 @@ var versionMetric = prometheus.NewDesc(
 	nil,
 )
 
-var _ collectorbreaker.Collector = versionCollector{}
-
 type versionCollector struct {
 	identityGetter identityGetter
-	url            string
 	logger         *slog.Logger
+	url            string
 }
 
 type identityGetter interface {
@@ -32,12 +29,11 @@ func (c versionCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- versionMetric
 }
 
-func (c versionCollector) CollectE(ch chan<- prometheus.Metric) error {
+func (c versionCollector) Collect(ch chan<- prometheus.Metric) {
 	identity, err := c.identityGetter.GetIdentity(context.Background())
 	if err != nil {
-		return fmt.Errorf("identity: %w", err)
+		c.logger.Error("failed to get identity", "err", err)
+		return
 	}
-
 	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), identity.Version, c.url)
-	return nil
 }

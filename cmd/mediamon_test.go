@@ -54,7 +54,7 @@ func Test_createCollectors(t *testing.T) {
 	v.Set("openvpn.bandwidth.filename", "/data/client.status")
 
 	collectors := createCollectors("ci/cd", v, slog.New(slog.DiscardHandler))
-	assert.Len(t, collectors, 6)
+	assert.Len(t, collectors, 12)
 }
 
 func Test_parseProxy(t *testing.T) {

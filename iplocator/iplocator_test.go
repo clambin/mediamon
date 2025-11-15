@@ -1,11 +1,12 @@
 package iplocator
 
 import (
-	"codeberg.org/clambin/go-common/testutils"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"codeberg.org/clambin/go-common/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestClient_Locate(t *testing.T) {

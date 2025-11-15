@@ -1,17 +1,15 @@
 package transmission
 
 import (
-	"codeberg.org/clambin/go-common/httputils/metrics"
-	"codeberg.org/clambin/go-common/httputils/roundtripper"
 	"context"
 	"fmt"
-	collectorBreaker "github.com/clambin/mediamon/v2/collector-breaker"
-	"github.com/hekmon/transmissionrpc/v3"
-	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"sync"
+
+	"github.com/hekmon/transmissionrpc/v3"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -51,30 +49,21 @@ var (
 	)
 )
 
-// TransmissionClient interface
 type TransmissionClient interface {
 	SessionArgumentsGetAll(ctx context.Context) (sessionArgs transmissionrpc.SessionArguments, err error)
 	SessionStats(ctx context.Context) (stats transmissionrpc.SessionStats, err error)
 }
 
-// Collector presents Transmission statistics as Prometheus metrics
 type Collector struct {
-	TransmissionClient TransmissionClient
-	url                string
-	metrics            metrics.RequestMetrics
+	transmissionClient TransmissionClient
 	logger             *slog.Logger
+	url                string
 }
 
-var _ collectorBreaker.Collector = &Collector{}
-
 // NewCollector creates a new Collector
-func NewCollector(serverURL string, logger *slog.Logger) (*collectorBreaker.CBCollector, error) {
+func NewCollector(httpClient *http.Client, serverURL string, logger *slog.Logger) (prometheus.Collector, error) {
 	c := Collector{
-		url: serverURL,
-		metrics: metrics.NewRequestMetrics(metrics.Options{
-			Namespace:   "mediamon",
-			ConstLabels: prometheus.Labels{"application": "transmission"},
-		}),
+		url:    serverURL,
 		logger: logger,
 	}
 
@@ -82,53 +71,46 @@ func NewCollector(serverURL string, logger *slog.Logger) (*collectorBreaker.CBCo
 	if err != nil {
 		return nil, fmt.Errorf("invalid transmission server URL %q: %w", serverURL, err)
 	}
-	c.TransmissionClient, err = transmissionrpc.New(ep, &transmissionrpc.Config{
-		CustomClient: &http.Client{Transport: roundtripper.New(roundtripper.WithRequestMetrics(c.metrics))},
-	})
+	c.transmissionClient, err = transmissionrpc.New(ep, &transmissionrpc.Config{CustomClient: httpClient})
 	if err != nil {
 		return nil, fmt.Errorf("error creating transmission client: %w", err)
 	}
 
-	return collectorBreaker.New("transmission", &c, logger), nil
+	return &c, nil
 }
 
-// Describe implements the prometheus.Collector interface
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- versionMetric
 	ch <- activeTorrentsMetric
 	ch <- pausedTorrentsMetric
 	ch <- downloadSpeedMetric
 	ch <- uploadSpeedMetric
-	c.metrics.Describe(ch)
 }
 
-// CollectE implements the prometheus.Collector interface
-func (c *Collector) CollectE(ch chan<- prometheus.Metric) error {
-	var g errgroup.Group
-	g.Go(func() error { return c.collectVersion(ch) })
-	g.Go(func() error { return c.collectStats(ch) })
-	err := g.Wait()
-	c.metrics.Collect(ch)
-	return err
+func (c *Collector) Collect(ch chan<- prometheus.Metric) {
+	var g sync.WaitGroup
+	g.Go(func() { c.collectVersion(ch) })
+	g.Go(func() { c.collectStats(ch) })
+	g.Wait()
 }
 
-func (c *Collector) collectVersion(ch chan<- prometheus.Metric) error {
-	args, err := c.TransmissionClient.SessionArgumentsGetAll(context.Background())
+func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
+	args, err := c.transmissionClient.SessionArgumentsGetAll(context.Background())
 	if err != nil {
-		return fmt.Errorf("error getting session parameters: %w", err)
+		c.logger.Error("error getting session parameters", "err", err)
+		return
 	}
 	ch <- prometheus.MustNewConstMetric(versionMetric, prometheus.GaugeValue, float64(1), *args.Version, c.url)
-	return nil
 }
 
-func (c *Collector) collectStats(ch chan<- prometheus.Metric) error {
-	stats, err := c.TransmissionClient.SessionStats(context.Background())
+func (c *Collector) collectStats(ch chan<- prometheus.Metric) {
+	stats, err := c.transmissionClient.SessionStats(context.Background())
 	if err != nil {
-		return fmt.Errorf("error getting session statistics: %w", err)
+		c.logger.Error("error getting session statistics", "err", err)
+		return
 	}
 	ch <- prometheus.MustNewConstMetric(activeTorrentsMetric, prometheus.GaugeValue, float64(stats.ActiveTorrentCount), c.url)
 	ch <- prometheus.MustNewConstMetric(pausedTorrentsMetric, prometheus.GaugeValue, float64(stats.PausedTorrentCount), c.url)
 	ch <- prometheus.MustNewConstMetric(downloadSpeedMetric, prometheus.GaugeValue, float64(stats.DownloadSpeed), c.url)
 	ch <- prometheus.MustNewConstMetric(uploadSpeedMetric, prometheus.GaugeValue, float64(stats.UploadSpeed), c.url)
-	return nil
 }
