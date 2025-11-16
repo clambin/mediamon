@@ -3,8 +3,6 @@ package plex
 import (
 	"log/slog"
 	"net/http"
-	"net/url"
-	"strings"
 	"sync"
 
 	"github.com/clambin/mediaclients/plex"
@@ -14,10 +12,10 @@ import (
 
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
-	versionCollector versionCollector
-	sessionCollector sessionCollector
 	libraryCollector prometheus.Collector
 	logger           *slog.Logger
+	sessionCollector sessionCollector
+	versionCollector versionCollector
 }
 
 type Getter interface {
@@ -55,21 +53,6 @@ func NewCollector(version, url, username, password string, httpClient *http.Clie
 		logger:           logger,
 	}
 	return &c
-}
-
-func chopPath(r *http.Request) *http.Request {
-	path := r.URL.Path
-	for _, prefix := range []string{"/library/metadata", "/library/sections"} {
-		if strings.HasPrefix(path, prefix) {
-			path = prefix
-			break
-		}
-	}
-
-	return &http.Request{
-		Method: r.Method,
-		URL:    &url.URL{Path: path},
-	}
 }
 
 // Describe implements the prometheus.Collector interface

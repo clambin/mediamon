@@ -3,7 +3,6 @@ package plex
 import (
 	"log/slog"
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -41,42 +40,4 @@ mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
 # TYPE mediamon_plex_version gauge
 mediamon_plex_version{url="http://localhost:8080",version="1.0"} 1
 `), "mediamon_plex_library_bytes", "mediamon_plex_library_count", "mediamon_plex_version"))
-}
-
-func Test_chopPath(t *testing.T) {
-	tests := []struct {
-		name string
-		path string
-		want string
-	}{
-		///library/metadata", "/library/sections
-		{
-			name: "unaltered",
-			path: "/healthz",
-			want: "/healthz",
-		},
-		{
-			name: "metadata",
-			path: "/library/metadata/123/details",
-			want: "/library/metadata",
-		},
-		{
-			name: "sections",
-			path: "/library/sections/123/details",
-			want: "/library/sections",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			out := chopPath(&http.Request{
-				Method: http.MethodPost,
-				URL:    &url.URL{Path: tt.path},
-			})
-			assert.Equal(t, http.MethodPost, out.Method)
-			assert.Equal(t, tt.want, out.URL.Path)
-		})
-	}
 }

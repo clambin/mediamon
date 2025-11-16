@@ -65,6 +65,7 @@ func (c *libraryCollector) Collect(ch chan<- prometheus.Metric) {
 	libraries, err := c.Measure(context.Background())
 	if err != nil {
 		c.logger.Error("fail to collect library metrics", "err", err)
+		return
 	}
 
 	for library, entries := range libraries {
@@ -83,24 +84,25 @@ type libraryEntry struct {
 }
 
 func (c *libraryCollector) getLibraries(ctx context.Context) (map[string][]libraryEntry, error) {
+	c.logger.Debug("refreshing library metrics")
 	libraries, err := c.GetLibraries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GetLibraries: %w", err)
 	}
 
 	result := make(map[string][]libraryEntry)
-	var sizes []libraryEntry
+	var entries []libraryEntry
 	for index := range libraries {
 		switch libraries[index].Type {
 		case "movie":
-			sizes, err = c.getMovieTotals(ctx, libraries[index].Key)
+			entries, err = c.getMovieTotals(ctx, libraries[index].Key)
 		case "show":
-			sizes, err = c.getShowTotals(ctx, libraries[index].Key)
+			entries, err = c.getShowTotals(ctx, libraries[index].Key)
 		}
 		if err != nil {
 			return nil, fmt.Errorf("getTotals (%s): %w", libraries[index].Type, err)
 		}
-		result[libraries[index].Title] = sizes
+		result[libraries[index].Title] = entries
 	}
 	return result, nil
 }
