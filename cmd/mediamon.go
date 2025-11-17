@@ -178,7 +178,7 @@ func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []pro
 		case "openvpn.bandwidth.filename":
 			collector = bandwidth.NewCollector(target, l)
 		case "openvpn.connectivity.proxy":
-			collector = connectivity.NewCollector(httpClient, v.GetDuration("openvpn.connectivity.interval"))
+			collector = connectivity.NewCollector(httpClient, v.GetDuration("openvpn.connectivity.interval"), l)
 		}
 		if err != nil {
 			l.Error("error creating collector", "err", err)

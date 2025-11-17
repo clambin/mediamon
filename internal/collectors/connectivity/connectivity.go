@@ -2,6 +2,7 @@ package connectivity
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -23,17 +24,23 @@ type Collector struct {
 	connection *measurer.Cached[float64]
 }
 
-func NewCollector(httpClient *http.Client, interval time.Duration) prometheus.Collector {
+func NewCollector(httpClient *http.Client, interval time.Duration, logger *slog.Logger) prometheus.Collector {
+	const target = "https://clients3.google.com/generate_204"
 	return &Collector{
 		connection: &measurer.Cached[float64]{
 			Interval: interval,
 			Do: func(ctx context.Context) (float64, error) {
-				req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://clients3.google.com/generate_204", nil)
+				logger.Debug("testing connectivity")
+				req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 				resp, err := httpClient.Do(req)
 				if err == nil {
 					_ = resp.Body.Close()
 				}
-				if err == nil && resp.StatusCode == 204 {
+				logger.Debug("connectivity test result", "err", err)
+				if err == nil {
+					logger.Debug("connectivity test response", "status", resp.StatusCode)
+				}
+				if err == nil && resp.StatusCode == http.StatusNoContent {
 					return 1, nil
 				}
 				return 0, nil

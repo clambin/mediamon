@@ -2,6 +2,7 @@ package connectivity
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 	"testing"
@@ -12,7 +13,7 @@ import (
 
 func TestCollector_Collect(t *testing.T) {
 	tp := fakeTransport{pass: true}
-	c := NewCollector(&http.Client{Transport: &tp}, 0)
+	c := NewCollector(&http.Client{Transport: &tp}, 0, slog.New(slog.DiscardHandler))
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP openvpn_client_status OpenVPN client status
