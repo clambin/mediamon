@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/clambin/mediamon/v2/internal/measurer"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
-	versionMeasureInterval = 15 * time.Minute
-	libraryMeasureInterval = 15 * time.Minute
+	versionMeasureInterval  = 15 * time.Minute
+	libraryMeasureInterval  = time.Hour
+	calendarMeasureInterval = 15 * time.Minute
 )
 
 type QueuedItem struct {
@@ -39,12 +40,13 @@ func WithToken(token string) func(ctx context.Context, req *http.Request) error 
 }
 
 type Collector struct {
-	client          Client
-	metrics         map[string]*prometheus.Desc
-	logger          *slog.Logger
-	application     string
-	versionMeasurer measurer.Cached[string]
-	libraryMeasurer measurer.Cached[Library]
+	client           Client
+	metrics          map[string]*prometheus.Desc
+	logger           *slog.Logger
+	application      string
+	versionMeasurer  measurer.Cached[string]
+	libraryMeasurer  measurer.Cached[Library]
+	calendarMeasurer measurer.Cached[[]string]
 }
 
 // Client presents a unified interface to Sonarr/Radarr clients
@@ -92,6 +94,12 @@ func newCollector(application, url string, client Client, logger *slog.Logger) *
 		Interval: libraryMeasureInterval,
 		Do:       func(ctx context.Context) (Library, error) { return c.client.GetLibrary(ctx) },
 	}
+	c.calendarMeasurer = measurer.Cached[[]string]{
+		Interval: calendarMeasureInterval,
+		Do: func(ctx context.Context) ([]string, error) {
+			return c.client.GetCalendar(ctx, 1)
+		},
+	}
 	return &c
 }
 
@@ -104,44 +112,46 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	var g sync.WaitGroup
-	g.Go(func() { c.collectVersion(ch) })
-	g.Go(func() { c.collectHealth(ch) })
-	g.Go(func() { c.collectCalendar(ch) })
-	g.Go(func() { c.collectQueue(ch) })
-	g.Go(func() { c.collectLibrary(ch) })
-	g.Wait()
+	var g errgroup.Group
+	g.Go(func() error { return c.collectVersion(ch) })
+	g.Go(func() error { return c.collectHealth(ch) })
+	g.Go(func() error { return c.collectCalendar(ch) })
+	g.Go(func() error { return c.collectQueue(ch) })
+	g.Go(func() error { return c.collectLibrary(ch) })
+	if err := g.Wait(); err != nil {
+		c.logger.Error("failed to collect metrics", "err", err)
+	}
 }
 
-func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
+func (c *Collector) collectVersion(ch chan<- prometheus.Metric) error {
 	version, err := c.versionMeasurer.Measure(context.Background())
 	if err != nil {
-		c.logger.Error("failed to get version", "err", err)
-		return
+		return fmt.Errorf("version: %w", err)
 	}
 	ch <- prometheus.MustNewConstMetric(c.metrics["version"], prometheus.GaugeValue, float64(1), version)
+	return nil
 }
 
-func (c *Collector) collectHealth(ch chan<- prometheus.Metric) {
+func (c *Collector) collectHealth(ch chan<- prometheus.Metric) error {
 	health, err := c.client.GetHealth(context.Background())
 	if err != nil {
-		c.logger.Error("failed to get health", "err", err)
-		return
+		return fmt.Errorf("health: %w", err)
 	}
 	for key, value := range health {
 		ch <- prometheus.MustNewConstMetric(c.metrics["health"], prometheus.GaugeValue, float64(value), key)
 	}
+	return nil
 }
 
-func (c *Collector) collectCalendar(ch chan<- prometheus.Metric) {
-	calendar, err := c.client.GetCalendar(context.Background(), 1)
+func (c *Collector) collectCalendar(ch chan<- prometheus.Metric) error {
+	calendar, err := c.calendarMeasurer.Measure(context.Background())
 	if err != nil {
-		c.logger.Error("failed to get calendar", "err", err)
-		return
+		return fmt.Errorf("calendar: %w", err)
 	}
 	for name, count := range groupNames(calendar) {
 		ch <- prometheus.MustNewConstMetric(c.metrics["calendar"], prometheus.GaugeValue, float64(count), name)
 	}
+	return nil
 }
 
 func groupNames(names []string) map[string]int {
@@ -152,11 +162,10 @@ func groupNames(names []string) map[string]int {
 	return result
 }
 
-func (c *Collector) collectQueue(ch chan<- prometheus.Metric) {
+func (c *Collector) collectQueue(ch chan<- prometheus.Metric) error {
 	queue, err := c.client.GetQueue(context.Background())
 	if err != nil {
-		c.logger.Error("failed to get queue", "err", err)
-		return
+		return fmt.Errorf("queue: %w", err)
 	}
 
 	ch <- prometheus.MustNewConstMetric(c.metrics["queued_count"], prometheus.GaugeValue, float64(len(queue)))
@@ -171,16 +180,17 @@ func (c *Collector) collectQueue(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(c.metrics["queued_total"], prometheus.GaugeValue, float64(totalBytes[name]), name)
 		ch <- prometheus.MustNewConstMetric(c.metrics["queued_downloaded"], prometheus.GaugeValue, float64(downloadedBytes[name]), name)
 	}
+	return nil
 }
 
-func (c *Collector) collectLibrary(ch chan<- prometheus.Metric) {
+func (c *Collector) collectLibrary(ch chan<- prometheus.Metric) error {
 	library, err := c.libraryMeasurer.Measure(context.Background())
 	if err != nil {
-		c.logger.Error("failed to get library", "err", err)
-		return
+		return fmt.Errorf("library: %w", err)
 	}
 	ch <- prometheus.MustNewConstMetric(c.metrics["monitored"], prometheus.GaugeValue, float64(library.Monitored))
 	ch <- prometheus.MustNewConstMetric(c.metrics["unmonitored"], prometheus.GaugeValue, float64(library.Unmonitored))
+	return nil
 }
 
 func createMetrics(application, url string) map[string]*prometheus.Desc {

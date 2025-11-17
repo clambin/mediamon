@@ -41,6 +41,7 @@ func TestSonarrCollector(t *testing.T) {
 			{Name: "foo - S01E02 - 2", TotalBytes: 100, DownloadedBytes: 50},
 		},
 		library: Library{Monitored: 3, Unmonitored: 1},
+		health:  map[string]int{"foo": 1},
 	}
 	c, err := NewSonarrCollector("http://localhost:8080", "api-key", http.DefaultClient, slog.New(slog.DiscardHandler))
 	require.NoError(t, err)
@@ -53,6 +54,10 @@ mediamon_xxxarr_calendar{application="sonarr",title="foo - S01E01 - 1",url="http
 mediamon_xxxarr_calendar{application="sonarr",title="foo - S01E02 - 2",url="http://localhost:8080"} 1
 mediamon_xxxarr_calendar{application="sonarr",title="foo - S01E03 - 3",url="http://localhost:8080"} 1
 mediamon_xxxarr_calendar{application="sonarr",title="foo - S01E04 - 4",url="http://localhost:8080"} 1
+
+# HELP mediamon_xxxarr_health Server health
+# TYPE mediamon_xxxarr_health gauge
+mediamon_xxxarr_health{application="sonarr",type="foo",url="http://localhost:8080"} 1
 
 # HELP mediamon_xxxarr_monitored_count Number of Monitored series / movies
 # TYPE mediamon_xxxarr_monitored_count gauge
