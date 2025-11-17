@@ -6,8 +6,15 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"time"
 
+	"github.com/clambin/mediamon/v2/internal/measurer"
 	"github.com/prometheus/client_golang/prometheus"
+)
+
+const (
+	versionMeasureInterval = 15 * time.Minute
+	libraryMeasureInterval = 15 * time.Minute
 )
 
 type QueuedItem struct {
@@ -32,10 +39,12 @@ func WithToken(token string) func(ctx context.Context, req *http.Request) error 
 }
 
 type Collector struct {
-	client      Client
-	metrics     map[string]*prometheus.Desc
-	logger      *slog.Logger
-	application string
+	client          Client
+	metrics         map[string]*prometheus.Desc
+	logger          *slog.Logger
+	application     string
+	versionMeasurer measurer.Cached[string]
+	libraryMeasurer measurer.Cached[Library]
 }
 
 // Client presents a unified interface to Sonarr/Radarr clients
@@ -55,42 +64,46 @@ var (
 func NewRadarrCollector(url, apiKey string, httpClient *http.Client, logger *slog.Logger) (prometheus.Collector, error) {
 	client, err := NewRadarrClient(url, apiKey, httpClient)
 	if err != nil {
-		return nil, fmt.Errorf("create radarr client: %w", err)
+		return nil, fmt.Errorf("radarr: %w", err)
 	}
-
-	c := Collector{
-		client:      client,
-		application: "radarr",
-		metrics:     createMetrics("radarr", url),
-		logger:      logger,
-	}
-	return &c, nil
+	return newCollector("radarr", url, client, logger), nil
 }
 
 func NewSonarrCollector(url, apiKey string, httpClient *http.Client, logger *slog.Logger) (prometheus.Collector, error) {
 	client, err := NewSonarrClient(url, apiKey, httpClient)
 	if err != nil {
-		return nil, fmt.Errorf("create sonarr client: %w", err)
+		return nil, fmt.Errorf("sonarr: %w", err)
 	}
+	return newCollector("sonarr", url, client, logger), nil
+}
 
+func newCollector(application, url string, client Client, logger *slog.Logger) *Collector {
 	c := Collector{
 		client:      client,
-		application: "sonarr",
-		metrics:     createMetrics("sonarr", url),
+		application: application,
+		metrics:     createMetrics(application, url),
 		logger:      logger,
 	}
-	return &c, nil
+	c.versionMeasurer = measurer.Cached[string]{
+		Interval: versionMeasureInterval,
+		Do:       func(ctx context.Context) (string, error) { return c.client.GetVersion(ctx) },
+	}
+	c.libraryMeasurer = measurer.Cached[Library]{
+		Interval: libraryMeasureInterval,
+		Do:       func(ctx context.Context) (Library, error) { return c.client.GetLibrary(ctx) },
+	}
+	return &c
 }
 
 // Describe implements the prometheus.Collector interface
-func (c Collector) Describe(ch chan<- *prometheus.Desc) {
+func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	for _, metric := range c.metrics {
 		ch <- metric
 	}
 }
 
 // Collect implements the prometheus.Collector interface
-func (c Collector) Collect(ch chan<- prometheus.Metric) {
+func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	var g sync.WaitGroup
 	g.Go(func() { c.collectVersion(ch) })
 	g.Go(func() { c.collectHealth(ch) })
@@ -100,8 +113,8 @@ func (c Collector) Collect(ch chan<- prometheus.Metric) {
 	g.Wait()
 }
 
-func (c Collector) collectVersion(ch chan<- prometheus.Metric) {
-	version, err := c.client.GetVersion(context.Background())
+func (c *Collector) collectVersion(ch chan<- prometheus.Metric) {
+	version, err := c.versionMeasurer.Measure(context.Background())
 	if err != nil {
 		c.logger.Error("failed to get version", "err", err)
 		return
@@ -109,7 +122,7 @@ func (c Collector) collectVersion(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(c.metrics["version"], prometheus.GaugeValue, float64(1), version)
 }
 
-func (c Collector) collectHealth(ch chan<- prometheus.Metric) {
+func (c *Collector) collectHealth(ch chan<- prometheus.Metric) {
 	health, err := c.client.GetHealth(context.Background())
 	if err != nil {
 		c.logger.Error("failed to get health", "err", err)
@@ -120,7 +133,7 @@ func (c Collector) collectHealth(ch chan<- prometheus.Metric) {
 	}
 }
 
-func (c Collector) collectCalendar(ch chan<- prometheus.Metric) {
+func (c *Collector) collectCalendar(ch chan<- prometheus.Metric) {
 	calendar, err := c.client.GetCalendar(context.Background(), 1)
 	if err != nil {
 		c.logger.Error("failed to get calendar", "err", err)
@@ -139,7 +152,7 @@ func groupNames(names []string) map[string]int {
 	return result
 }
 
-func (c Collector) collectQueue(ch chan<- prometheus.Metric) {
+func (c *Collector) collectQueue(ch chan<- prometheus.Metric) {
 	queue, err := c.client.GetQueue(context.Background())
 	if err != nil {
 		c.logger.Error("failed to get queue", "err", err)
@@ -160,8 +173,8 @@ func (c Collector) collectQueue(ch chan<- prometheus.Metric) {
 	}
 }
 
-func (c Collector) collectLibrary(ch chan<- prometheus.Metric) {
-	library, err := c.client.GetLibrary(context.Background())
+func (c *Collector) collectLibrary(ch chan<- prometheus.Metric) {
+	library, err := c.libraryMeasurer.Measure(context.Background())
 	if err != nil {
 		c.logger.Error("failed to get library", "err", err)
 		return
