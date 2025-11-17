@@ -84,7 +84,6 @@ type libraryEntry struct {
 }
 
 func (c *libraryCollector) getLibraries(ctx context.Context) (map[string][]libraryEntry, error) {
-	c.logger.Debug("refreshing library metrics")
 	libraries, err := c.GetLibraries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GetLibraries: %w", err)

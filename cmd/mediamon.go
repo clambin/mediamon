@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -146,10 +147,21 @@ func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []pro
 			continue
 		}
 		l := logger.With("collector", c.name)
+
+		// for connectivity, we need a proxy-enabled http.Transport.
+		var rt http.RoundTripper
+		if key == "openvpn.connectivity.proxy" {
+			proxy, err := parseProxy(target)
+			if err != nil {
+				l.Error("failed to parse proxy URL. connectivity monitoring disabled", "err", err)
+				continue
+			}
+			rt = &http.Transport{Proxy: http.ProxyURL(proxy)}
+		}
+
 		var collector prometheus.Collector
 		var err error
-
-		httpClient, metrics := instrumentedHttpClient(c.name)
+		httpClient, metrics := instrumentedHttpClient(c.name, rt)
 		collectors = append(collectors, metrics)
 
 		switch key {
@@ -166,18 +178,7 @@ func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []pro
 		case "openvpn.bandwidth.filename":
 			collector = bandwidth.NewCollector(target, l)
 		case "openvpn.connectivity.proxy":
-			var proxy *url.URL
-			if proxy, err = parseProxy(target); err == nil {
-				tp, ok := httpClient.Transport.(*http.Transport)
-				if ok {
-					tp = tp.Clone()
-				} else {
-					tp = &http.Transport{}
-				}
-				tp.Proxy = http.ProxyURL(proxy)
-				httpClient.Transport = tp
-				collector = connectivity.NewCollector(httpClient, v.GetDuration("openvpn.connectivity.interval"))
-			}
+			collector = connectivity.NewCollector(httpClient, v.GetDuration("openvpn.connectivity.interval"))
 		}
 		if err != nil {
 			l.Error("error creating collector", "err", err)
@@ -200,7 +201,7 @@ func parseProxy(proxyURL string) (*url.URL, error) {
 	return proxy, nil
 }
 
-func instrumentedHttpClient(application string) (*http.Client, prometheus.Collector) {
+func instrumentedHttpClient(application string, roundTripper http.RoundTripper) (*http.Client, prometheus.Collector) {
 	metrics := requestMetrics{
 		counter: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace:   "mediamon",
@@ -217,11 +218,14 @@ func instrumentedHttpClient(application string) (*http.Client, prometheus.Collec
 			ConstLabels: prometheus.Labels{"application": application},
 		}, []string{"method", "code"}),
 	}
+
 	client := http.Client{
-		Transport: promhttp.InstrumentRoundTripperCounter(metrics.counter,
-			promhttp.InstrumentRoundTripperDuration(metrics.latency, http.DefaultTransport),
-		),
 		Timeout: 10 * time.Second,
+		Transport: promhttp.InstrumentRoundTripperCounter(metrics.counter,
+			promhttp.InstrumentRoundTripperDuration(metrics.latency,
+				cmp.Or(roundTripper, http.DefaultTransport),
+			),
+		),
 	}
 	return &client, &metrics
 }
