@@ -12,7 +12,7 @@ import (
 )
 
 func TestCollector_Collect(t *testing.T) {
-	p := fakeGetter{
+	g := fakeGetter{
 		libraries: []plex.Library{
 			{Title: "movies", Type: "movie", Key: "1"},
 			{Title: "shows", Type: "show", Key: "2"},
@@ -23,9 +23,9 @@ func TestCollector_Collect(t *testing.T) {
 		identity: plex.Identity{Version: "1.0"},
 	}
 	c := NewCollector("1.0", "http://localhost:8080", "", "", http.DefaultClient, slog.New(slog.DiscardHandler))
-	c.libraryCollector.(*libraryCollector).libraryGetter = p
-	c.versionCollector.identityGetter = p
-	c.sessionCollector.sessionGetter = p
+	c.libraryCollector.(*libraryCollector).libraryGetter = g
+	c.versionCollector.(*versionCollector).identityGetter = g
+	c.sessionCollector.sessionGetter = g
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP mediamon_plex_library_bytes Library size in bytes

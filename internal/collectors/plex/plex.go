@@ -13,9 +13,9 @@ import (
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
 	libraryCollector prometheus.Collector
+	versionCollector prometheus.Collector
 	logger           *slog.Logger
 	sessionCollector sessionCollector
-	versionCollector versionCollector
 }
 
 type Getter interface {
@@ -38,11 +38,7 @@ type Config struct {
 func NewCollector(version, url, username, password string, httpClient *http.Client, logger *slog.Logger) *Collector {
 	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, httpClient.Transport)
 	c := Collector{
-		versionCollector: versionCollector{
-			identityGetter: p,
-			url:            url,
-			logger:         logger,
-		},
+		versionCollector: newVersionCollector(p, url, logger),
 		sessionCollector: sessionCollector{
 			sessionGetter: p,
 			ipLocator:     iplocator.New(httpClient),

@@ -11,11 +11,11 @@ import (
 )
 
 func TestVersionCollector_Collect(t *testing.T) {
-	c := versionCollector{
-		identityGetter: fakeGetter{identity: plex.Identity{Version: "1.2.3"}},
-		url:            "http://localhost:8080",
-		logger:         slog.Default(),
-	}
+	c := newVersionCollector(
+		fakeGetter{identity: plex.Identity{Version: "1.2.3"}},
+		"http://localhost:8080",
+		slog.New(slog.DiscardHandler),
+	)
 
 	expected := bytes.NewBufferString(`
 # HELP mediamon_plex_version version info
