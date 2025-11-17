@@ -30,20 +30,21 @@ func NewCollector(httpClient *http.Client, interval time.Duration, logger *slog.
 		connection: &measurer.Cached[float64]{
 			Interval: interval,
 			Do: func(ctx context.Context) (float64, error) {
-				logger.Debug("testing connectivity")
+				attrs := make([]any, 0, 3)
 				req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 				resp, err := httpClient.Do(req)
+				attrs = append(attrs, slog.Any("err", err))
 				if err == nil {
 					_ = resp.Body.Close()
+					attrs = append(attrs, slog.Any("status", resp.StatusCode))
 				}
-				logger.Debug("connectivity test result", "err", err)
-				if err == nil {
-					logger.Debug("connectivity test response", "status", resp.StatusCode)
-				}
+				var up float64
 				if err == nil && resp.StatusCode == http.StatusNoContent {
-					return 1, nil
+					up = 1
 				}
-				return 0, nil
+				attrs = append(attrs, slog.Any("up", up))
+				logger.Debug("connectivity check", attrs...)
+				return up, nil
 			},
 		},
 	}

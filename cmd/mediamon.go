@@ -111,7 +111,6 @@ func initConfig() {
 }
 
 type constructor struct {
-	make func(string, string, *viper.Viper, *slog.Logger) (prometheus.Collector, error)
 	name string
 }
 
@@ -132,10 +131,10 @@ var constructors = map[string]constructor{
 		name: "plex",
 	},
 	"openvpn.connectivity.proxy": {
-		name: "vpn connectivity",
+		name: "connectivity",
 	},
 	"openvpn.bandwidth.filename": {
-		name: "vpn bandwidth",
+		name: "bandwidth",
 	},
 }
 
