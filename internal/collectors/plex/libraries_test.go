@@ -1,32 +1,29 @@
 package plex
 
 import (
-	"errors"
-	"github.com/clambin/mediaclients/plex"
-	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
-	"github.com/clambin/mediamon/v2/internal/collectors/plex/mocks"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"log/slog"
 	"strings"
 	"testing"
+
+	"github.com/clambin/mediaclients/plex"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLibraryCollector_Collect(t *testing.T) {
 	tests := []struct {
-		name  string
-		setup func(p *mocks.Getter)
-		want  string
+		name   string
+		getter libraryGetter
+		want   string
 	}{
 		{
 			name: "movie",
-			setup: func(p *mocks.Getter) {
-				p.EXPECT().GetLibraries(mock.Anything).Return([]plex.Library{{Title: "movies", Type: "movie", Key: "1"}}, nil)
-				p.EXPECT().GetMovies(mock.Anything, "1").Return([]plex.Movie{
+			getter: fakeGetter{
+				libraries: []plex.Library{{Title: "movies", Type: "movie", Key: "1"}},
+				movies: []plex.Movie{
 					{Title: "movie 1", Media: []plex.Media{{Part: []plex.MediaPart{{Size: 1024}}}}},
 					{Title: "movie 2", Media: []plex.Media{{Part: []plex.MediaPart{{Size: 2 * 1024}}}}},
-				}, nil)
+				},
 			},
 			want: `
 # HELP mediamon_plex_library_bytes Library size in bytes
@@ -39,146 +36,86 @@ mediamon_plex_library_count{library="movies",url="http://localhost:8080"} 2
 		},
 		{
 			name: "movie - empty",
-			setup: func(p *mocks.Getter) {
-				p.EXPECT().GetLibraries(mock.Anything).Return([]plex.Library{{Title: "movies", Type: "movie", Key: "1"}}, nil)
-				p.EXPECT().GetMovies(mock.Anything, "1").Return([]plex.Movie{}, nil)
+			getter: fakeGetter{
+				libraries: []plex.Library{{Title: "movies", Type: "movie", Key: "1"}},
 			},
 			want: `
-# HELP mediamon_plex_library_bytes Library size in bytes
-# TYPE mediamon_plex_library_bytes gauge
-mediamon_plex_library_bytes{library="movies",url="http://localhost:8080"} 0
-# HELP mediamon_plex_library_count Library size in number of entries
-# TYPE mediamon_plex_library_count gauge
-mediamon_plex_library_count{library="movies",url="http://localhost:8080"} 0
-`,
-		},
-		{
-			name: "movie - error",
-			setup: func(p *mocks.Getter) {
-				p.EXPECT().GetLibraries(mock.Anything).Return(nil, errors.New("plex is down"))
-			},
-			want: ``,
+			# HELP mediamon_plex_library_bytes Library size in bytes
+			# TYPE mediamon_plex_library_bytes gauge
+			mediamon_plex_library_bytes{library="movies",url="http://localhost:8080"} 0
+			# HELP mediamon_plex_library_count Library size in number of entries
+			# TYPE mediamon_plex_library_count gauge
+			mediamon_plex_library_count{library="movies",url="http://localhost:8080"} 0
+			`,
 		},
 		{
 			name: "show",
-			setup: func(p *mocks.Getter) {
-				p.EXPECT().GetLibraries(mock.Anything).Return([]plex.Library{{Title: "shows", Type: "show", Key: "2"}}, nil)
-				p.EXPECT().GetShows(mock.Anything, "2").Return([]plex.Show{
-					{Key: "20", RatingKey: "21", Title: "show 1"},
-				}, nil)
-				p.EXPECT().GetSeasons(mock.Anything, "21").Return([]plex.Season{
-					{Key: "22", RatingKey: "23", Title: "Season 1"},
-				}, nil)
-				p.EXPECT().GetEpisodes(mock.Anything, "23").Return([]plex.Episode{
-					{Title: "Pilot", Media: []plex.Media{{Part: []plex.MediaPart{{Size: 1024}}}}},
-				}, nil)
+			getter: fakeGetter{
+				libraries: []plex.Library{{Title: "shows", Type: "show", Key: "2"}},
+				shows:     []plex.Show{{Key: "20", RatingKey: "21", Title: "show 1"}},
+				seasons:   map[string][]plex.Season{"21": {{Key: "22", RatingKey: "23", Title: "Season 1"}}},
+				episodes:  map[string][]plex.Episode{"23": {{Title: "Pilot", Media: []plex.Media{{Part: []plex.MediaPart{{Size: 1024}}}}}}},
 			},
 			want: `
-# HELP mediamon_plex_library_bytes Library size in bytes
-# TYPE mediamon_plex_library_bytes gauge
-mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 1024
-# HELP mediamon_plex_library_count Library size in number of entries
-# TYPE mediamon_plex_library_count gauge
-mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 1
-`,
+			# HELP mediamon_plex_library_bytes Library size in bytes
+			# TYPE mediamon_plex_library_bytes gauge
+			mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 1024
+			# HELP mediamon_plex_library_count Library size in number of entries
+			# TYPE mediamon_plex_library_count gauge
+			mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 1
+			`,
 		},
 		{
 			name: "show - empty season",
-			setup: func(p *mocks.Getter) {
-				p.EXPECT().GetLibraries(mock.Anything).Return([]plex.Library{{Title: "shows", Type: "show", Key: "2"}}, nil)
-				p.EXPECT().GetShows(mock.Anything, "2").Return([]plex.Show{
-					{Key: "20", RatingKey: "21", Title: "show 1"},
-				}, nil)
-				p.EXPECT().GetSeasons(mock.Anything, "21").Return([]plex.Season{
-					{Key: "22", RatingKey: "23", Title: "Season 1"},
-				}, nil)
-				p.EXPECT().GetEpisodes(mock.Anything, "23").Return([]plex.Episode{}, nil)
+			getter: fakeGetter{
+				libraries: []plex.Library{{Title: "shows", Type: "show", Key: "2"}},
+				shows:     []plex.Show{{Key: "20", RatingKey: "21", Title: "show 1"}},
+				seasons:   map[string][]plex.Season{"21": {{Key: "22", RatingKey: "23", Title: "Season 1"}}},
 			},
 			want: `
-# HELP mediamon_plex_library_bytes Library size in bytes
-# TYPE mediamon_plex_library_bytes gauge
-mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
-# HELP mediamon_plex_library_count Library size in number of entries
-# TYPE mediamon_plex_library_count gauge
-mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
-`,
+			# HELP mediamon_plex_library_bytes Library size in bytes
+			# TYPE mediamon_plex_library_bytes gauge
+			mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
+			# HELP mediamon_plex_library_count Library size in number of entries
+			# TYPE mediamon_plex_library_count gauge
+			mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
+			`,
 		},
 		{
 			name: "show - empty seasons",
-			setup: func(p *mocks.Getter) {
-				p.EXPECT().GetLibraries(mock.Anything).Return([]plex.Library{{Title: "shows", Type: "show", Key: "2"}}, nil)
-				p.EXPECT().GetShows(mock.Anything, "2").Return([]plex.Show{
-					{Key: "20", RatingKey: "21", Title: "show 1"},
-				}, nil)
-				p.EXPECT().GetSeasons(mock.Anything, "21").Return([]plex.Season{}, nil)
+			getter: fakeGetter{
+				libraries: []plex.Library{{Title: "shows", Type: "show", Key: "2"}},
+				shows:     []plex.Show{{Key: "20", RatingKey: "21", Title: "show 1"}},
 			},
 			want: `
-# HELP mediamon_plex_library_bytes Library size in bytes
-# TYPE mediamon_plex_library_bytes gauge
-mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
-# HELP mediamon_plex_library_count Library size in number of entries
-# TYPE mediamon_plex_library_count gauge
-mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
-`,
+			# HELP mediamon_plex_library_bytes Library size in bytes
+			# TYPE mediamon_plex_library_bytes gauge
+			mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
+			# HELP mediamon_plex_library_count Library size in number of entries
+			# TYPE mediamon_plex_library_count gauge
+			mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
+			`,
 		},
 		{
 			name: "show - empty",
-			setup: func(p *mocks.Getter) {
-				p.EXPECT().GetLibraries(mock.Anything).Return([]plex.Library{{Title: "shows", Type: "show", Key: "2"}}, nil)
-				p.EXPECT().GetShows(mock.Anything, "2").Return([]plex.Show{}, nil)
+			getter: fakeGetter{
+				libraries: []plex.Library{{Title: "shows", Type: "show", Key: "2"}},
 			},
 			want: `
-# HELP mediamon_plex_library_bytes Library size in bytes
-# TYPE mediamon_plex_library_bytes gauge
-mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
-# HELP mediamon_plex_library_count Library size in number of entries
-# TYPE mediamon_plex_library_count gauge
-mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
-`,
-		},
-		{
-			name: "show - error",
-			setup: func(p *mocks.Getter) {
-				p.EXPECT().GetLibraries(mock.Anything).Return(nil, errors.New("plex is down"))
-			},
-			want: ``,
+			# HELP mediamon_plex_library_bytes Library size in bytes
+			# TYPE mediamon_plex_library_bytes gauge
+			mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
+			# HELP mediamon_plex_library_count Library size in number of entries
+			# TYPE mediamon_plex_library_count gauge
+			mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
+			`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			p := mocks.NewGetter(t)
-			tt.setup(p)
-
-			c := libraryCollector{
-				libraryGetter: p,
-				url:           "http://localhost:8080",
-				logger:        slog.Default(),
-			}
-			assert.NoError(t, testutil.CollectAndCompare(
-				collectorbreaker.PassThroughCollector{Collector: &c},
-				strings.NewReader(tt.want),
-			))
+			c := newLibraryCollector(tt.getter, "http://localhost:8080", slog.New(slog.DiscardHandler))
+			assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(tt.want)))
 		})
 	}
-}
-
-func TestLibraryCollector_Collect_cached(t *testing.T) {
-	p := mocks.NewGetter(t)
-	p.EXPECT().GetLibraries(mock.Anything).Return([]plex.Library{{Title: "movies", Type: "movie", Key: "1"}}, nil).Once()
-	p.EXPECT().GetMovies(mock.Anything, "1").Return([]plex.Movie{
-		{Title: "movie 1", Media: []plex.Media{{Part: []plex.MediaPart{{Size: 1024}}}}},
-		{Title: "movie 2", Media: []plex.Media{{Part: []plex.MediaPart{{Size: 2 * 1024}}}}},
-	}, nil).Once()
-
-	c := libraryCollector{
-		libraryGetter: p,
-		url:           "http://localhost:8080",
-		logger:        slog.Default(),
-	}
-	cb := collectorbreaker.PassThroughCollector{Collector: &c}
-	assert.NotZero(t, testutil.CollectAndCount(cb))
-	assert.NotZero(t, testutil.CollectAndCount(cb))
 }

@@ -1,150 +1,163 @@
 package xxxarr
 
 import (
-	"codeberg.org/clambin/go-common/httputils/metrics"
-	"codeberg.org/clambin/go-common/httputils/roundtripper"
 	"context"
 	"fmt"
-	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
-	"github.com/clambin/mediamon/v2/internal/collectors/xxxarr/clients"
-	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
+
+	"github.com/clambin/mediamon/v2/internal/measurer"
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 )
 
-// Collector presents Sonarr/Radarr statistics as Prometheus metrics
-type Collector struct {
-	client       Client
-	application  string
-	metrics      map[string]*prometheus.Desc
-	tpMetrics    metrics.RequestMetrics
-	cacheMetrics roundtripper.CacheMetrics
-	logger       *slog.Logger
+const (
+	versionMeasureInterval  = 15 * time.Minute
+	libraryMeasureInterval  = time.Hour
+	calendarMeasureInterval = 15 * time.Minute
+)
+
+func createMetrics(application, url string) map[string]*prometheus.Desc {
+	constLabels := prometheus.Labels{
+		"application": application,
+		"url":         url,
+	}
+	return map[string]*prometheus.Desc{
+		"version": prometheus.NewDesc(
+			prometheus.BuildFQName("mediamon", "xxxarr", "version"),
+			"Version info",
+			[]string{"version"},
+			constLabels,
+		),
+		"health": prometheus.NewDesc(
+			prometheus.BuildFQName("mediamon", "xxxarr", "health"),
+			"Server health",
+			[]string{"type"},
+			constLabels,
+		),
+		"calendar": prometheus.NewDesc(
+			prometheus.BuildFQName("mediamon", "xxxarr", "calendar"),
+			"Upcoming episodes / movies",
+			[]string{"title"},
+			constLabels,
+		),
+		"queued_count": prometheus.NewDesc(
+			prometheus.BuildFQName("mediamon", "xxxarr", "queued_count"),
+			"Episodes / movies being downloaded",
+			nil,
+			constLabels,
+		),
+		"queued_total": prometheus.NewDesc(
+			prometheus.BuildFQName("mediamon", "xxxarr", "queued_total_bytes"),
+			"Size of episode / movie being downloaded in bytes",
+			[]string{"title"},
+			constLabels,
+		),
+		"queued_downloaded": prometheus.NewDesc(
+			prometheus.BuildFQName("mediamon", "xxxarr", "queued_downloaded_bytes"),
+			"Downloaded size of episode / movie being downloaded in bytes",
+			[]string{"title"},
+			constLabels,
+		),
+		"monitored": prometheus.NewDesc(
+			prometheus.BuildFQName("mediamon", "xxxarr", "monitored_count"),
+			"Number of Monitored series / movies",
+			nil,
+			constLabels,
+		),
+		"unmonitored": prometheus.NewDesc(
+			prometheus.BuildFQName("mediamon", "xxxarr", "unmonitored_count"),
+			"Number of Unmonitored series / movies",
+			nil,
+			constLabels,
+		),
+	}
 }
 
+type QueuedItem struct {
+	Name            string
+	TotalBytes      int64
+	DownloadedBytes int64
+}
+
+type Library struct {
+	Monitored   int
+	Unmonitored int
+}
+
+func WithToken(token string) func(ctx context.Context, req *http.Request) error {
+	return func(_ context.Context, req *http.Request) error {
+		if token == "" {
+			return fmt.Errorf("no token provided")
+		}
+		req.Header.Set("X-Api-Key", token)
+		return nil
+	}
+}
+
+type Collector struct {
+	client           Client
+	metrics          map[string]*prometheus.Desc
+	logger           *slog.Logger
+	application      string
+	versionMeasurer  measurer.Cached[string]
+	libraryMeasurer  measurer.Cached[Library]
+	calendarMeasurer measurer.Cached[[]string]
+}
+
+// Client presents a unified interface to Sonarr/Radarr clients
 type Client interface {
 	GetVersion(context.Context) (string, error)
 	GetHealth(context.Context) (map[string]int, error)
 	GetCalendar(context.Context, int) ([]string, error)
-	GetQueue(context.Context) ([]clients.QueuedItem, error)
-	GetLibrary(context.Context) (clients.Library, error)
+	GetQueue(context.Context) ([]QueuedItem, error)
+	GetLibrary(context.Context) (Library, error)
 }
 
 var (
-	radarrCacheTable = roundtripper.CacheTable{
-		{Path: `/api/v3/system/status`, Expiry: time.Minute},
-		{Path: `/api/v3/calendar`, Expiry: time.Minute},
-		{Path: `/api/v3/movie`},
-		{Path: `/api/v3/movie/[\d+]`, IsRegExp: true},
-	}
-
-	sonarrCacheTable = roundtripper.CacheTable{
-		{Path: `/api/v3/system/status`, Expiry: time.Minute},
-		{Path: `/api/v3/calendar`, Expiry: time.Minute},
-		{Path: `/api/v3/series`},
-		{Path: `/api/v3/series/[\d+]`, IsRegExp: true},
-		{Path: `/api/v3/episode`, IsRegExp: true},
-	}
+	_ Client = Sonarr{}
+	_ Client = Radarr{}
 )
 
-const (
-	cacheExpiry     = 15 * time.Minute
-	cleanupInterval = 5 * time.Minute
-)
-
-// NewRadarrCollector creates a new RadarrCollector
-func NewRadarrCollector(url, apiKey string, logger *slog.Logger) (*collectorbreaker.CBCollector, error) {
-	tpMetrics := metrics.NewRequestMetrics(metrics.Options{
-		Namespace:   "mediamon",
-		ConstLabels: prometheus.Labels{"application": "radarr"},
-		LabelValues: func(request *http.Request, i int) (method string, path string, code string) {
-			return request.Method, choppedPath(request), strconv.Itoa(i)
-		},
-	})
-	cacheMetrics := roundtripper.NewCacheMetrics(roundtripper.CacheMetricsOptions{
-		Namespace:   "mediamon",
-		ConstLabels: prometheus.Labels{"application": "radarr"},
-		GetPath:     choppedPath,
-	})
-
-	httpClient := http.Client{
-		Transport: roundtripper.New(
-			roundtripper.WithCache(roundtripper.CacheOptions{
-				CacheTable:        radarrCacheTable,
-				DefaultExpiration: cacheExpiry,
-				CleanupInterval:   cleanupInterval,
-				CacheMetrics:      cacheMetrics,
-				GetKey: func(r *http.Request) string {
-					return http.MethodGet + "|" + r.URL.Path + "|" + r.URL.Query().Encode()
-				},
-			}),
-			roundtripper.WithRequestMetrics(tpMetrics),
-		),
-	}
-
-	client, err := clients.NewRadarrClient(url, apiKey, &httpClient)
+func NewRadarrCollector(url, apiKey string, httpClient *http.Client, logger *slog.Logger) (prometheus.Collector, error) {
+	client, err := NewRadarrClient(url, apiKey, httpClient)
 	if err != nil {
-		return nil, fmt.Errorf("create radarr client: %w", err)
+		return nil, fmt.Errorf("radarr: %w", err)
 	}
-
-	c := Collector{
-		client:       client,
-		application:  "radarr",
-		metrics:      createMetrics("radarr", url),
-		tpMetrics:    tpMetrics,
-		cacheMetrics: cacheMetrics,
-		logger:       logger,
-	}
-	return collectorbreaker.New("radarr", &c, logger), nil
+	return newCollector("radarr", url, client, logger), nil
 }
 
-// NewSonarrCollector creates a new SonarrCollector
-func NewSonarrCollector(target, apiKey string, logger *slog.Logger) (*collectorbreaker.CBCollector, error) {
-	tpMetrics := metrics.NewRequestMetrics(metrics.Options{
-		Namespace:   "mediamon",
-		ConstLabels: prometheus.Labels{"application": "sonarr"},
-		LabelValues: func(request *http.Request, i int) (method string, path string, code string) {
-			return request.Method, choppedPath(request), strconv.Itoa(i)
-		},
-	})
-	cacheMetrics := roundtripper.NewCacheMetrics(roundtripper.CacheMetricsOptions{
-		Namespace:   "mediamon",
-		ConstLabels: prometheus.Labels{"application": "sonarr"},
-		GetPath:     choppedPath,
-	})
-
-	httpClient := http.Client{
-		Transport: roundtripper.New(
-			roundtripper.WithCache(roundtripper.CacheOptions{
-				CacheTable:        sonarrCacheTable,
-				DefaultExpiration: cacheExpiry,
-				CleanupInterval:   cleanupInterval,
-				CacheMetrics:      cacheMetrics,
-				GetKey: func(r *http.Request) string {
-					return http.MethodGet + "|" + r.URL.Path + "|" + r.URL.Query().Encode()
-				},
-			}),
-			roundtripper.WithRequestMetrics(tpMetrics),
-		),
-	}
-
-	client, err := clients.NewSonarrClient(target, apiKey, &httpClient)
+func NewSonarrCollector(url, apiKey string, httpClient *http.Client, logger *slog.Logger) (prometheus.Collector, error) {
+	client, err := NewSonarrClient(url, apiKey, httpClient)
 	if err != nil {
-		return nil, fmt.Errorf("create sonarr client: %w", err)
+		return nil, fmt.Errorf("sonarr: %w", err)
 	}
+	return newCollector("sonarr", url, client, logger), nil
+}
 
+func newCollector(application, url string, client Client, logger *slog.Logger) *Collector {
 	c := Collector{
-		client:       client,
-		application:  "sonarr",
-		metrics:      createMetrics("sonarr", target),
-		tpMetrics:    tpMetrics,
-		cacheMetrics: cacheMetrics,
-		logger:       logger,
+		client:      client,
+		application: application,
+		metrics:     createMetrics(application, url),
+		logger:      logger,
 	}
-	return collectorbreaker.New("sonarr", &c, logger), nil
+	c.versionMeasurer = measurer.Cached[string]{
+		Interval: versionMeasureInterval,
+		Do:       func(ctx context.Context) (string, error) { return c.client.GetVersion(ctx) },
+	}
+	c.libraryMeasurer = measurer.Cached[Library]{
+		Interval: libraryMeasureInterval,
+		Do:       func(ctx context.Context) (Library, error) { return c.client.GetLibrary(ctx) },
+	}
+	c.calendarMeasurer = measurer.Cached[[]string]{
+		Interval: calendarMeasureInterval,
+		Do: func(ctx context.Context) ([]string, error) {
+			return c.client.GetCalendar(ctx, 1)
+		},
+	}
+	return &c
 }
 
 // Describe implements the prometheus.Collector interface
@@ -152,26 +165,23 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	for _, metric := range c.metrics {
 		ch <- metric
 	}
-	c.tpMetrics.Describe(ch)
-	c.cacheMetrics.Describe(ch)
 }
 
-// CollectE implements the prometheus.Collector interface
-func (c *Collector) CollectE(ch chan<- prometheus.Metric) error {
+// Collect implements the prometheus.Collector interface
+func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	var g errgroup.Group
 	g.Go(func() error { return c.collectVersion(ch) })
 	g.Go(func() error { return c.collectHealth(ch) })
 	g.Go(func() error { return c.collectCalendar(ch) })
 	g.Go(func() error { return c.collectQueue(ch) })
 	g.Go(func() error { return c.collectLibrary(ch) })
-	err := g.Wait()
-	c.tpMetrics.Collect(ch)
-	c.cacheMetrics.Collect(ch)
-	return err
+	if err := g.Wait(); err != nil {
+		c.logger.Error("failed to collect metrics", "err", err)
+	}
 }
 
 func (c *Collector) collectVersion(ch chan<- prometheus.Metric) error {
-	version, err := c.client.GetVersion(context.Background())
+	version, err := c.versionMeasurer.Measure(context.Background())
 	if err != nil {
 		return fmt.Errorf("version: %w", err)
 	}
@@ -191,7 +201,7 @@ func (c *Collector) collectHealth(ch chan<- prometheus.Metric) error {
 }
 
 func (c *Collector) collectCalendar(ch chan<- prometheus.Metric) error {
-	calendar, err := c.client.GetCalendar(context.Background(), 1)
+	calendar, err := c.calendarMeasurer.Measure(context.Background())
 	if err != nil {
 		return fmt.Errorf("calendar: %w", err)
 	}
@@ -231,7 +241,7 @@ func (c *Collector) collectQueue(ch chan<- prometheus.Metric) error {
 }
 
 func (c *Collector) collectLibrary(ch chan<- prometheus.Metric) error {
-	library, err := c.client.GetLibrary(context.Background())
+	library, err := c.libraryMeasurer.Measure(context.Background())
 	if err != nil {
 		return fmt.Errorf("library: %w", err)
 	}

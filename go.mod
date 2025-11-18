@@ -3,9 +3,8 @@ module github.com/clambin/mediamon/v2
 go 1.25
 
 require (
-	codeberg.org/clambin/breaker v0.5.3
+	codeberg.org/clambin/go-common/cache v0.9.0
 	codeberg.org/clambin/go-common/charmer v0.4.0
-	codeberg.org/clambin/go-common/httputils v0.4.0
 	codeberg.org/clambin/go-common/set v0.6.0
 	codeberg.org/clambin/go-common/testutils v0.7.2
 	github.com/clambin/mediaclients v0.17.0
@@ -14,11 +13,10 @@ require (
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/sync v0.17.0
+	golang.org/x/sync v0.18.0
 )
 
 require (
-	codeberg.org/clambin/go-common/cache v0.9.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -42,7 +40,6 @@ require (
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect

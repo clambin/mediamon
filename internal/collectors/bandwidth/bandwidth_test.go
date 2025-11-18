@@ -1,21 +1,23 @@
 package bandwidth
 
 import (
+	"log/slog"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log/slog"
-	"os"
-	"strings"
-	"testing"
 )
 
 func TestCollector_Collect(t *testing.T) {
-	content := []byte(`OpenVPN STATISTICS
+	content := `OpenVPN STATISTICS
 Updated,Fri Dec 18 11:24:01 2020
 TCP/UDP read bytes,5624951995
 TCP/UDP write bytes,2048
-END`)
+END`
 	want := `
 # HELP openvpn_client_tcp_udp_read_bytes_total OpenVPN client bytes read
 # TYPE openvpn_client_tcp_udp_read_bytes_total gauge
@@ -24,25 +26,13 @@ openvpn_client_tcp_udp_read_bytes_total 5.624951995e+09
 # TYPE openvpn_client_tcp_udp_write_bytes_total gauge
 openvpn_client_tcp_udp_write_bytes_total 2048
 `
+	filename := filepath.Join(t.TempDir(), "openvpn.log")
+	require.NoError(t, os.WriteFile(filename, []byte(content), 0644))
 
-	filename, err := tempFile(content)
-	require.NoError(t, err)
-
-	c := NewCollector(filename, slog.Default())
+	c := NewCollector(filename, slog.New(slog.DiscardHandler))
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(want)))
 	assert.NoError(t, os.Remove(filename))
 	assert.Error(t, testutil.CollectAndCompare(c, strings.NewReader(want)))
-}
-
-func tempFile(content []byte) (string, error) {
-	filename := ""
-	file, err := os.CreateTemp("", "openvpn_")
-	if err == nil {
-		filename = file.Name()
-		_, _ = file.Write(content)
-		_ = file.Close()
-	}
-	return filename, err
 }
 
 func TestCollector_readStats(t *testing.T) {

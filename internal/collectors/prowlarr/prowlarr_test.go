@@ -1,21 +1,22 @@
 package prowlarr
 
 import (
-	"context"
-	"github.com/clambin/mediaclients/prowlarr"
-	"github.com/clambin/mediamon/v2/internal/collectors/prowlarr/mocks"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/stretchr/testify/assert"
+	"encoding/json"
 	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/clambin/mediaclients/prowlarr"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCollector(t *testing.T) {
-	p := mocks.NewProwlarrClient(t)
-	p.EXPECT().
-		GetApiV1IndexerstatsWithResponse(context.Background(), (*prowlarr.GetApiV1IndexerstatsParams)(nil)).
-		Return(&prowlarr.GetApiV1IndexerstatsResponse{JSON200: &prowlarr.IndexerStatsResource{
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := prowlarr.IndexerStatsResource{
 			Indexers: &[]prowlarr.IndexerStatistics{{
 				IndexerId:             constP[int32](1),
 				IndexerName:           constP("foo"),
@@ -29,13 +30,16 @@ func TestCollector(t *testing.T) {
 				UserAgent:       constP("foo"),
 				NumberOfQueries: constP[int32](10),
 				NumberOfGrabs:   constP[int32](1),
-			}}}}, nil).
-		Once()
+			}},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}))
+	t.Cleanup(ts.Close)
 
-	c, _ := New("http://localhost", "", slog.Default())
-	c.Collector.(*Collector).ProwlarrClient = p
-
-	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
+	want := `
 # HELP mediamon_prowlarr_indexer_failed_grab_total Total number of failed grabs from this indexer
 # TYPE mediamon_prowlarr_indexer_failed_grab_total counter
 mediamon_prowlarr_indexer_failed_grab_total{application="prowlarr",indexer="foo",url="http://localhost"} 1
@@ -63,7 +67,12 @@ mediamon_prowlarr_user_agent_grab_total{application="prowlarr",url="http://local
 # HELP mediamon_prowlarr_user_agent_query_total Total number of queries by user agent
 # TYPE mediamon_prowlarr_user_agent_query_total counter
 mediamon_prowlarr_user_agent_query_total{application="prowlarr",url="http://localhost",user_agent="foo"} 10
-`),
+`
+	want = strings.ReplaceAll(want, "url=\"http://localhost\"", "url=\""+ts.URL+"\"")
+
+	c, err := New(ts.URL, "1234", http.DefaultClient, slog.Default())
+	require.NoError(t, err)
+	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(want),
 		"mediamon_prowlarr_indexer_grab_total",
 		"mediamon_prowlarr_indexer_query_total",
 		"mediamon_prowlarr_indexer_failed_grab_total",

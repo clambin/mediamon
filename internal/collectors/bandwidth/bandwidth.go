@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"log/slog"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -29,8 +30,8 @@ var (
 
 // Collector reads an openvpn status file and provides Prometheus metrics
 type Collector struct {
-	Filename string
 	logger   *slog.Logger
+	Filename string
 }
 
 var _ prometheus.Collector = &Collector{}
@@ -46,7 +47,7 @@ type bandwidthStats struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(filename string, logger *slog.Logger) *Collector {
+func NewCollector(filename string, logger *slog.Logger) prometheus.Collector {
 	return &Collector{
 		Filename: filename,
 		logger:   logger,

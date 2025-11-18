@@ -1,17 +1,16 @@
 package plex
 
 import (
-	"codeberg.org/clambin/go-common/set"
 	"context"
-	"fmt"
-	"github.com/clambin/mediaclients/plex"
-	collectorbreaker "github.com/clambin/mediamon/v2/collector-breaker"
-	"github.com/prometheus/client_golang/prometheus"
 	"iter"
 	"log/slog"
 	"math"
 	"strconv"
 	"strings"
+
+	"codeberg.org/clambin/go-common/set"
+	"github.com/clambin/mediaclients/plex"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -44,13 +43,11 @@ var (
 	)
 )
 
-var _ collectorbreaker.Collector = sessionCollector{}
-
 type sessionCollector struct {
 	sessionGetter sessionGetter
 	ipLocator     IPLocator
-	url           string
 	logger        *slog.Logger
+	url           string
 }
 
 type sessionGetter interface {
@@ -64,10 +61,10 @@ func (c sessionCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- speedMetric
 }
 
-func (c sessionCollector) CollectE(ch chan<- prometheus.Metric) error {
+func (c sessionCollector) Collect(ch chan<- prometheus.Metric) {
 	sessions, err := c.sessionGetter.GetSessions(context.Background())
 	if err != nil {
-		return fmt.Errorf("sessions: %w", err)
+		c.logger.Error("fail to collect session metrics", "err", err)
 	}
 
 	var active, throttled, speed float64
@@ -94,7 +91,6 @@ func (c sessionCollector) CollectE(ch chan<- prometheus.Metric) error {
 		ch <- prometheus.MustNewConstMetric(transcodersMetric, prometheus.GaugeValue, throttled, c.url, "throttled")
 		ch <- prometheus.MustNewConstMetric(speedMetric, prometheus.GaugeValue, speed, c.url)
 	}
-	return nil
 }
 
 func (c sessionCollector) locateAddress(address string) (lonAsString, latAsString string) {
@@ -113,13 +109,13 @@ type plexSession struct {
 	latitude   string
 	title      string
 	address    string
-	progress   float64
-	bandwidth  int
 	videoMode  string
-	throttled  bool
-	speed      float64
 	audioCodec string
 	videoCodec string
+	progress   float64
+	bandwidth  int
+	speed      float64
+	throttled  bool
 }
 
 func (c sessionCollector) plexSessions(sessions []plex.Session) iter.Seq2[string, plexSession] {
