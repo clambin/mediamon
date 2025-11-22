@@ -22,7 +22,7 @@ func TestCollector_Collect(t *testing.T) {
 		},
 		identity: plex.Identity{Version: "1.0"},
 	}
-	c := NewCollector("1.0", "http://localhost:8080", "", "", http.DefaultClient, slog.New(slog.DiscardHandler))
+	c := NewCollector("1.0", "http://localhost:8080", "", "", "", http.DefaultClient, slog.New(slog.DiscardHandler))
 	c.libraryCollector.(*libraryCollector).libraryGetter = g
 	c.versionCollector.(*versionCollector).identityGetter = g
 	c.sessionCollector.sessionGetter = g

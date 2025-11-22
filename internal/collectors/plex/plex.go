@@ -3,10 +3,12 @@ package plex
 import (
 	"log/slog"
 	"net/http"
+	"runtime"
 	"sync"
 
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/iplocator"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -35,8 +37,23 @@ type Config struct {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(version, url, username, password string, httpClient *http.Client, logger *slog.Logger) *Collector {
-	p := plex.New(username, password, "github.com/clambin/mediamon", version, url, httpClient.Transport)
+func NewCollector(version, url, clientID, username, password string, httpClient *http.Client, logger *slog.Logger) *Collector {
+	if clientID == "" {
+		clientID = uuid.New().String()
+		logger.Info("clientID not set, using generated clientID", "clientID", clientID)
+	}
+	id := plex.ClientIdentity{
+		Product:         "github.com/clambin/mediamon",
+		Version:         version,
+		Platform:        runtime.GOOS,
+		PlatformVersion: runtime.Version(),
+		DeviceName:      "Media Monitor",
+		Identifier:      clientID,
+	}
+	p := plex.New(url,
+		plex.WithHTTPClient(httpClient),
+		plex.WithCredentials(username, password, id),
+	)
 	c := Collector{
 		versionCollector: newVersionCollector(p, url, logger),
 		sessionCollector: sessionCollector{

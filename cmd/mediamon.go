@@ -47,6 +47,7 @@ var (
 		"radarr.url":                    {Default: ""},
 		"radarr.apikey":                 {Default: ""},
 		"plex.url":                      {Default: ""},
+		"plex.client-id":                {Default: ""},
 		"plex.username":                 {Default: ""},
 		"plex.password":                 {Default: ""},
 		"openvpn.connectivity.proxy":    {Default: ""},
@@ -173,7 +174,15 @@ func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []pro
 		case "prowlarr.url":
 			collector, err = prowlarr.New(target, v.GetString("prowlarr.apikey"), httpClient, l)
 		case "plex.url":
-			collector = plex.NewCollector(version, target, v.GetString("plex.username"), v.GetString("plex.password"), httpClient, l)
+			collector = plex.NewCollector(
+				version,
+				target,
+				v.GetString("plex.client-id"),
+				v.GetString("plex.username"),
+				v.GetString("plex.password"),
+				httpClient,
+				l,
+			)
 		case "openvpn.bandwidth.filename":
 			collector = bandwidth.NewCollector(target, l)
 		case "openvpn.connectivity.proxy":
