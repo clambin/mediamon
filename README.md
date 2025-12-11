@@ -56,6 +56,26 @@ plex:
   # Your plex.tv user name and password
   username: <username>
   password: <password>
+  # Your plex.tv client identifier. If blank, mediamon will allocate a random one for you.
+  # Note: when using JWT, this *must* be set and kept consistent.
+  client-id: <client-id>
+  # If you want to use a JWT token instead of re-registering every time mediamon starts.
+  jwt:
+    # disabled by default
+    enable: false
+    # the path of the file where the JWT data is stored.
+    path: <path>
+    # passphrase used to encrypt the JWT data.
+    passphrase: <passphrase>
+  # If multiple Plex Media Servers are registered under the same user account,
+  # you can specify which one to monitor here.
+  # Note: when using JWT, this *must* be set.
+  pms:
+    #  disabled by default
+    enable: false
+    # the name of the Plex Media Server to monitor. Case sensitive. Spaces matter.
+    # If blank 
+    name: <your-pms-name>
 
 openvpn:
   bandwidth:

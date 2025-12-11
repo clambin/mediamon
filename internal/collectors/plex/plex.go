@@ -7,17 +7,40 @@ import (
 	"sync"
 
 	"github.com/clambin/mediaclients/plex"
+	"github.com/clambin/mediaclients/plex/plexauth"
 	"github.com/clambin/mediamon/v2/iplocator"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// Config holds the configuration for the Plex collector
+type Config struct {
+	UserName      string
+	Password      string
+	ClientID      string
+	UseJWT        bool
+	JWTLocation   string
+	JWTPassphrase string
+	UsePMS        bool
+	PMSName       string
+	Version       string
+}
+
+func (p Config) options() []plexauth.TokenSourceOption {
+	var opts []plexauth.TokenSourceOption
+	opts = append(opts, plexauth.WithCredentials(p.UserName, p.Password))
+	if p.UseJWT {
+		opts = append(opts, plexauth.WithJWT(p.JWTLocation, p.JWTPassphrase))
+	}
+	if p.UsePMS {
+		opts = append(opts, plexauth.WithPMS(p.PMSName))
+	}
+	return opts
+}
+
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
-	libraryCollector prometheus.Collector
-	versionCollector prometheus.Collector
-	logger           *slog.Logger
-	sessionCollector sessionCollector
+	collectors []prometheus.Collector
 }
 
 type Getter interface {
@@ -30,56 +53,53 @@ type IPLocator interface {
 	Locate(string) (iplocator.Location, error)
 }
 
-type Config struct {
-	URL      string
-	UserName string
-	Password string
-}
-
 // NewCollector creates a new Collector
-func NewCollector(version, url, clientID, username, password string, httpClient *http.Client, logger *slog.Logger) *Collector {
-	if clientID == "" {
-		clientID = uuid.New().String()
-		logger.Info("clientID not set, using generated clientID", "clientID", clientID)
+func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog.Logger) *Collector {
+	if pcfg.ClientID == "" {
+		pcfg.ClientID = uuid.New().String()
+		logger.Info("clientID not set, using generated clientID", "clientID", pcfg.ClientID)
 	}
-	id := plex.ClientIdentity{
+
+	clientDevice := plexauth.ClientDevice{
 		Product:         "github.com/clambin/mediamon",
-		Version:         version,
+		Version:         pcfg.Version,
 		Platform:        runtime.GOOS,
 		PlatformVersion: runtime.Version(),
 		DeviceName:      "Media Monitor",
-		Identifier:      clientID,
 	}
+
+	cfg := plexauth.DefaultConfig.WithClientID(pcfg.ClientID).WithClientDevice(clientDevice)
 	p := plex.New(url,
+		cfg.TokenSource(append(pcfg.options(), plexauth.WithLogger(logger))...),
 		plex.WithHTTPClient(httpClient),
-		plex.WithCredentials(username, password, id),
 	)
 	c := Collector{
-		versionCollector: newVersionCollector(p, url, logger),
-		sessionCollector: sessionCollector{
-			sessionGetter: p,
-			ipLocator:     iplocator.New(httpClient),
-			url:           url,
-			logger:        logger,
+		collectors: []prometheus.Collector{
+			newVersionCollector(p, url, logger),
+			&sessionCollector{
+				sessionGetter: p,
+				ipLocator:     iplocator.New(httpClient),
+				url:           url,
+				logger:        logger,
+			},
+			newLibraryCollector(p, url, logger),
 		},
-		libraryCollector: newLibraryCollector(p, url, logger),
-		logger:           logger,
 	}
 	return &c
 }
 
 // Describe implements the prometheus.Collector interface
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
-	c.versionCollector.Describe(ch)
-	c.sessionCollector.Describe(ch)
-	c.libraryCollector.Describe(ch)
+	for _, collector := range c.collectors {
+		collector.Describe(ch)
+	}
 }
 
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	var g sync.WaitGroup
-	g.Go(func() { c.versionCollector.Collect(ch) })
-	g.Go(func() { c.sessionCollector.Collect(ch) })
-	g.Go(func() { c.libraryCollector.Collect(ch) })
+	for _, collector := range c.collectors {
+		g.Go(func() { collector.Collect(ch) })
+	}
 	g.Wait()
 }

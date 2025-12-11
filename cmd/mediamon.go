@@ -50,6 +50,11 @@ var (
 		"plex.client-id":                {Default: ""},
 		"plex.username":                 {Default: ""},
 		"plex.password":                 {Default: ""},
+		"plex.jwt.enable":               {Default: false},
+		"plex.jwt.path":                 {Default: ""},
+		"plex.jwt.passphrase":           {Default: ""},
+		"plex.pms.enable":               {Default: false},
+		"plex.pms.name":                 {Default: ""},
 		"openvpn.connectivity.proxy":    {Default: ""},
 		"openvpn.connectivity.interval": {Default: "10s"},
 		"openvpn.bandwidth.filename":    {Default: ""},
@@ -174,15 +179,18 @@ func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []pro
 		case "prowlarr.url":
 			collector, err = prowlarr.New(target, v.GetString("prowlarr.apikey"), httpClient, l)
 		case "plex.url":
-			collector = plex.NewCollector(
-				version,
-				target,
-				v.GetString("plex.client-id"),
-				v.GetString("plex.username"),
-				v.GetString("plex.password"),
-				httpClient,
-				l,
-			)
+			pcfg := plex.Config{
+				UserName:      v.GetString("plex.username"),
+				Password:      v.GetString("plex.password"),
+				ClientID:      v.GetString("plex.client-id"),
+				UseJWT:        v.GetBool("plex.jwt.enable"),
+				JWTLocation:   v.GetString("plex.jwt.path"),
+				JWTPassphrase: v.GetString("plex.jwt.passphrase"),
+				UsePMS:        v.GetBool("plex.pms.enable"),
+				PMSName:       v.GetString("plex.pms.name"),
+				Version:       version,
+			}
+			collector = plex.NewCollector(target, pcfg, httpClient, l)
 		case "openvpn.bandwidth.filename":
 			collector = bandwidth.NewCollector(target, l)
 		case "openvpn.connectivity.proxy":

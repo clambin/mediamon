@@ -22,10 +22,25 @@ func TestCollector_Collect(t *testing.T) {
 		},
 		identity: plex.Identity{Version: "1.0"},
 	}
-	c := NewCollector("1.0", "http://localhost:8080", "", "", "", http.DefaultClient, slog.New(slog.DiscardHandler))
-	c.libraryCollector.(*libraryCollector).libraryGetter = g
-	c.versionCollector.(*versionCollector).identityGetter = g
-	c.sessionCollector.sessionGetter = g
+
+	c := NewCollector(
+		"http://localhost:8080",
+		Config{Version: "1.0"},
+		http.DefaultClient,
+		slog.New(slog.DiscardHandler),
+	)
+	for _, coll := range c.collectors {
+		switch cl := coll.(type) {
+		case *libraryCollector:
+			cl.libraryGetter = g
+		case *versionCollector:
+			cl.identityGetter = g
+		case *sessionCollector:
+			cl.sessionGetter = g
+		default:
+			panic("unknown collector")
+		}
+	}
 
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
 # HELP mediamon_plex_library_bytes Library size in bytes

@@ -26,12 +26,12 @@ func TestLibraryCollector_Collect(t *testing.T) {
 				},
 			},
 			want: `
-# HELP mediamon_plex_library_bytes Library size in bytes
-# TYPE mediamon_plex_library_bytes gauge
-mediamon_plex_library_bytes{library="movies",url="http://localhost:8080"} 3072
-# HELP mediamon_plex_library_count Library size in number of entries
-# TYPE mediamon_plex_library_count gauge
-mediamon_plex_library_count{library="movies",url="http://localhost:8080"} 2
+			# HELP mediamon_plex_library_bytes Library size in bytes
+			# TYPE mediamon_plex_library_bytes gauge
+			mediamon_plex_library_bytes{library="movies",url="http://localhost:8080"} 3072
+			# HELP mediamon_plex_library_count Library size in number of entries
+			# TYPE mediamon_plex_library_count gauge
+			mediamon_plex_library_count{library="movies",url="http://localhost:8080"} 2
 `,
 		},
 		{
