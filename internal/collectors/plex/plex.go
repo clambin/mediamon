@@ -18,21 +18,21 @@ type Config struct {
 	UserName      string
 	Password      string
 	ClientID      string
-	UseJWT        bool
 	JWTLocation   string
 	JWTPassphrase string
-	UsePMS        bool
 	PMSName       string
 	Version       string
+	UseJWT        bool
+	UsePMS        bool
 }
 
 func (p Config) options() []plexauth.TokenSourceOption {
 	var opts []plexauth.TokenSourceOption
 	opts = append(opts, plexauth.WithCredentials(p.UserName, p.Password))
-	if p.UseJWT {
-		opts = append(opts, plexauth.WithJWT(p.JWTLocation, p.JWTPassphrase))
-	}
 	if p.UsePMS {
+		if p.UseJWT {
+			opts = append(opts, plexauth.WithJWT(p.JWTLocation, p.JWTPassphrase))
+		}
 		opts = append(opts, plexauth.WithPMS(p.PMSName))
 	}
 	return opts
@@ -60,7 +60,7 @@ func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog
 		logger.Info("clientID not set, using generated clientID", "clientID", pcfg.ClientID)
 	}
 
-	clientDevice := plexauth.ClientDevice{
+	device := plexauth.Device{
 		Product:         "github.com/clambin/mediamon",
 		Version:         pcfg.Version,
 		Platform:        runtime.GOOS,
@@ -68,7 +68,7 @@ func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog
 		DeviceName:      "Media Monitor",
 	}
 
-	cfg := plexauth.DefaultConfig.WithClientID(pcfg.ClientID).WithClientDevice(clientDevice)
+	cfg := plexauth.DefaultConfig.WithClientID(pcfg.ClientID).WithDevice(device)
 	p := plex.New(url,
 		cfg.TokenSource(append(pcfg.options(), plexauth.WithLogger(logger))...),
 		plex.WithHTTPClient(httpClient),
