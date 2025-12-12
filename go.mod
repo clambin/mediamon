@@ -7,7 +7,7 @@ require (
 	codeberg.org/clambin/go-common/charmer v0.4.0
 	codeberg.org/clambin/go-common/set v0.6.0
 	codeberg.org/clambin/go-common/testutils v0.7.2
-	github.com/clambin/mediaclients v0.18.1-0.20251212162930-68e50359fb9b
+	github.com/clambin/mediaclients v0.18.1-0.20251212233030-be3d6209625a
 	github.com/google/uuid v1.6.0
 	github.com/hekmon/transmissionrpc/v3 v3.0.0
 	github.com/prometheus/client_golang v1.23.2
