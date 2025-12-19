@@ -66,6 +66,8 @@ func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog
 		Platform:        runtime.GOOS,
 		PlatformVersion: runtime.Version(),
 		DeviceName:      "Media Monitor",
+		Device:          "Media Monitor",
+		Provides:        "controller",
 	}
 
 	cfg := plexauth.DefaultConfig.WithClientID(pcfg.ClientID).WithDevice(device)
