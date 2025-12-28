@@ -53,8 +53,6 @@ var (
 		"plex.jwt.enable":               {Default: false},
 		"plex.jwt.path":                 {Default: ""},
 		"plex.jwt.passphrase":           {Default: ""},
-		"plex.pms.enable":               {Default: false},
-		"plex.pms.name":                 {Default: ""},
 		"openvpn.connectivity.proxy":    {Default: ""},
 		"openvpn.connectivity.interval": {Default: "10s"},
 		"openvpn.bandwidth.filename":    {Default: ""},
@@ -186,8 +184,6 @@ func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []pro
 				UseJWT:        v.GetBool("plex.jwt.enable"),
 				JWTLocation:   v.GetString("plex.jwt.path"),
 				JWTPassphrase: v.GetString("plex.jwt.passphrase"),
-				UsePMS:        v.GetBool("plex.pms.enable"),
-				PMSName:       v.GetString("plex.pms.name"),
 				Version:       version,
 			}
 			collector = plex.NewCollector(target, pcfg, httpClient, l)

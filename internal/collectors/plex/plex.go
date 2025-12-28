@@ -1,13 +1,15 @@
 package plex
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"runtime"
 	"sync"
 
 	"github.com/clambin/mediaclients/plex"
-	"github.com/clambin/mediaclients/plex/plexauth"
+	"github.com/clambin/mediaclients/plex/plextv"
+	"github.com/clambin/mediaclients/plex/vault"
 	"github.com/clambin/mediamon/v2/iplocator"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,20 +22,15 @@ type Config struct {
 	ClientID      string
 	JWTLocation   string
 	JWTPassphrase string
-	PMSName       string
 	Version       string
 	UseJWT        bool
-	UsePMS        bool
 }
 
-func (p Config) options() []plexauth.TokenSourceOption {
-	var opts []plexauth.TokenSourceOption
-	opts = append(opts, plexauth.WithCredentials(p.UserName, p.Password))
-	if p.UsePMS {
-		if p.UseJWT {
-			opts = append(opts, plexauth.WithJWT(p.JWTLocation, p.JWTPassphrase))
-		}
-		opts = append(opts, plexauth.WithPMS(p.PMSName))
+func (p Config) options() []plextv.TokenSourceOption {
+	var opts []plextv.TokenSourceOption
+	opts = append(opts, plextv.WithCredentials(p.UserName, p.Password))
+	if p.UseJWT {
+		opts = append(opts, plextv.WithJWT(vault.New[plextv.JWTSecureData](p.JWTLocation, p.JWTPassphrase)))
 	}
 	return opts
 }
@@ -60,7 +57,7 @@ func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog
 		logger.Info("clientID not set, using generated clientID", "clientID", pcfg.ClientID)
 	}
 
-	device := plexauth.Device{
+	device := plextv.Device{
 		Product:         "github.com/clambin/mediamon",
 		Version:         pcfg.Version,
 		Platform:        runtime.GOOS,
@@ -70,9 +67,9 @@ func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog
 		Provides:        "controller",
 	}
 
-	cfg := plexauth.DefaultConfig.WithClientID(pcfg.ClientID).WithDevice(device)
+	cfg := plextv.DefaultConfig().WithClientID(pcfg.ClientID).WithDevice(device)
 	p := plex.New(url,
-		cfg.TokenSource(append(pcfg.options(), plexauth.WithLogger(logger))...),
+		cfg.Client(context.Background(), cfg.TokenSource(append(pcfg.options(), plextv.WithLogger(logger))...)),
 		plex.WithHTTPClient(httpClient),
 	)
 	c := Collector{
