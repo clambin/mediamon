@@ -57,19 +57,19 @@ func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog
 		logger.Info("clientID not set, using generated clientID", "clientID", pcfg.ClientID)
 	}
 
-	device := plextv.Device{
-		Product:         "github.com/clambin/mediamon",
-		Version:         pcfg.Version,
-		Platform:        runtime.GOOS,
-		PlatformVersion: runtime.Version(),
-		DeviceName:      "Media Monitor",
-		Device:          "Media Monitor",
-		Provides:        "controller",
-	}
-
-	cfg := plextv.DefaultConfig().WithClientID(pcfg.ClientID).WithDevice(device)
-	p := plex.New(url,
-		cfg.Client(context.Background(), cfg.TokenSource(append(pcfg.options(), plextv.WithLogger(logger))...)),
+	config := plextv.DefaultConfig().
+		WithClientID(pcfg.ClientID).
+		WithDevice(plextv.Device{
+			Product:         "github.com/clambin/mediamon",
+			Version:         pcfg.Version,
+			Platform:        runtime.GOOS,
+			PlatformVersion: runtime.Version(),
+			DeviceName:      "Media Monitor",
+			Device:          "Media Monitor Y",
+			Provides:        "controller",
+		})
+	p := plex.NewPMSClient(url,
+		config.Client(context.Background(), config.TokenSource(append(pcfg.options(), plextv.WithLogger(logger))...)),
 		plex.WithHTTPClient(httpClient),
 	)
 	c := Collector{

@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	version        = "change_me"
+	version        = "(devel)"
 	configFilename string
 	rootCmd        = cobra.Command{
 		Use:   "mediamon",
