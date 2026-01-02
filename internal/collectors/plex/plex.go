@@ -68,20 +68,18 @@ func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog
 			Device:          "Media Monitor Y",
 			Provides:        "controller",
 		})
-	p := plex.NewPMSClient(url,
-		config.Client(context.Background(), config.TokenSource(append(pcfg.options(), plextv.WithLogger(logger))...)),
-		plex.WithHTTPClient(httpClient),
-	)
+	plexTVClient := config.Client(context.Background(), config.TokenSource(append(pcfg.options(), plextv.WithLogger(logger))...))
+	pmsClient := plex.NewPMSClient(url, plexTVClient, plex.WithHTTPClient(httpClient))
 	c := Collector{
 		collectors: []prometheus.Collector{
-			newVersionCollector(p, url, logger),
+			newVersionCollector(pmsClient, url, logger),
 			&sessionCollector{
-				sessionGetter: p,
+				sessionGetter: pmsClient,
 				ipLocator:     iplocator.New(httpClient),
 				url:           url,
 				logger:        logger,
 			},
-			newLibraryCollector(p, url, logger),
+			newLibraryCollector(pmsClient, url, logger),
 		},
 	}
 	return &c
