@@ -60,13 +60,11 @@ func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog
 	config := plextv.DefaultConfig().
 		WithClientID(pcfg.ClientID).
 		WithDevice(plextv.Device{
-			Product:         "github.com/clambin/mediamon",
-			Version:         pcfg.Version,
-			Platform:        runtime.GOOS,
-			PlatformVersion: runtime.Version(),
-			DeviceName:      "Media Monitor",
-			Device:          "Media Monitor Y",
-			Provides:        "controller",
+			Product:    "github.com/clambin/mediamon",
+			Version:    pcfg.Version,
+			DeviceName: "Media Monitor",
+			Platform:   runtime.GOOS,
+			Provides:   "controller",
 		})
 	plexTVClient := config.Client(context.Background(), config.TokenSource(append(pcfg.options(), plextv.WithLogger(logger))...))
 	pmsClient := plex.NewPMSClient(url, plexTVClient, plex.WithHTTPClient(httpClient))
