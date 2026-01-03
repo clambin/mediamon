@@ -67,16 +67,7 @@ plex:
     path: <path>
     # passphrase used to encrypt the JWT data.
     passphrase: <passphrase>
-  # If multiple Plex Media Servers are registered under the same user account,
-  # you can specify which one to monitor here.
-  # Note: when using JWT, this *must* be set.
-  pms:
-    #  disabled by default
-    enable: false
-    # the name of the Plex Media Server to monitor. Case sensitive. Spaces matter.
-    # If blank 
-    name: <your-pms-name>
-
+    
 openvpn:
   bandwidth:
     # mediamon uses the OpenVPN status will to measure up/download bandwidth
