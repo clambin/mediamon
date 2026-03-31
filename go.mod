@@ -3,7 +3,7 @@ module github.com/clambin/mediamon/v2
 go 1.25
 
 require (
-	codeberg.org/clambin/go-common/cache v0.9.0
+	codeberg.org/clambin/go-common/cache v0.10.0
 	codeberg.org/clambin/go-common/charmer v0.4.0
 	codeberg.org/clambin/go-common/set v0.6.0
 	codeberg.org/clambin/go-common/testutils v0.7.2
