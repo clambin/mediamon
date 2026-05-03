@@ -18,18 +18,18 @@ func TestCollector(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := prowlarr.IndexerStatsResource{
 			Indexers: &[]prowlarr.IndexerStatistics{{
-				IndexerId:             constP[int32](1),
-				IndexerName:           constP("foo"),
-				AverageResponseTime:   constP[int32](100),
-				NumberOfQueries:       constP[int32](10),
-				NumberOfFailedQueries: constP[int32](1),
-				NumberOfGrabs:         constP[int32](2),
-				NumberOfFailedGrabs:   constP[int32](1),
+				IndexerId:             new(int32(1)),
+				IndexerName:           new("foo"),
+				AverageResponseTime:   new(int32(100)),
+				NumberOfQueries:       new(int32(10)),
+				NumberOfFailedQueries: new(int32(1)),
+				NumberOfGrabs:         new(int32(2)),
+				NumberOfFailedGrabs:   new(int32(1)),
 			}},
 			UserAgents: &[]prowlarr.UserAgentStatistics{{
-				UserAgent:       constP("foo"),
-				NumberOfQueries: constP[int32](10),
-				NumberOfGrabs:   constP[int32](1),
+				UserAgent:       new("foo"),
+				NumberOfQueries: new(int32(10)),
+				NumberOfGrabs:   new(int32(1)),
 			}},
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -81,8 +81,4 @@ mediamon_prowlarr_user_agent_query_total{application="prowlarr",url="http://loca
 		"mediamon_prowlarr_user_agent_query_total",
 		"mediamon_prowlarr_user_agent_grab_total",
 	))
-}
-
-func constP[T any](t T) *T {
-	return &t
 }

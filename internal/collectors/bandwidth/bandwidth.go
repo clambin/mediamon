@@ -103,18 +103,18 @@ func readClientStatusFile(r io.Reader) (map[string]int64, error) {
 		if _, ok := ignoredLines[line]; ok {
 			continue
 		}
-		idx := strings.IndexByte(line, ',')
-		if idx == -1 {
+		before, after, ok := strings.Cut(line, ",")
+		if !ok {
 			return nil, fmt.Errorf("invalid line %q", line)
 		}
-		if line[:idx] == "Updated" {
+		if before == "Updated" {
 			continue
 		}
-		value, err := strconv.ParseInt(line[idx+1:], 10, 64)
+		value, err := strconv.ParseInt(after, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid value %q: %w", line[idx+1:], err)
+			return nil, fmt.Errorf("invalid value %q: %w", after, err)
 		}
-		values[line[:idx]] = value
+		values[before] = value
 	}
 	return values, nil
 }

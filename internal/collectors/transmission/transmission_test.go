@@ -21,7 +21,7 @@ func TestCollector_Collect(t *testing.T) {
 			DownloadSpeed:      100,
 		},
 		sessionArgs: transmissionrpc.SessionArguments{
-			Version: constP("foo"),
+			Version: new("foo"),
 		},
 	}
 
@@ -53,10 +53,6 @@ mediamon_transmission_version{url="",version="foo"} 1
 
 	g.err = assert.AnError
 	assert.NoError(t, testutil.CollectAndCompare(c, strings.NewReader("")))
-}
-
-func constP[T any](t T) *T {
-	return &t
 }
 
 var _ TransmissionClient = &fakeTransmissionClient{}

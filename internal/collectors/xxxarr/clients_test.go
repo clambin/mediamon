@@ -12,21 +12,21 @@ import (
 
 func TestRadarrClient(t *testing.T) {
 	client := fakeRadarrClient{
-		systemStatus: &radarr.GetApiV3SystemStatusResponse{JSON200: &radarr.SystemResource{Version: constP("v1.2.3")}},
+		systemStatus: &radarr.GetApiV3SystemStatusResponse{JSON200: &radarr.SystemResource{Version: new("v1.2.3")}},
 		health: &radarr.GetApiV3HealthResponse{JSON200: &[]radarr.HealthResource{
-			{Type: constP(radarr.HealthCheckResult("foo")), Message: constP("bar")},
+			{Type: new(radarr.HealthCheckResult("foo")), Message: new("bar")},
 		}},
-		calendar: &radarr.GetApiV3CalendarResponse{JSON200: &[]radarr.MovieResource{{Title: constP("some movie")}}},
+		calendar: &radarr.GetApiV3CalendarResponse{JSON200: &[]radarr.MovieResource{{Title: new("some movie")}}},
 		queue: &radarr.GetApiV3QueueResponse{JSON200: &radarr.QueueResourcePagingResource{
-			Page:         constP(int32(1)),
-			PageSize:     constP(int32(100)),
-			Records:      &[]radarr.QueueResource{{Size: constP(100.0), Sizeleft: constP(40.0), Title: constP("some other movie")}},
-			TotalRecords: constP(int32(1)),
+			Page:         new(int32(1)),
+			PageSize:     new(int32(100)),
+			Records:      &[]radarr.QueueResource{{Size: new(100.0), Sizeleft: new(40.0), Title: new("some other movie")}},
+			TotalRecords: new(int32(1)),
 		}},
 		movies: &radarr.GetApiV3MovieResponse{JSON200: &[]radarr.MovieResource{
-			{Monitored: constP(true), Title: constP("some movie")},
-			{Monitored: constP(false), Title: constP("some other movie")},
-			{Monitored: constP(true), Title: constP("some other other movie")},
+			{Monitored: new(true), Title: new("some movie")},
+			{Monitored: new(false), Title: new("some other movie")},
+			{Monitored: new(true), Title: new("some other other movie")},
 		}},
 	}
 	c, _ := NewRadarrClient("http://localhost:1234", "api-key", http.DefaultClient)
@@ -56,33 +56,33 @@ func TestRadarrClient(t *testing.T) {
 
 func TestSonarrClient(t *testing.T) {
 	client := fakeSonarrClient{
-		systemStatus: &sonarr.GetApiV3SystemStatusResponse{JSON200: &sonarr.SystemResource{Version: constP("v1.2.3")}},
+		systemStatus: &sonarr.GetApiV3SystemStatusResponse{JSON200: &sonarr.SystemResource{Version: new("v1.2.3")}},
 		health: &sonarr.GetApiV3HealthResponse{JSON200: &[]sonarr.HealthResource{
-			{Type: constP(sonarr.HealthCheckResult("foo")), Message: constP("bar")},
+			{Type: new(sonarr.HealthCheckResult("foo")), Message: new("bar")},
 		}},
 		calendar: &sonarr.GetApiV3CalendarResponse{JSON200: &[]sonarr.EpisodeResource{{
-			Title:         constP("some episode"),
-			SeasonNumber:  constP(int32(1)),
-			EpisodeNumber: constP(int32(12)),
-			Series:        &sonarr.SeriesResource{Title: constP("some series")}},
+			Title:         new("some episode"),
+			SeasonNumber:  new(int32(1)),
+			EpisodeNumber: new(int32(12)),
+			Series:        &sonarr.SeriesResource{Title: new("some series")}},
 		}},
 		queue: &sonarr.GetApiV3QueueResponse{JSON200: &sonarr.QueueResourcePagingResource{
-			Page:     constP(int32(1)),
-			PageSize: constP(int32(100)),
+			Page:     new(int32(1)),
+			PageSize: new(int32(100)),
 			Records: &[]sonarr.QueueResource{{
-				Size:         constP(100.0),
-				Sizeleft:     constP(40.0),
-				Title:        constP("some other episode"),
-				Series:       &sonarr.SeriesResource{Title: constP("some other series")},
-				SeasonNumber: constP(int32(1)),
-				Episode:      &sonarr.EpisodeResource{EpisodeNumber: constP(int32(12))},
+				Size:         new(100.0),
+				Sizeleft:     new(40.0),
+				Title:        new("some other episode"),
+				Series:       &sonarr.SeriesResource{Title: new("some other series")},
+				SeasonNumber: new(int32(1)),
+				Episode:      &sonarr.EpisodeResource{EpisodeNumber: new(int32(12))},
 			}},
-			TotalRecords: constP(int32(1)),
+			TotalRecords: new(int32(1)),
 		}},
 		series: &sonarr.GetApiV3SeriesResponse{JSON200: &[]sonarr.SeriesResource{
-			{Monitored: constP(true), Title: constP("some series")},
-			{Monitored: constP(false), Title: constP("some other series")},
-			{Monitored: constP(true), Title: constP("some other other series")},
+			{Monitored: new(true), Title: new("some series")},
+			{Monitored: new(false), Title: new("some other series")},
+			{Monitored: new(true), Title: new("some other other series")},
 		}},
 	}
 	c, _ := NewSonarrClient("http://localhost:1234", "api-key", http.DefaultClient)
@@ -108,8 +108,4 @@ func TestSonarrClient(t *testing.T) {
 	library, err := c.GetLibrary(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, Library{Monitored: 2, Unmonitored: 1}, library)
-}
-
-func constP[T any](v T) *T {
-	return &v
 }
