@@ -1,31 +1,30 @@
 package plex
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
-	"runtime"
 	"sync"
 
 	"github.com/clambin/mediaclients/plex"
-	"github.com/clambin/mediaclients/plex/plextv"
-	"github.com/clambin/mediaclients/plex/vault"
 	"github.com/clambin/mediamon/v2/iplocator"
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Config holds the configuration for the Plex collector
 type Config struct {
-	UserName      string
-	Password      string
-	ClientID      string
-	JWTLocation   string
-	JWTPassphrase string
-	Version       string
-	UseJWT        bool
+	Token string
+	/*
+		UserName      string
+		Password      string
+		ClientID      string
+		JWTLocation   string
+		JWTPassphrase string
+		Version       string
+		UseJWT        bool
+	*/
 }
 
+/*
 func (p Config) options() []plextv.TokenSourceOption {
 	var opts []plextv.TokenSourceOption
 	opts = append(opts, plextv.WithCredentials(p.UserName, p.Password))
@@ -34,6 +33,7 @@ func (p Config) options() []plextv.TokenSourceOption {
 	}
 	return opts
 }
+*/
 
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
@@ -52,22 +52,25 @@ type IPLocator interface {
 
 // NewCollector creates a new Collector
 func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog.Logger) *Collector {
-	if pcfg.ClientID == "" {
-		pcfg.ClientID = uuid.New().String()
-		logger.Info("clientID not set, using generated clientID", "clientID", pcfg.ClientID)
-	}
+	/*
+		if pcfg.ClientID == "" {
+			pcfg.ClientID = uuid.New().String()
+			logger.Info("clientID not set, using generated clientID", "clientID", pcfg.ClientID)
+		}
 
-	config := plextv.DefaultConfig().
-		WithClientID(pcfg.ClientID).
-		WithDevice(plextv.Device{
-			Product:    "github.com/clambin/mediamon",
-			Version:    pcfg.Version,
-			DeviceName: "Media Monitor",
-			Platform:   runtime.GOOS,
-			Provides:   "controller",
-		})
-	plexTVClient := config.Client(context.Background(), config.TokenSource(append(pcfg.options(), plextv.WithLogger(logger))...))
-	pmsClient := plex.NewPMSClient(url, plexTVClient, plex.WithHTTPClient(httpClient))
+		config := plextv.DefaultConfig().
+			WithClientID(pcfg.ClientID).
+			WithDevice(plextv.Device{
+				Product:    "github.com/clambin/mediamon",
+				Version:    pcfg.Version,
+				DeviceName: "Media Monitor",
+				Platform:   runtime.GOOS,
+				Provides:   "controller",
+			})
+		plexTVClient := config.Client(context.Background(), config.TokenSource(append(pcfg.options(), plextv.WithLogger(logger))...))
+		pmsClient := plex.NewPMSClient(url, plexTVClient, plex.WithHTTPClient(httpClient))
+	*/
+	pmsClient := plex.NewPMSClientWithToken(url, pcfg.Token, plex.WithHTTPClient(httpClient))
 	c := Collector{
 		collectors: []prometheus.Collector{
 			newVersionCollector(pmsClient, url, logger),

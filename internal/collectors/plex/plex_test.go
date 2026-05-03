@@ -25,7 +25,7 @@ func TestCollector_Collect(t *testing.T) {
 
 	c := NewCollector(
 		"http://localhost:8080",
-		Config{Version: "1.0"},
+		Config{ /*Version: "1.0"*/ Token: "my-token"},
 		http.DefaultClient,
 		slog.New(slog.DiscardHandler),
 	)

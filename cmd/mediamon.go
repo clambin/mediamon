@@ -142,7 +142,7 @@ var constructors = map[string]constructor{
 	},
 }
 
-func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []prometheus.Collector {
+func createCollectors(_ string, v *viper.Viper, logger *slog.Logger) []prometheus.Collector {
 	collectors := make([]prometheus.Collector, 0, len(constructors))
 	for key, c := range constructors {
 		target := v.GetString(key)
@@ -178,13 +178,16 @@ func createCollectors(version string, v *viper.Viper, logger *slog.Logger) []pro
 			collector, err = prowlarr.New(target, v.GetString("prowlarr.apikey"), httpClient, l)
 		case "plex.url":
 			pcfg := plex.Config{
-				UserName:      v.GetString("plex.username"),
-				Password:      v.GetString("plex.password"),
-				ClientID:      v.GetString("plex.client-id"),
-				UseJWT:        v.GetBool("plex.jwt.enable"),
-				JWTLocation:   v.GetString("plex.jwt.path"),
-				JWTPassphrase: v.GetString("plex.jwt.passphrase"),
-				Version:       version,
+				Token: v.GetString("plex.token"),
+				// the following options are disabled until plex auth settles down
+				// currently there's too much confusion on how to get a plex pms token reliably
+				//UserName:      v.GetString("plex.username"),
+				//Password:      v.GetString("plex.password"),
+				//ClientID:      v.GetString("plex.client-id"),
+				//UseJWT:        v.GetBool("plex.jwt.enable"),
+				//JWTLocation:   v.GetString("plex.jwt.path"),
+				//JWTPassphrase: v.GetString("plex.jwt.passphrase"),
+				//Version:       version,
 			}
 			collector = plex.NewCollector(target, pcfg, httpClient, l)
 		case "openvpn.bandwidth.filename":

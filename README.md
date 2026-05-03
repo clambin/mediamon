@@ -52,21 +52,9 @@ prowlarr:
 
 plex:
   # Plex URL, e.g. http://192.168.0.11:32400 
-  url: <url> 
-  # Your plex.tv user name and password
-  username: <username>
-  password: <password>
-  # Your plex.tv client identifier. If blank, mediamon will allocate a random one for you.
-  # Note: when using JWT, this *must* be set and kept consistent.
-  client-id: <client-id>
-  # If you want to use a JWT token instead of re-registering every time mediamon starts.
-  jwt:
-    # disabled by default
-    enable: false
-    # the path of the file where the JWT data is stored.
-    path: <path>
-    # passphrase used to encrypt the JWT data.
-    passphrase: <passphrase>
+  url: <url>
+  # Token. See https://support.plex.tv/articles/201998867-investigate-media-information-and-formats/ 
+  token: <token> 
     
 openvpn:
   bandwidth:
