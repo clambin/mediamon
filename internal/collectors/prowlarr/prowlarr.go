@@ -66,7 +66,7 @@ func newMetrics(url string) map[string]*prometheus.Desc {
 type Collector struct {
 	metrics      map[string]*prometheus.Desc
 	logger       *slog.Logger
-	indexerStats measurer.Cached[*prowlarr.IndexerStatsResource]
+	indexerStats measurer.CachingMeasurer[*prowlarr.IndexerStatsResource]
 }
 
 type ProwlarrClient interface {
@@ -84,7 +84,7 @@ func New(url, apiKey string, httpClient *http.Client, logger *slog.Logger) (prom
 	}
 
 	return &Collector{
-		indexerStats: measurer.Cached[*prowlarr.IndexerStatsResource]{
+		indexerStats: measurer.CachingMeasurer[*prowlarr.IndexerStatsResource]{
 			Interval: refreshInterval,
 			Do: func(ctx context.Context) (*prowlarr.IndexerStatsResource, error) {
 				resp, err := prowlarrClient.GetApiV1IndexerstatsWithResponse(context.Background(), nil)

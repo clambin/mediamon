@@ -81,6 +81,7 @@ func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog
 				logger:        logger,
 			},
 			newLibraryCollector(pmsClient, url, logger),
+			newStatsCollector(pmsClient, url, logger),
 		},
 	}
 	return &c

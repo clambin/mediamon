@@ -16,7 +16,7 @@ import (
 func TestCached_Measure(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var calls atomic.Int64
-		c := measurer.Cached[int64]{
+		c := measurer.CachingMeasurer[int64]{
 			Interval: time.Second,
 			Do: func(ctx context.Context) (int64, error) {
 				return calls.Add(1), nil

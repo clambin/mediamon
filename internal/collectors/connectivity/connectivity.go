@@ -21,13 +21,13 @@ var (
 
 // Collector tests network connectivity by querying the IP address location through ip-api.com
 type Collector struct {
-	connection *measurer.Cached[float64]
+	connection *measurer.CachingMeasurer[float64]
 }
 
 func NewCollector(httpClient *http.Client, interval time.Duration, _ *slog.Logger) prometheus.Collector {
 	const target = "https://clients3.google.com/generate_204"
 	return &Collector{
-		connection: &measurer.Cached[float64]{
+		connection: &measurer.CachingMeasurer[float64]{
 			Interval: interval,
 			Do: func(ctx context.Context) (float64, error) {
 				req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)

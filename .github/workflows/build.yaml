@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-      - jwt
+      - count
     paths-ignore:
       - 'assets/**'
   workflow_call:

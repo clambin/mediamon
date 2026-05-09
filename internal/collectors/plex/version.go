@@ -27,7 +27,7 @@ type versionCollector struct {
 	identityGetter
 	logger *slog.Logger
 	url    string
-	measurer.Cached[plex.Identity]
+	measurer.CachingMeasurer[plex.Identity]
 }
 
 func newVersionCollector(client identityGetter, url string, logger *slog.Logger) prometheus.Collector {
@@ -36,7 +36,7 @@ func newVersionCollector(client identityGetter, url string, logger *slog.Logger)
 		url:            url,
 		logger:         logger,
 	}
-	c.Cached = measurer.Cached[plex.Identity]{
+	c.CachingMeasurer = measurer.CachingMeasurer[plex.Identity]{
 		Interval: identityRefreshInterval,
 		Do:       func(ctx context.Context) (plex.Identity, error) { return c.GetIdentity(ctx) },
 	}

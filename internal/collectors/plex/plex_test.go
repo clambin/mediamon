@@ -37,6 +37,8 @@ func TestCollector_Collect(t *testing.T) {
 			cl.identityGetter = g
 		case *sessionCollector:
 			cl.sessionGetter = g
+		case *statsCollector:
+			cl.client = g
 		default:
 			panic("unknown collector")
 		}

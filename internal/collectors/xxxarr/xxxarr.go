@@ -101,9 +101,9 @@ type Collector struct {
 	metrics          map[string]*prometheus.Desc
 	logger           *slog.Logger
 	application      string
-	versionMeasurer  measurer.Cached[string]
-	libraryMeasurer  measurer.Cached[Library]
-	calendarMeasurer measurer.Cached[[]string]
+	versionMeasurer  measurer.CachingMeasurer[string]
+	libraryMeasurer  measurer.CachingMeasurer[Library]
+	calendarMeasurer measurer.CachingMeasurer[[]string]
 }
 
 // Client presents a unified interface to Sonarr/Radarr clients
@@ -143,15 +143,15 @@ func newCollector(application, url string, client Client, logger *slog.Logger) *
 		metrics:     createMetrics(application, url),
 		logger:      logger,
 	}
-	c.versionMeasurer = measurer.Cached[string]{
+	c.versionMeasurer = measurer.CachingMeasurer[string]{
 		Interval: versionMeasureInterval,
 		Do:       func(ctx context.Context) (string, error) { return c.client.GetVersion(ctx) },
 	}
-	c.libraryMeasurer = measurer.Cached[Library]{
+	c.libraryMeasurer = measurer.CachingMeasurer[Library]{
 		Interval: libraryMeasureInterval,
 		Do:       func(ctx context.Context) (Library, error) { return c.client.GetLibrary(ctx) },
 	}
-	c.calendarMeasurer = measurer.Cached[[]string]{
+	c.calendarMeasurer = measurer.CachingMeasurer[[]string]{
 		Interval: calendarMeasureInterval,
 		Do: func(ctx context.Context) ([]string, error) {
 			return c.client.GetCalendar(ctx, 1)

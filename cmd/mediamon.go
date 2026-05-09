@@ -30,7 +30,7 @@ var (
 	configFilename string
 	rootCmd        = cobra.Command{
 		Use:   "mediamon",
-		Short: "Prometheus exporter for various media applications. Currently supports Transmission, OpenVPN Client, Sonarr, Radarr and Plex.",
+		Short: "Prometheus exporter for various media applications.",
 		Run:   Main,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			charmer.SetTextLogger(cmd, viper.GetBool("debug"))

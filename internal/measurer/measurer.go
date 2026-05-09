@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// Cached measures a value and caches it for Interval seconds.
-type Cached[T any] struct {
+// CachingMeasurer measures a value and caches it for Interval seconds.
+type CachingMeasurer[T any] struct {
 	lastCheck time.Time
 	lastValue T
 	Do        func(context.Context) (T, error)
@@ -16,7 +16,7 @@ type Cached[T any] struct {
 }
 
 // Measure returns the cached value if it's within Interval seconds, otherwise it calls Do to measure a new value.
-func (c *Cached[T]) Measure(ctx context.Context) (T, error) {
+func (c *CachingMeasurer[T]) Measure(ctx context.Context) (T, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	if time.Since(c.lastCheck) > c.Interval {

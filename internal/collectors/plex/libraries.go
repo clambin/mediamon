@@ -40,7 +40,7 @@ type libraryCollector struct {
 	libraryGetter
 	logger *slog.Logger
 	url    string
-	measurer.Cached[map[string][]libraryEntry]
+	measurer.CachingMeasurer[map[string][]libraryEntry]
 }
 
 func newLibraryCollector(client libraryGetter, url string, logger *slog.Logger) prometheus.Collector {
@@ -49,7 +49,7 @@ func newLibraryCollector(client libraryGetter, url string, logger *slog.Logger) 
 		url:           url,
 		logger:        logger,
 	}
-	c.Cached = measurer.Cached[map[string][]libraryEntry]{
+	c.CachingMeasurer = measurer.CachingMeasurer[map[string][]libraryEntry]{
 		Do:       c.getLibraries,
 		Interval: libraryRefreshInterval,
 	}
