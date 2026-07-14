@@ -1,7 +1,7 @@
 codeberg.org/clambin/go-common/cache v0.10.0 h1:yxe776W5lC3357LB7CQQ4Xd663xhtNEEhmVQ2Jo5cqs=
 codeberg.org/clambin/go-common/cache v0.10.0/go.mod h1:XLosTvfQ+AuqK44fcf7pK9fD8B83skqM+QI5pu3P1v0=
-codeberg.org/clambin/go-common/charmer v0.4.1 h1:WkRy9vpoCqghWBShiPqWkkhEOWrq3a9S6hcoaij8sTA=
-codeberg.org/clambin/go-common/charmer v0.4.1/go.mod h1:okSKC9dmKQuXUEW85fdN8QjFK0LpXowLANCGfyACxL8=
+codeberg.org/clambin/go-common/charmer v0.5.0 h1:IlJ+5loR7J35mTn/ti09vTnJkG5wxNFTTw3EHfGtf5I=
+codeberg.org/clambin/go-common/charmer v0.5.0/go.mod h1:Zmw5X7Fc4pxIR7RAGrzJAUAH3qWVNqBYbOzrqnN2npg=
 codeberg.org/clambin/go-common/set v0.6.0 h1:R+Pe98XsmW3sdMtBZ/G/FKsgeeynhbqoCTrL+pGApUQ=
 codeberg.org/clambin/go-common/set v0.6.0/go.mod h1:PRd4gka5V+Tn3BmUkXkEjUGlEsLjCqKOFjG1inc+Zpc=
 codeberg.org/clambin/go-common/testutils v0.7.2 h1:6dwCCfhCRbUXPxwBtVMg3/Pi7wV2mS9ZN2ExUCtI11A=
