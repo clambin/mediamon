@@ -1,6 +1,6 @@
 module github.com/clambin/mediamon/v2
 
-go 1.26
+go 1.27
 
 require (
 	codeberg.org/clambin/go-common/cache v0.10.0
