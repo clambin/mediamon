@@ -46,9 +46,9 @@ var _ prometheus.Collector = &statsCollector{}
 
 type statsCollector struct {
 	client     statsGetter
-	movieStats measurer.CachingMeasurer[int]
-	showStats  measurer.CachingMeasurer[[]int]
 	url        string
+	showStats  measurer.CachingMeasurer[[]int]
+	movieStats measurer.CachingMeasurer[int]
 }
 
 func newStatsCollector(client statsGetter, url string, _ *slog.Logger) *statsCollector {
