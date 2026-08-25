@@ -178,18 +178,20 @@ func createCollectors(_ string, v *viper.Viper, logger *slog.Logger) []prometheu
 			collector, err = prowlarr.New(target, v.GetString("prowlarr.apikey"), httpClient, l)
 		case "plex.url":
 			pcfg := plex.Config{
-				Token: v.GetString("plex.token"),
-				// the following options are disabled until plex auth settles down
-				// currently there's too much confusion on how to get a plex pms token reliably
-				//UserName:      v.GetString("plex.username"),
-				//Password:      v.GetString("plex.password"),
-				//ClientID:      v.GetString("plex.client-id"),
-				//UseJWT:        v.GetBool("plex.jwt.enable"),
-				//JWTLocation:   v.GetString("plex.jwt.path"),
-				//JWTPassphrase: v.GetString("plex.jwt.passphrase"),
-				//Version:       version,
+				Token:         v.GetString("plex.token"),
+				UserName:      v.GetString("plex.username"),
+				Password:      v.GetString("plex.password"),
+				ClientID:      v.GetString("plex.client-id"),
+				UseJWT:        v.GetBool("plex.jwt.enable"),
+				JWTLocation:   v.GetString("plex.jwt.path"),
+				JWTPassphrase: v.GetString("plex.jwt.passphrase"),
+				Version:       version,
 			}
-			collector = plex.NewCollector(target, pcfg, httpClient, l)
+			collector, err = plex.NewCollector(target, pcfg, httpClient, l)
+			if err != nil {
+				logger.Warn("failed to create Plex collector", "err", err)
+				continue
+			}
 		case "openvpn.bandwidth.filename":
 			collector = bandwidth.NewCollector(target, l)
 		case "openvpn.connectivity.proxy":

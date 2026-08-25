@@ -49,12 +49,11 @@ func Test_createCollectors(t *testing.T) {
 	v.Set("transmission.url", "http://transmission:80")
 	v.Set("sonarr.url", "http://sonarr:80")
 	v.Set("radarr.url", "http://radarr:80")
-	v.Set("plex.url", "http://plex:80")
 	v.Set("openvpn.connectivity.proxy", "http://proxy:8080")
 	v.Set("openvpn.bandwidth.filename", "/data/client.status")
 
 	collectors := createCollectors("ci/cd", v, slog.New(slog.DiscardHandler))
-	assert.Len(t, collectors, 12)
+	assert.Len(t, collectors, 10)
 }
 
 func Test_parseProxy(t *testing.T) {

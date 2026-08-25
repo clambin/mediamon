@@ -1,30 +1,33 @@
 package plex
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"runtime"
 	"sync"
+	"uuid"
 
 	"github.com/clambin/mediaclients/plex"
+	"github.com/clambin/mediaclients/plex/plextv"
+	"github.com/clambin/mediaclients/plex/vault"
 	"github.com/clambin/mediamon/v2/iplocator"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Config holds the configuration for the Plex collector
 type Config struct {
-	Token string
-	/*
-		UserName      string
-		Password      string
-		ClientID      string
-		JWTLocation   string
-		JWTPassphrase string
-		Version       string
-		UseJWT        bool
-	*/
+	Token         string
+	UserName      string
+	Password      string
+	ClientID      string
+	JWTLocation   string
+	JWTPassphrase string
+	Version       string
+	UseJWT        bool
 }
 
-/*
 func (p Config) options() []plextv.TokenSourceOption {
 	var opts []plextv.TokenSourceOption
 	opts = append(opts, plextv.WithCredentials(p.UserName, p.Password))
@@ -33,7 +36,6 @@ func (p Config) options() []plextv.TokenSourceOption {
 	}
 	return opts
 }
-*/
 
 // Collector presents Plex statistics as Prometheus metrics
 type Collector struct {
@@ -51,40 +53,55 @@ type IPLocator interface {
 }
 
 // NewCollector creates a new Collector
-func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog.Logger) *Collector {
-	/*
+func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog.Logger) (*Collector, error) {
+	token := pcfg.Token
+	if token == "" {
+		// we don't have a token, so we need to get the PMS's token from Plex.tv
+
+		// we need a client ID to register our client with Plex.tv. Create one if not set.
 		if pcfg.ClientID == "" {
 			pcfg.ClientID = uuid.New().String()
 			logger.Info("clientID not set, using generated clientID", "clientID", pcfg.ClientID)
 		}
 
+		// build plex.tv Config to create a client
 		config := plextv.DefaultConfig().
 			WithClientID(pcfg.ClientID).
-			WithDevice(plextv.Device{
+			WithDevice(plextv.DeviceInformation{
 				Product:    "github.com/clambin/mediamon",
 				Version:    pcfg.Version,
 				DeviceName: "Media Monitor",
 				Platform:   runtime.GOOS,
 				Provides:   "controller",
 			})
-		plexTVClient := config.Client(context.Background(), config.TokenSource(append(pcfg.options(), plextv.WithLogger(logger))...))
-		pmsClient := plex.NewPMSClient(url, plexTVClient, plex.WithHTTPClient(httpClient))
-	*/
-	pmsClient := plex.NewPMSClientWithToken(url, pcfg.Token, plex.WithHTTPClient(httpClient))
+		ctx := context.Background()
+		plexTVClient := config.Client(ctx, config.TokenSource(append(pcfg.options(), plextv.WithLogger(logger))...))
+
+		// get the Plex Media Server token from plex.tv
+		var err error
+		if token, err = plex.Token(ctx, url, plexTVClient); err != nil {
+			return nil, fmt.Errorf("failed to get Plex token: %w", err)
+		}
+	}
+
+	// create a Plex client
+	client := plex.New(url, token, plex.WithHTTPClient(httpClient))
+
+	// create the collector
 	c := Collector{
 		collectors: []prometheus.Collector{
-			newVersionCollector(pmsClient, url, logger),
+			newVersionCollector(client, url, logger),
 			&sessionCollector{
-				sessionGetter: pmsClient,
+				sessionGetter: client,
 				ipLocator:     iplocator.New(httpClient),
 				url:           url,
 				logger:        logger,
 			},
-			newLibraryCollector(pmsClient, url, logger),
-			newStatsCollector(pmsClient, url, logger),
+			newLibraryCollector(client, url, logger),
+			newStatsCollector(client, url, logger),
 		},
 	}
-	return &c
+	return &c, nil
 }
 
 // Describe implements the prometheus.Collector interface

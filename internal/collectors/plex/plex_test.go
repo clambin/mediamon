@@ -23,7 +23,7 @@ func TestCollector_Collect(t *testing.T) {
 		identity: plex.Identity{Version: "1.0"},
 	}
 
-	c := NewCollector(
+	c, _ := NewCollector(
 		"http://localhost:8080",
 		Config{ /*Version: "1.0"*/ Token: "my-token"},
 		http.DefaultClient,
