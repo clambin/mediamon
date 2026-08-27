@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-      - count
+      - plex
     paths-ignore:
       - 'assets/**'
   workflow_call:

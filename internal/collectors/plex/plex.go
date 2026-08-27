@@ -98,7 +98,6 @@ func NewCollector(url string, pcfg Config, httpClient *http.Client, logger *slog
 				logger:        logger,
 			},
 			newLibraryCollector(client, url, logger),
-			newStatsCollector(client, url, logger),
 		},
 	}
 	return &c, nil

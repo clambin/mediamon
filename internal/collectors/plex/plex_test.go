@@ -17,7 +17,7 @@ func TestCollector_Collect(t *testing.T) {
 			{Title: "movies", Type: "movie", Key: "1"},
 			{Title: "shows", Type: "show", Key: "2"},
 		},
-		movies: []plex.Movie{
+		movies: []plex.MediaMetadata{
 			{Title: "a movie", Key: "10", Media: []plex.Media{{Part: []plex.MediaPart{{Size: 1024}}}}},
 		},
 		identity: plex.Identity{Version: "1.0"},
@@ -37,8 +37,6 @@ func TestCollector_Collect(t *testing.T) {
 			cl.identityGetter = g
 		case *sessionCollector:
 			cl.sessionGetter = g
-		case *statsCollector:
-			cl.client = g
 		default:
 			panic("unknown collector")
 		}
@@ -48,11 +46,8 @@ func TestCollector_Collect(t *testing.T) {
 # HELP mediamon_plex_library_bytes Library size in bytes
 # TYPE mediamon_plex_library_bytes gauge
 mediamon_plex_library_bytes{library="movies",url="http://localhost:8080"} 1024
-mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 0
-# HELP mediamon_plex_library_count Library size in number of entries
-# TYPE mediamon_plex_library_count gauge
-mediamon_plex_library_count{library="movies",url="http://localhost:8080"} 1
-mediamon_plex_library_count{library="shows",url="http://localhost:8080"} 0
+mediamon_plex_library_bytes{library="shows",url="http://localhost:8080"} 1024
+
 # HELP mediamon_plex_version version info
 # TYPE mediamon_plex_version gauge
 mediamon_plex_version{url="http://localhost:8080",version="1.0"} 1
