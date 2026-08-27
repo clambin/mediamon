@@ -2882,7 +2882,7 @@ spec:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "mediamon_plex_movie_count",
+              "expr": "sum(mediamon_plex_movie_count)",
               "instant": true,
               "legendFormat": "{{library}}",
               "range": false,
@@ -2949,7 +2949,7 @@ spec:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "mediamon_plex_show_count",
+              "expr": "avg(mediamon_plex_show_count)",
               "instant": true,
               "legendFormat": "{{library}}",
               "range": false,
@@ -3015,7 +3015,7 @@ spec:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "mediamon_plex_episode_count",
+              "expr": "sum(mediamon_plex_episode_count)",
               "instant": true,
               "legendFormat": "{{library}}",
               "range": false,
@@ -3066,7 +3066,7 @@ spec:
       "timezone": "",
       "title": "Media Server",
       "uid": "8C0N81WRl",
-      "version": 10,
+      "version": 11,
       "weekStart": ""
     }
   resyncPeriod: 10m0s
