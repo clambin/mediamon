@@ -4,11 +4,12 @@ import (
 	"context"
 	"iter"
 	"log/slog"
+	"maps"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 
-	"codeberg.org/clambin/go-common/set"
 	"github.com/clambin/mediaclients/plex"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -121,11 +122,11 @@ type plexSession struct {
 func (c sessionCollector) plexSessions(sessions []plex.Session) iter.Seq2[string, plexSession] {
 	return func(yield func(string, plexSession) bool) {
 		for _, session := range sessions {
-			videoCodecs := set.New[string]()
-			audioCodecs := set.New[string]()
+			videoCodecs := make(values)
+			audioCodecs := make(values)
 			for _, media := range session.Media {
-				videoCodecs.Add(media.VideoCodec)
-				audioCodecs.Add(media.AudioCodec)
+				videoCodecs.add(media.VideoCodec)
+				audioCodecs.add(media.AudioCodec)
 			}
 			progress := session.GetProgress()
 			if math.IsNaN(progress) {
@@ -143,8 +144,8 @@ func (c sessionCollector) plexSessions(sessions []plex.Session) iter.Seq2[string
 				videoMode:  session.GetVideoMode(),
 				throttled:  session.TranscodeSession.Throttled,
 				speed:      session.TranscodeSession.Speed,
-				videoCodec: strings.Join(videoCodecs.List(), ","),
-				audioCodec: strings.Join(audioCodecs.List(), ","),
+				videoCodec: videoCodecs.list(),
+				audioCodec: audioCodecs.list(),
 			}
 
 			if s.location != "lan" {
@@ -156,4 +157,16 @@ func (c sessionCollector) plexSessions(sessions []plex.Session) iter.Seq2[string
 			}
 		}
 	}
+}
+
+type values map[string]struct{}
+
+func (v values) add(name string) {
+	v[name] = struct{}{}
+}
+
+func (v values) list() string {
+	names := slices.Collect(maps.Keys(v))
+	slices.Sort(names)
+	return strings.Join(names, ",")
 }
