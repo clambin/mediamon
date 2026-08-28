@@ -5,7 +5,7 @@
 [![build](https://github.com/clambin/mediamon/workflows/Build/badge.svg)](https://github.com/clambin/mediamon/actions/workflows/build.yaml)
 [![license](https://img.shields.io/github/license/clambin/mediamon?style=plastic)](LICENSE.md)
 
-Prometheus exporter for various media applications. Currently, supports Transmission, OpenVPN Client, Sonarr, Radarr,
+Prometheus exporter for various media applications. Currently, it supports Transmission, OpenVPN Client, Sonarr, Radarr,
 Prowlarr and Plex.
 
 ## Installation
@@ -31,7 +31,7 @@ Flags:
 
 ### Configuration
 
-The configuration file option specifies a yaml file to control mediamon's behaviour:
+The configuration file option specifies a YAML file to control mediamon's behavior:
 
 ```
 transmission:
@@ -68,7 +68,7 @@ openvpn:
     filename: <file path>
   # OpenVPN monitoring. Includes connectivity monitoring (up/down) and bandwidth consumption
   connectivity:
-    # mediamon will connect to http://ip-api.com through a proxy running inside the OpenVPN container
+    # mediamon will connect to https://ip-api.com through a proxy running inside the OpenVPN container
     # URL of the Proxy. If not set, connectivity won't be monitored
     proxy: <url>
     # interval limits how often connectivity is checked 
@@ -84,8 +84,8 @@ $HOME/.mediamon
 .
 ```
 
-Any value in the configuration file may be overriden by setting an environment variable with a prefix `MEDIAMON_`. E.g.
-to avoid setting your Sonarr API key in the configuration file, set the following environment variables:
+Any value in the configuration file may be overridden by setting an environment variable with a prefix `MEDIAMON_`. 
+E.g., to avoid setting your Sonarr API key in the configuration file, set the following environment variables:
 
 ```
 export MEDIAMON_SONAR.APIKEY="your-sonarr-apikey"
@@ -146,4 +146,4 @@ to visualize the scraped metrics. Feel free to customize as you see fit.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License – see the [LICENSE.md](LICENSE.md) file for details.

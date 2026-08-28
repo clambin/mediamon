@@ -10,7 +10,7 @@ import (
 	"codeberg.org/clambin/go-common/cache"
 )
 
-const ipAPIURL = "http://ip-api.com"
+const target = "http://ip-api.com" // using https is a paying option.
 
 // Client finds the geographic coordinates of an IP address.  It uses https://ip-api.com to look up an IP address' location.
 type Client struct {
@@ -24,7 +24,7 @@ func New(httpClient *http.Client) *Client {
 	return &Client{
 		cache:      cache.New[string, Location](time.Hour, 5*time.Minute),
 		httpClient: cmp.Or(httpClient, http.DefaultClient),
-		url:        ipAPIURL,
+		url:        target,
 	}
 }
 
