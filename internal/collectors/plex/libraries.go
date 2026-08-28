@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const libraryRefreshInterval = 6 * time.Hour
+const libraryRefreshInterval = time.Hour
 
 var (
 	libraryBytesMetric = prometheus.NewDesc(
