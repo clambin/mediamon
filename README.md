@@ -58,9 +58,27 @@ prowlarr:
 plex:
   # Plex URL, e.g. http://192.168.0.11:32400 
   url: <url>
-  # Token. See https://support.plex.tv/articles/201998867-investigate-media-information-and-formats/ 
+  # Your PMS Token. See https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token.
+  # If you don't want to use your token here, leave this blank and provide your Plex username & password instead.
+  # Optionally, enable JWT authentication to use your Plex username & password only on first login.
   token: <token> 
-    
+  # Plex username. Used to authenticate with Plex
+  username: my-user
+  # Plex username. Used to authenticate with Plex
+  password: my-password
+  # Plex Client Identifier. Used to authenticate with Plex.
+  # When using JWT authentication, you *must* provide a client-id to prevent mediamon of logging in each time it starts.
+  client-id: 2194c117-e4eb-4223-af4e-f924e2234d21
+  # Plex JWT authentication. This is the new authentication method recommended by Plex.
+  # The advantage of JWT authentication is that it only uses your Plex username & password on first login.
+  # After the first login, mediamon will store a JWT token and use that to authenticate with Plex.
+  jwt:
+    # Enable JWT authentication.
+    enable: true
+    # Path to store the JWT token (encrypted).
+    path: "storage.enc"
+    # Passphrase to encrypt the JWT token.
+    passphrase: "my-very-insecure-passphrase"
 openvpn:
   bandwidth:
     # mediamon uses the OpenVPN status will to measure up/download bandwidth
