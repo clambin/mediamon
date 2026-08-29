@@ -3,6 +3,7 @@ package plex
 import (
 	"context"
 	"fmt"
+	"iter"
 	"log/slog"
 	"time"
 
@@ -42,7 +43,7 @@ var (
 
 type libraryGetter interface {
 	GetLibraries(ctx context.Context) ([]plex.Library, error)
-	GetAllLibraryMedia(ctx context.Context, key string) ([]plex.MediaMetadata, error)
+	GetAllLibraryMedia(ctx context.Context, key string) iter.Seq2[plex.MediaMetadata, error]
 }
 
 type libraryCollector struct {
@@ -110,13 +111,12 @@ func (c *libraryCollector) analyzeLibraries(ctx context.Context) (map[string]lib
 
 	result := make(map[string]libraryInfo, len(libraries))
 	for index := range libraries {
-		media, err := c.GetAllLibraryMedia(ctx, libraries[index].Key)
-		if err != nil {
-			return nil, fmt.Errorf("GetAllLibraryMedia (%s): %w", libraries[index].Type, err)
-		}
 		var info libraryInfo
 		titles := make(map[string]struct{})
-		for _, entry := range media {
+		for entry, err := range c.GetAllLibraryMedia(ctx, libraries[index].Key) {
+			if err != nil {
+				return nil, fmt.Errorf("GetAllLibraryMedia (%s): %w", libraries[index].Type, err)
+			}
 			switch libraries[index].Type {
 			case "movie":
 				titles[entry.Title] = struct{}{}
