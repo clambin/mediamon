@@ -2,6 +2,7 @@ package plex
 
 import (
 	"context"
+	"iter"
 
 	"github.com/clambin/mediaclients/plex"
 	"github.com/clambin/mediamon/v2/iplocator"
@@ -25,8 +26,14 @@ func (f fakeGetter) GetLibraries(_ context.Context) ([]plex.Library, error) {
 	return f.libraries, nil
 }
 
-func (f fakeGetter) GetAllLibraryMedia(_ context.Context, _ string) ([]plex.MediaMetadata, error) {
-	return append(f.movies, f.episodes...), nil
+func (f fakeGetter) GetAllLibraryMedia(_ context.Context, _ string) iter.Seq2[plex.MediaMetadata, error] {
+	return func(yield func(plex.MediaMetadata, error) bool) {
+		for _, entry := range append(f.movies, f.episodes...) {
+			if !yield(entry, nil) {
+				return
+			}
+		}
+	}
 }
 
 func (f fakeGetter) GetSessions(_ context.Context) ([]plex.Session, error) {
