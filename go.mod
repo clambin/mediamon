@@ -6,7 +6,7 @@ require (
 	codeberg.org/clambin/go-common/cache v0.10.0
 	codeberg.org/clambin/go-common/charmer v0.5.1
 	codeberg.org/clambin/go-common/testutils v0.7.2
-	github.com/clambin/mediaclients v0.21.1-0.20260829190408-d692c82514aa
+	github.com/clambin/mediaclients v0.21.1
 	github.com/hekmon/transmissionrpc/v3 v3.0.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/spf13/cobra v1.10.2
