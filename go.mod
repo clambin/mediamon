@@ -7,7 +7,7 @@ require (
 	codeberg.org/clambin/go-common/charmer v0.5.1
 	codeberg.org/clambin/go-common/testutils v0.7.2
 	github.com/clambin/mediaclients v0.21.1
-	github.com/hekmon/transmissionrpc/v3 v3.0.0
+	github.com/pborzenkov/go-transmission v0.3.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
@@ -25,8 +25,6 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hekmon/cunits/v2 v2.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect

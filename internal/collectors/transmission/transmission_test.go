@@ -7,21 +7,21 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hekmon/transmissionrpc/v3"
+	"github.com/pborzenkov/go-transmission/transmission"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCollector_Collect(t *testing.T) {
 	g := fakeTransmissionClient{
-		sessionStats: transmissionrpc.SessionStats{
-			ActiveTorrentCount: 1,
-			PausedTorrentCount: 2,
-			UploadSpeed:        25,
-			DownloadSpeed:      100,
+		sessionStats: transmission.SessionStats{
+			ActiveTorrents: 1,
+			PausedTorrents: 2,
+			UploadRate:     25,
+			DownloadRate:   100,
 		},
-		sessionArgs: transmissionrpc.SessionArguments{
-			Version: new("foo"),
+		session: transmission.Session{
+			Version: "foo",
 		},
 	}
 
@@ -58,15 +58,21 @@ mediamon_transmission_version{url="",version="foo"} 1
 var _ TransmissionClient = &fakeTransmissionClient{}
 
 type fakeTransmissionClient struct {
-	sessionStats transmissionrpc.SessionStats
-	sessionArgs  transmissionrpc.SessionArguments
+	sessionStats transmission.SessionStats
+	session      transmission.Session
 	err          error
 }
 
-func (f fakeTransmissionClient) SessionArgumentsGetAll(_ context.Context) (sessionArgs transmissionrpc.SessionArguments, err error) {
-	return f.sessionArgs, f.err
+func (f fakeTransmissionClient) GetSession(_ context.Context, _ ...transmission.SessionField) (*transmission.Session, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &f.session, nil
 }
 
-func (f fakeTransmissionClient) SessionStats(_ context.Context) (stats transmissionrpc.SessionStats, err error) {
-	return f.sessionStats, f.err
+func (f fakeTransmissionClient) GetSessionStats(_ context.Context) (*transmission.SessionStats, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &f.sessionStats, nil
 }
