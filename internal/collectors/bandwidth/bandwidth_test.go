@@ -35,7 +35,7 @@ openvpn_client_tcp_udp_write_bytes_total 2048
 	assert.Error(t, testutil.CollectAndCompare(c, strings.NewReader(want)))
 }
 
-func TestCollector_readStats(t *testing.T) {
+func TestCollector_readClientStatusFile(t *testing.T) {
 	type want struct {
 		err   assert.ErrorAssertionFunc
 		stats bandwidthStats
@@ -52,12 +52,7 @@ Updated,Fri Dec 18 11:24:01 2020
 TCP/UDP read bytes,1024
 TCP/UDP write bytes,2048
 END`,
-			want: want{err: assert.NoError, stats: bandwidthStats{read: 1024, written: 2048}},
-		},
-		{
-			name:    "empty",
-			content: ``,
-			want:    want{err: assert.Error},
+			want: want{err: assert.NoError, stats: bandwidthStats{"TCP/UDP read bytes": 1024, "TCP/UDP write bytes": 2048}},
 		},
 		{
 			name:    "invalid line",
@@ -74,28 +69,12 @@ END`,
 			content: `foo`,
 			want:    want{err: assert.Error},
 		},
-		{
-			name: "no read bytes",
-			content: `OpenVPN STATISTICS
-Updated,Fri Dec 18 11:24:01 2020
-TCP/UDP write bytes,2048
-END`,
-			want: want{err: assert.Error},
-		},
-		{
-			name: "no write bytes",
-			content: `OpenVPN STATISTICS
-Updated,Fri Dec 18 11:24:01 2020
-TCP/UDP read bytes,1024
-END`,
-			want: want{err: assert.Error},
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			stats, err := readStats(strings.NewReader(tt.content))
+			stats, err := readClientStatusFile(strings.NewReader(tt.content))
 			tt.want.err(t, err)
 			assert.Equal(t, tt.want.stats, stats)
 		})

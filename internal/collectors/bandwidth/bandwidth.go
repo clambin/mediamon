@@ -2,7 +2,6 @@ package bandwidth
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -41,11 +40,6 @@ type Config struct {
 	FileName string
 }
 
-type bandwidthStats struct {
-	read    int64
-	written int64
-}
-
 // NewCollector creates a new Collector
 func NewCollector(filename string, logger *slog.Logger) prometheus.Collector {
 	return &Collector{
@@ -63,40 +57,25 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	statusFile, err := os.Open(c.Filename)
-	var stats bandwidthStats
-	if err == nil {
-		stats, err = readStats(statusFile)
-		_ = statusFile.Close()
-	}
 	if err != nil {
-		c.logger.Error("failed to collect bandwidth metrics", "err", err)
+		c.logger.Error("failed to open openvpn status file", "err", err)
+		return
+	}
+	defer func() { _ = statusFile.Close() }()
+
+	values, err := readClientStatusFile(statusFile)
+	if err != nil {
+		c.logger.Error("failed to read openvpn status file", "err", err)
 		return
 	}
 
-	ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(stats.read))
-	ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(stats.written))
-}
-
-func readStats(r io.Reader) (bandwidthStats, error) {
-	values, err := readClientStatusFile(r)
-	if err != nil {
-		return bandwidthStats{}, err
-	}
-	var stats bandwidthStats
-	var ok bool
-	if stats.written, ok = values["TCP/UDP write bytes"]; !ok {
-		return bandwidthStats{}, errors.New("TCP/UDP write bytes not found")
-	}
-	if stats.read, ok = values["TCP/UDP read bytes"]; !ok {
-		return bandwidthStats{}, errors.New("TCP/UDP read bytes not found")
-	}
-	return stats, nil
+	values.collect(ch)
 }
 
 var ignoredLines = map[string]struct{}{"OpenVPN STATISTICS": {}, "END": {}}
 
-func readClientStatusFile(r io.Reader) (map[string]int64, error) {
-	values := make(map[string]int64)
+func readClientStatusFile(r io.Reader) (bandwidthStats, error) {
+	values := make(bandwidthStats)
 	s := bufio.NewScanner(r)
 	for s.Scan() {
 		line := s.Text()
@@ -116,5 +95,23 @@ func readClientStatusFile(r io.Reader) (map[string]int64, error) {
 		}
 		values[before] = value
 	}
+	if err := s.Err(); err != nil {
+		return nil, fmt.Errorf("failed to read client status file: %w", err)
+	}
 	return values, nil
+}
+
+type bandwidthStats map[string]int64
+
+func (s bandwidthStats) collect(ch chan<- prometheus.Metric) {
+	const (
+		bytesWritten = "TCP/UDP write bytes"
+		bytesRead    = "TCP/UDP read bytes"
+	)
+	if value, ok := s[bytesWritten]; ok {
+		ch <- prometheus.MustNewConstMetric(writeMetric, prometheus.GaugeValue, float64(value))
+	}
+	if value, ok := s[bytesRead]; ok {
+		ch <- prometheus.MustNewConstMetric(readMetric, prometheus.GaugeValue, float64(value))
+	}
 }
