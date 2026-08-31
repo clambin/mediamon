@@ -34,6 +34,12 @@ func (r Radarr) GetVersion(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("GetApiV3SystemStatusWithResponse: %w", err)
 	}
+	if resp.StatusCode() != http.StatusOK {
+		return "", fmt.Errorf("GetApiV3SystemStatusWithResponse: %d", resp.StatusCode())
+	}
+	if resp.JSON200 == nil || resp.JSON200.Version == nil {
+		return "", fmt.Errorf("GetApiV3SystemStatusWithResponse: nil response")
+	}
 	return *resp.JSON200.Version, err
 }
 
@@ -41,6 +47,12 @@ func (r Radarr) GetHealth(ctx context.Context) (map[string]int, error) {
 	resp, err := r.Client.GetApiV3HealthWithResponse(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GetApiV3HealthWithResponse: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("GetApiV3HealthWithResponse: %d", resp.StatusCode())
+	}
+	if resp.JSON200 == nil {
+		return nil, fmt.Errorf("GetApiV3HealthWithResponse: nil response")
 	}
 	health := make(map[string]int, len(*resp.JSON200))
 	for _, healthItem := range *resp.JSON200 {
@@ -61,6 +73,12 @@ func (r Radarr) GetCalendar(ctx context.Context, days int) ([]string, error) {
 	resp, err := r.Client.GetApiV3CalendarWithResponse(ctx, &params)
 	if err != nil {
 		return nil, fmt.Errorf("GetApiV3CalendarWithResponse: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("GetApiV3CalendarWithResponse: %d", resp.StatusCode())
+	}
+	if resp.JSON200 == nil {
+		return nil, fmt.Errorf("GetApiV3CalendarWithResponse: nil response")
 	}
 	calendar := make([]string, len(*resp.JSON200))
 	for i, movie := range *resp.JSON200 {
@@ -83,6 +101,12 @@ func (r Radarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
 		if err != nil {
 			return nil, fmt.Errorf("GetApiV3QueueWithResponse: %w", err)
 		}
+		if resp.StatusCode() != http.StatusOK {
+			return nil, fmt.Errorf("GetApiV3QueueWithResponse: %d", resp.StatusCode())
+		}
+		if resp.JSON200 == nil || resp.JSON200.Records == nil {
+			return nil, fmt.Errorf("GetApiV3QueueWithResponse: nil response")
+		}
 		for _, record := range *resp.JSON200.Records {
 			entries = append(entries, QueuedItem{
 				Name:            *record.Title,
@@ -101,7 +125,13 @@ func (r Radarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
 func (r Radarr) GetLibrary(ctx context.Context) (Library, error) {
 	resp, err := r.Client.GetApiV3MovieWithResponse(ctx, &radarr.GetApiV3MovieParams{})
 	if err != nil {
-		return Library{}, fmt.Errorf("GetApiV3SeriesWithResponse: %w", err)
+		return Library{}, fmt.Errorf("GetApiV3MovieWithResponse: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return Library{}, fmt.Errorf("GetApiV3MovieWithResponse: %d", resp.StatusCode())
+	}
+	if resp.JSON200 == nil {
+		return Library{}, fmt.Errorf("GetApiV3MovieWithResponse: nil response")
 	}
 	var library Library
 	for _, entry := range *resp.JSON200 {
@@ -138,6 +168,12 @@ func (s Sonarr) GetVersion(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("GetApiV3SystemStatusWithResponse: %w", err)
 	}
+	if resp.StatusCode() != http.StatusOK {
+		return "", fmt.Errorf("GetApiV3SystemStatusWithResponse: %d", resp.StatusCode())
+	}
+	if resp.JSON200 == nil || resp.JSON200.Version == nil {
+		return "", fmt.Errorf("GetApiV3SystemStatusWithResponse: nil response")
+	}
 	return *resp.JSON200.Version, err
 }
 
@@ -145,6 +181,12 @@ func (s Sonarr) GetHealth(ctx context.Context) (map[string]int, error) {
 	resp, err := s.Client.GetApiV3HealthWithResponse(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GetApiV3HealthWithResponse: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("GetApiV3HealthWithResponse: %d", resp.StatusCode())
+	}
+	if resp.JSON200 == nil {
+		return nil, fmt.Errorf("GetApiV3HealthWithResponse: nil response")
 	}
 	health := make(map[string]int, len(*resp.JSON200))
 	for _, healthItem := range *resp.JSON200 {
@@ -167,6 +209,12 @@ func (s Sonarr) GetCalendar(ctx context.Context, days int) ([]string, error) {
 	resp, err := s.Client.GetApiV3CalendarWithResponse(ctx, &params)
 	if err != nil {
 		return nil, fmt.Errorf("GetApiV3CalendarWithResponse: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("GetApiV3CalendarWithResponse: %d", resp.StatusCode())
+	}
+	if resp.JSON200 == nil {
+		return nil, fmt.Errorf("GetApiV3CalendarWithResponse: nil response")
 	}
 	calendar := make([]string, len(*resp.JSON200))
 	for i, episode := range *resp.JSON200 {
@@ -204,6 +252,12 @@ func (s Sonarr) GetQueue(ctx context.Context) ([]QueuedItem, error) {
 		if err != nil {
 			return nil, fmt.Errorf("GetApiV3QueueWithResponse: %w", err)
 		}
+		if resp.StatusCode() != http.StatusOK {
+			return nil, fmt.Errorf("GetApiV3QueueWithResponse: %d", resp.StatusCode())
+		}
+		if resp.JSON200 == nil || resp.JSON200.Records == nil {
+			return nil, fmt.Errorf("GetApiV3QueueWithResponse: nil response")
+		}
 		for _, record := range *resp.JSON200.Records {
 			name, err := s.getEpisodeNameFromQueueResource(ctx, record)
 			if err != nil {
@@ -237,6 +291,13 @@ func (s Sonarr) GetLibrary(ctx context.Context) (Library, error) {
 	if err != nil {
 		return Library{}, fmt.Errorf("GetApiV3SeriesWithResponse: %w", err)
 	}
+	if resp.StatusCode() != http.StatusOK {
+		return Library{}, fmt.Errorf("GetApiV3SeriesWithResponse: %d", resp.StatusCode())
+	}
+	if resp.JSON200 == nil {
+		return Library{}, fmt.Errorf("GetApiV3SeriesWithResponse: nil response")
+	}
+
 	var library Library
 	for _, entry := range *resp.JSON200 {
 		if *entry.Monitored {

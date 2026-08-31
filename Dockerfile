@@ -17,6 +17,8 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
 
 FROM alpine
 
+RUN apk add --no-cache tzdata
+
 WORKDIR /app
 COPY --from=builder /app/mediamon /app/mediamon
 

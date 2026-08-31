@@ -2,6 +2,7 @@ package xxxarr
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/clambin/mediaclients/radarr"
 	"github.com/clambin/mediaclients/sonarr"
@@ -48,22 +49,27 @@ type fakeSonarrClient struct {
 }
 
 func (f fakeSonarrClient) GetApiV3SystemStatusWithResponse(_ context.Context, _ ...sonarr.RequestEditorFn) (*sonarr.GetApiV3SystemStatusResponse, error) {
+	f.systemStatus.HTTPResponse = &http.Response{StatusCode: http.StatusOK}
 	return f.systemStatus, nil
 }
 
 func (f fakeSonarrClient) GetApiV3HealthWithResponse(_ context.Context, _ ...sonarr.RequestEditorFn) (*sonarr.GetApiV3HealthResponse, error) {
+	f.health.HTTPResponse = &http.Response{StatusCode: http.StatusOK}
 	return f.health, nil
 }
 
 func (f fakeSonarrClient) GetApiV3CalendarWithResponse(_ context.Context, _ *sonarr.GetApiV3CalendarParams, _ ...sonarr.RequestEditorFn) (*sonarr.GetApiV3CalendarResponse, error) {
+	f.calendar.HTTPResponse = &http.Response{StatusCode: http.StatusOK}
 	return f.calendar, nil
 }
 
 func (f fakeSonarrClient) GetApiV3QueueWithResponse(_ context.Context, _ *sonarr.GetApiV3QueueParams, _ ...sonarr.RequestEditorFn) (*sonarr.GetApiV3QueueResponse, error) {
+	f.queue.HTTPResponse = &http.Response{StatusCode: http.StatusOK}
 	return f.queue, nil
 }
 
 func (f fakeSonarrClient) GetApiV3SeriesWithResponse(_ context.Context, _ *sonarr.GetApiV3SeriesParams, _ ...sonarr.RequestEditorFn) (*sonarr.GetApiV3SeriesResponse, error) {
+	f.series.HTTPResponse = &http.Response{StatusCode: http.StatusOK}
 	return f.series, nil
 }
 
@@ -78,21 +84,26 @@ type fakeRadarrClient struct {
 }
 
 func (f fakeRadarrClient) GetApiV3SystemStatusWithResponse(_ context.Context, _ ...radarr.RequestEditorFn) (*radarr.GetApiV3SystemStatusResponse, error) {
+	f.systemStatus.HTTPResponse = &http.Response{StatusCode: http.StatusOK}
 	return f.systemStatus, nil
 }
 
 func (f fakeRadarrClient) GetApiV3HealthWithResponse(_ context.Context, _ ...radarr.RequestEditorFn) (*radarr.GetApiV3HealthResponse, error) {
+	f.health.HTTPResponse = &http.Response{StatusCode: http.StatusOK}
 	return f.health, nil
 }
 
 func (f fakeRadarrClient) GetApiV3CalendarWithResponse(_ context.Context, _ *radarr.GetApiV3CalendarParams, _ ...radarr.RequestEditorFn) (*radarr.GetApiV3CalendarResponse, error) {
+	f.calendar.HTTPResponse = &http.Response{StatusCode: http.StatusOK}
 	return f.calendar, nil
 }
 
 func (f fakeRadarrClient) GetApiV3QueueWithResponse(_ context.Context, _ *radarr.GetApiV3QueueParams, _ ...radarr.RequestEditorFn) (*radarr.GetApiV3QueueResponse, error) {
+	f.queue.HTTPResponse = &http.Response{StatusCode: http.StatusOK}
 	return f.queue, nil
 }
 
 func (f fakeRadarrClient) GetApiV3MovieWithResponse(_ context.Context, _ *radarr.GetApiV3MovieParams, _ ...radarr.RequestEditorFn) (*radarr.GetApiV3MovieResponse, error) {
+	f.movies.HTTPResponse = &http.Response{StatusCode: http.StatusOK}
 	return f.movies, nil
 }

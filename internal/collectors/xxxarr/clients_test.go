@@ -23,11 +23,12 @@ func TestRadarrClient(t *testing.T) {
 			Records:      &[]radarr.QueueResource{{Size: new(100.0), Sizeleft: new(40.0), Title: new("some other movie")}},
 			TotalRecords: new(int32(1)),
 		}},
-		movies: &radarr.GetApiV3MovieResponse{JSON200: &[]radarr.MovieResource{
-			{Monitored: new(true), Title: new("some movie")},
-			{Monitored: new(false), Title: new("some other movie")},
-			{Monitored: new(true), Title: new("some other other movie")},
-		}},
+		movies: &radarr.GetApiV3MovieResponse{
+			JSON200: &[]radarr.MovieResource{
+				{Monitored: new(true), Title: new("some movie")},
+				{Monitored: new(false), Title: new("some other movie")},
+				{Monitored: new(true), Title: new("some other other movie")},
+			}},
 	}
 	c, _ := NewRadarrClient("http://localhost:1234", "api-key", http.DefaultClient)
 	c.Client = &client

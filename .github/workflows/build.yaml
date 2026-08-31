@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-      - transmission
+      - fix
     paths-ignore:
       - 'assets/**'
   workflow_call:
