@@ -42,10 +42,13 @@ var (
 		"metrics.path":                  {Default: "/metrics"},
 		"metrics.addr":                  {Default: ":9090"},
 		"transmission.url":              {Default: ""},
+		"transmission.timeout":          {Default: "10s", Help: "Timeout for Transmission API requests."},
 		"sonarr.url":                    {Default: ""},
 		"sonarr.apikey":                 {Default: ""},
+		"sonarr.timeout":                {Default: "10s", Help: "Timeout for Sonarr API requests."},
 		"radarr.url":                    {Default: ""},
 		"radarr.apikey":                 {Default: ""},
+		"radarr.timeout":                {Default: "10s", Help: "Timeout for Radarr API requests."},
 		"plex.url":                      {Default: ""},
 		"plex.client-id":                {Default: ""},
 		"plex.username":                 {Default: ""},
@@ -53,8 +56,10 @@ var (
 		"plex.jwt.enable":               {Default: false},
 		"plex.jwt.path":                 {Default: ""},
 		"plex.jwt.passphrase":           {Default: ""},
+		"plex.timeout":                  {Default: "10s", Help: "Timeout for Plex API requests."},
 		"openvpn.connectivity.proxy":    {Default: ""},
 		"openvpn.connectivity.interval": {Default: "10s"},
+		"openvpn.connectivity.timeout":  {Default: "10s", Help: "Timeout for OpenVPN connectivity checks."},
 		"openvpn.bandwidth.filename":    {Default: ""},
 	}
 )
@@ -164,7 +169,8 @@ func createCollectors(_ string, v *viper.Viper, logger *slog.Logger) []prometheu
 
 		var collector prometheus.Collector
 		var err error
-		httpClient, metrics := instrumentedHttpClient(c.name, rt)
+
+		httpClient, metrics := instrumentedHttpClient(c.name, rt, v.GetDuration(c.name+".timeout"))
 		collectors = append(collectors, metrics)
 
 		switch key {
@@ -218,7 +224,7 @@ func parseProxy(proxyURL string) (*url.URL, error) {
 	return proxy, nil
 }
 
-func instrumentedHttpClient(application string, roundTripper http.RoundTripper) (*http.Client, prometheus.Collector) {
+func instrumentedHttpClient(application string, roundTripper http.RoundTripper, timeout time.Duration) (*http.Client, prometheus.Collector) {
 	metrics := requestMetrics{
 		counter: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace:   "mediamon",
@@ -237,7 +243,7 @@ func instrumentedHttpClient(application string, roundTripper http.RoundTripper) 
 	}
 
 	client := http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: cmp.Or(timeout, 10*time.Second),
 		Transport: promhttp.InstrumentRoundTripperCounter(metrics.counter,
 			promhttp.InstrumentRoundTripperDuration(metrics.latency,
 				cmp.Or(roundTripper, http.DefaultTransport),
