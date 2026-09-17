@@ -173,6 +173,8 @@ func createCollectors(_ string, v *viper.Viper, logger *slog.Logger) []prometheu
 		httpClient, metrics := instrumentedHttpClient(c.name, rt, v.GetDuration(c.name+".timeout"))
 		collectors = append(collectors, metrics)
 
+		logger.Debug("created http client", "name", c.name, "timeout", httpClient.Timeout)
+
 		switch key {
 		case "transmission.url":
 			collector, err = transmission.NewCollector(httpClient, target, l)
