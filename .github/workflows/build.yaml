@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-      - fix
+      - timeouts
     paths-ignore:
       - 'assets/**'
   workflow_call:

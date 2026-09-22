@@ -38,22 +38,30 @@ transmission:
   # Transmission RPC URL, e.g. "http://192.168.0.1:9101/transmission/rpc"
   # If not set, Transmission won't be monitored
   url: <url>
-
+  # Override timeout in seconds for API requests
+  # timeout: 10s
+  
 sonarr:
   # Sonarr URL. If not set, Sonarr won't be monitored
   url: <url>
   # Sonarr API Key. See Sonarr / Settings / Security
   apikey: <key>
+  # Override timeout in seconds for API requests
+  # timeout: 10s
 
 radarr:
   # All these are equivalent to sonarr
   url: <url>
   apikey: <key>
+  # Override timeout in seconds for API requests
+  # timeout: 10s
 
 prowlarr:
   # All these are equivalent to sonarr
   url: <url>
   apikey: <key>
+  # Override timeout in seconds for API requests
+  # timeout: 10s
 
 plex:
   # Plex URL, e.g. http://192.168.0.11:32400 
@@ -79,6 +87,8 @@ plex:
     path: "storage.enc"
     # Passphrase to encrypt the JWT token.
     passphrase: "my-very-insecure-passphrase"
+    # Override timeout in seconds for API requests
+    # timeout: 10s
 openvpn:
   bandwidth:
     # mediamon uses the OpenVPN status will to measure up/download bandwidth
@@ -91,6 +101,8 @@ openvpn:
     proxy: <url>
     # interval limits how often connectivity is checked 
     interval: <duration>
+    # Override timeout in seconds for API requests
+    # timeout: 10s
 ```
 
 If the filename is not specified on the command line, mediamon will look for a file `config.yaml` in the following

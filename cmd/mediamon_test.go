@@ -48,6 +48,7 @@ func Test_createCollectors(t *testing.T) {
 	v := viper.New()
 	v.Set("transmission.url", "http://transmission:80")
 	v.Set("sonarr.url", "http://sonarr:80")
+	v.Set("sonarr.timeout", "1m")
 	v.Set("radarr.url", "http://radarr:80")
 	v.Set("openvpn.connectivity.proxy", "http://proxy:8080")
 	v.Set("openvpn.bandwidth.filename", "/data/client.status")
